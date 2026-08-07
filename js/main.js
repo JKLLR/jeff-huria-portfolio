@@ -4,6 +4,20 @@
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ── Smooth scroll (Lenis) synced with ScrollTrigger ─
+const lenis = new Lenis({
+    duration: 1.15,
+    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+    smoothWheel: true
+});
+
+lenis.on('scroll', ScrollTrigger.update);
+
+gsap.ticker.add((time) => {
+    lenis.raf(time * 1000);
+});
+gsap.ticker.lagSmoothing(0);
+
 // ── Header scroll border ───────────────────────────
 window.addEventListener('scroll', () => {
     document.getElementById('header').classList.toggle('scrolled', window.scrollY > 40);
@@ -95,6 +109,85 @@ function buildMarquee(container) {
     container.appendChild(wrap);
 }
 
+// ── Split element's text into masked word spans ────
+// Wraps each word in .split-word-mask > .split-word-inner
+// so it can be revealed with a clipped translateY stagger.
+function splitWords(el) {
+    const html = el.innerHTML;
+    // Preserve manual <br> line breaks while splitting words
+    const lines = html.split(/<br\s*\/?>/i);
+    el.innerHTML = '';
+    lines.forEach((line, li) => {
+        const words = line.trim().split(/\s+/).filter(Boolean);
+        words.forEach(word => {
+            const mask = document.createElement('span');
+            mask.className = 'split-word-mask';
+            const inner = document.createElement('span');
+            inner.className = 'split-word-inner';
+            inner.textContent = word + '\u00A0';
+            mask.appendChild(inner);
+            el.appendChild(mask);
+        });
+        if (li < lines.length - 1) el.appendChild(document.createElement('br'));
+    });
+    return el.querySelectorAll('.split-word-inner');
+}
+
+// ── Custom cursor + magnetic hover ─────────────────
+function initCursorAndMagnets() {
+    const cursor = document.getElementById('cursorDot');
+    if (!cursor || matchMedia('(max-width: 960px)').matches) return;
+
+    const setX = gsap.quickTo(cursor, 'x', { duration: 0.35, ease: 'power3.out' });
+    const setY = gsap.quickTo(cursor, 'y', { duration: 0.35, ease: 'power3.out' });
+
+    window.addEventListener('mousemove', (e) => {
+        setX(e.clientX);
+        setY(e.clientY);
+    });
+
+    const magnets = document.querySelectorAll(
+        '.header-cta, .work-link, .service-cta, .contact-link, .header-nav a'
+    );
+
+    magnets.forEach(el => {
+        const moveX = gsap.quickTo(el, 'x', { duration: 0.4, ease: 'power3.out' });
+        const moveY = gsap.quickTo(el, 'y', { duration: 0.4, ease: 'power3.out' });
+
+        el.addEventListener('mouseenter', () => cursor.classList.add('hovering'));
+        el.addEventListener('mousemove', (e) => {
+            const r = el.getBoundingClientRect();
+            const relX = e.clientX - (r.left + r.width / 2);
+            const relY = e.clientY - (r.top + r.height / 2);
+            moveX(relX * 0.35);
+            moveY(relY * 0.35);
+        });
+        el.addEventListener('mouseleave', () => {
+            cursor.classList.remove('hovering');
+            moveX(0);
+            moveY(0);
+        });
+    });
+}
+
+// ── Clip-path curtain reveal for images ────────────
+function revealImage(el, { scrollTriggered = true } = {}) {
+    gsap.set(el, { clipPath: 'inset(0 0 100% 0)' });
+    const anim = {
+        clipPath: 'inset(0 0 0% 0)',
+        duration: 1.1,
+        ease: 'power4.out'
+    };
+    if (scrollTriggered) {
+        gsap.to(el, {
+            ...anim,
+            scrollTrigger: { trigger: el, start: 'top 85%', once: true }
+        });
+    } else {
+        gsap.to(el, anim);
+    }
+}
+
 // ── Main init (called after loader exits) ─────────
 function initSite() {
     // Font-ready check before sizing title
@@ -116,13 +209,32 @@ function initSite() {
     const servicesSection = document.getElementById('services');
     if (servicesSection) buildMarquee(servicesSection.parentNode);
 
+    // Cursor + magnetic buttons
+    initCursorAndMagnets();
+
+    // Curtain-reveal the hero photo once the entrance timeline gets to it
+    revealImage(document.getElementById('heroPhoto'), { scrollTriggered: false });
+
+    // Masked word-by-word reveal for every heading (section titles + contact title)
+    document.querySelectorAll('.section-title, .contact-title').forEach(title => {
+        const words = splitWords(title);
+        gsap.from(words, {
+            scrollTrigger: { trigger: title, start: 'top 88%', once: true },
+            yPercent: 110,
+            duration: 0.9,
+            stagger: 0.06,
+            ease: 'power4.out'
+        });
+    });
+
+    // Curtain-reveal each work image on scroll
+    document.querySelectorAll('.work-img-inner').forEach(img => revealImage(img));
+
     // Scroll reveals
     const revealEls = [
         '.section-label',
-        '.section-title',
         '.about-text',
         '.about-stats',
-        '.contact-title',
         '.contact-right'
     ];
 

@@ -630,3 +630,61 @@ a { color: inherit; text-decoration: none; }
     .loader-small { display: none; }
     .hero-sub-left p { font-size: 13px; }
 }
+
+/* ===================================================
+   CUSTOM CURSOR
+   =================================================== */
+.cursor-dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 10px;
+    height: 10px;
+    background: var(--black);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 2000;
+    transform: translate(-50%, -50%);
+    mix-blend-mode: difference;
+    background: #fff;
+    transition: width 0.25s ease, height 0.25s ease;
+}
+
+.cursor-dot.hovering {
+    width: 50px;
+    height: 50px;
+}
+
+@media (max-width: 960px) {
+    .cursor-dot { display: none; }
+}
+
+/* ===================================================
+   SPLIT-TEXT WORD REVEAL (masked)
+   =================================================== */
+.split-title {
+    display: block;
+}
+
+.split-word-mask {
+    display: inline-block;
+    overflow: hidden;
+    vertical-align: top;
+    padding-bottom: 0.05em;
+    margin-bottom: -0.05em;
+}
+
+.split-word-inner {
+    display: inline-block;
+    will-change: transform;
+}
+
+/* ===================================================
+   MAGNETIC TARGETS
+   =================================================== */
+.header-cta,
+.work-link,
+.service-cta,
+.contact-link {
+    will-change: transform;
+}
