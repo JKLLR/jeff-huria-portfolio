@@ -194,7 +194,7 @@ function initSite() {
     document.fonts.ready.then(fitTitle);
 
     // Hero count-up
-    countUp(document.getElementById('heroCount'), 1618);
+    countUp(document.getElementById('heroCount'), 8);
 
     // Hero entrance
     const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
@@ -258,6 +258,18 @@ function initSite() {
             opacity: 0,
             duration: 0.65,
             delay: (i % 2) * 0.15,
+            ease: 'power2.out'
+        });
+    });
+
+    // Experience rows slide in
+    document.querySelectorAll('.exp-item').forEach((item, i) => {
+        gsap.from(item, {
+            scrollTrigger: { trigger: item, start: 'top 90%', once: true },
+            x: -30,
+            opacity: 0,
+            duration: 0.5,
+            delay: i * 0.08,
             ease: 'power2.out'
         });
     });
