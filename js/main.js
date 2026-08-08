@@ -133,6 +133,85 @@ function splitWords(el) {
     return el.querySelectorAll('.split-word-inner');
 }
 
+// ── About statement: split into individual letters ─
+// Wraps every non-space character in its own span so each
+// one can later become an independent physics body.
+function splitStatementLetters(container) {
+    const letters = [];
+    container.querySelectorAll('.stmt-line').forEach(line => {
+        const text = line.textContent;
+        line.textContent = '';
+        [...text].forEach(ch => {
+            const span = document.createElement('span');
+            span.className = 'stmt-letter';
+            span.textContent = ch === ' ' ? ' ' : ch;
+            line.appendChild(span);
+            if (ch !== ' ') letters.push(span);
+        });
+    });
+    return letters;
+}
+
+// ── About statement: gravity shatter (Matter.js) ───
+// Freezes each letter's current screen position, hands it to a
+// physics body, then syncs the body's position/angle back onto
+// the element every frame until the pile comes to rest.
+function shatterStatement(container, letters) {
+    if (!window.Matter || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+    const { Engine, Runner, Bodies, Body, World } = Matter;
+    const rect = container.getBoundingClientRect();
+
+    container.style.height = rect.height + 'px';
+
+    const engine = Engine.create();
+    engine.gravity.y = 1;
+
+    const items = letters.map(el => {
+        const r = el.getBoundingClientRect();
+        const left = r.left - rect.left;
+        const top  = r.top - rect.top;
+        el.style.position = 'absolute';
+        el.style.left = left + 'px';
+        el.style.top = top + 'px';
+        el.style.margin = '0';
+
+        const body = Bodies.rectangle(
+            left + r.width / 2,
+            top + r.height / 2,
+            r.width, r.height,
+            { restitution: 0.3, friction: 0.55, frictionAir: 0.015 }
+        );
+        Body.setAngularVelocity(body, (Math.random() - 0.5) * 0.25);
+        Body.setVelocity(body, { x: (Math.random() - 0.5) * 2, y: 0 });
+
+        return { el, body, left, top, w: r.width, h: r.height };
+    });
+
+    World.add(engine.world, items.map(i => i.body));
+
+    const floor      = Bodies.rectangle(rect.width / 2, rect.height + 20, rect.width * 2, 40, { isStatic: true });
+    const leftWall    = Bodies.rectangle(-20, rect.height / 2, 40, rect.height * 2, { isStatic: true });
+    const rightWall  = Bodies.rectangle(rect.width + 20, rect.height / 2, 40, rect.height * 2, { isStatic: true });
+    World.add(engine.world, [floor, leftWall, rightWall]);
+
+    const runner = Runner.create();
+    Runner.run(runner, engine);
+
+    function update() {
+        let settled = true;
+        items.forEach(({ el, body, left, top, w, h }) => {
+            el.style.transform = `translate(${body.position.x - w / 2 - left}px, ${body.position.y - h / 2 - top}px) rotate(${body.angle}rad)`;
+            if (body.speed > 0.05 || body.angularSpeed > 0.02) settled = false;
+        });
+        if (settled) {
+            Runner.stop(runner);
+            gsap.ticker.remove(update);
+        }
+    }
+    gsap.ticker.add(update);
+}
+
 // ── Custom cursor + magnetic hover ─────────────────
 function initCursorAndMagnets() {
     const cursor = document.getElementById('cursorDot');
@@ -229,6 +308,18 @@ function initSite() {
 
     // Curtain-reveal each work image on scroll
     document.querySelectorAll('.work-img-inner').forEach(img => revealImage(img));
+
+    // About statement: shatter into physics letters on scroll
+    const statementEl = document.getElementById('aboutStatement');
+    if (statementEl && !matchMedia('(max-width: 720px)').matches) {
+        const statementLetters = splitStatementLetters(statementEl);
+        ScrollTrigger.create({
+            trigger: statementEl,
+            start: 'top 65%',
+            once: true,
+            onEnter: () => shatterStatement(statementEl, statementLetters)
+        });
+    }
 
     // Scroll reveals
     const revealEls = [
