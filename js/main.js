@@ -4,6 +4,16 @@
 
 gsap.registerPlugin(ScrollTrigger);
 
+// ── Rotating hero roles ─────────────────────────────
+const heroRoles = [
+    'SOFTWARE ENGINEER',
+    'CLOUD ARCHITECT',
+    'ERP SPECIALIST',
+    'AI NATIVE FOUNDER',
+    'TECH STRATEGIST',
+    'GROWTH ENGINEER'
+];
+
 // ── Smooth scroll (Lenis) synced with ScrollTrigger ─
 const lenis = new Lenis({
     duration: 1.15,
@@ -62,22 +72,55 @@ function revealSite() {
         .call(initSite);
 }
 
-// ── Hero title: auto-fit to full viewport width ────
+// ── Hero title: auto-fit ONE font size that fits every
+//    rotating role, so the text never resizes mid-rotation ─
 function fitTitle() {
     const title = document.getElementById('heroTitle');
-    if (!title) return;
-    title.style.fontSize = '10px';
+    const inner = document.getElementById('heroTitleInner');
+    if (!title || !inner) return;
     const maxWidth = title.parentElement.offsetWidth;
-    let lo = 10, hi = 600;
-    while (hi - lo > 1) {
-        const mid = (lo + hi) / 2;
-        title.style.fontSize = mid + 'px';
-        title.scrollWidth <= maxWidth ? lo = mid : hi = mid;
-    }
-    title.style.fontSize = lo + 'px';
+    const originalText = inner.textContent;
+
+    let minFit = 600;
+    heroRoles.forEach(role => {
+        inner.textContent = role;
+        let lo = 10, hi = 600;
+        while (hi - lo > 1) {
+            const mid = (lo + hi) / 2;
+            title.style.fontSize = mid + 'px';
+            inner.scrollWidth <= maxWidth ? lo = mid : hi = mid;
+        }
+        minFit = Math.min(minFit, lo);
+    });
+
+    inner.textContent = originalText;
+    title.style.fontSize = minFit + 'px';
 }
 
 window.addEventListener('resize', fitTitle);
+
+// ── Rotate hero title through heroRoles, seamless
+//    masked crossfade — old line slides up & out while
+//    new line slides up & in from below ────────────
+function startHeroRoleRotation() {
+    const inner = document.getElementById('heroTitleInner');
+    if (!inner) return;
+    let i = 0;
+
+    function step() {
+        i = (i + 1) % heroRoles.length;
+        gsap.timeline()
+            .to(inner, { yPercent: -100, opacity: 0, duration: 0.55, ease: 'power3.in' })
+            .call(() => { inner.textContent = heroRoles[i]; })
+            .set(inner, { yPercent: 100 })
+            .to(inner, { yPercent: 0, opacity: 1, duration: 0.6, ease: 'power3.out' });
+    }
+
+    gsap.delayedCall(3.2, function loop() {
+        step();
+        gsap.delayedCall(3.2, loop);
+    });
+}
 
 // ── Animate a number from 0 to target ─────────────
 function countUp(el, target, dur = 2200) {
@@ -290,6 +333,9 @@ function initSite() {
 
     // Cursor + magnetic buttons
     initCursorAndMagnets();
+
+    // Start the hero role rotation once the entrance settles
+    startHeroRoleRotation();
 
     // Curtain-reveal the hero photo once the entrance timeline gets to it
     revealImage(document.getElementById('heroPhoto'), { scrollTriggered: false });
