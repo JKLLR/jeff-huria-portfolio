@@ -1,58 +1,180 @@
 [
     {
         "id": "sat-erp-integrator",
+        "slug": "sat-erp-integrator",
         "title": "SAT ERP INTEGRATOR",
-        "tags": "ERP / API / INTEGRATION",
-        "link": { "href": "/#connect", "label": "READ CASE STUDY ↗", "external": false },
-        "capabilities": ["software-engineering", "erp-integration"]
+        "shortDescription": "Integration layer connecting a sales automation platform to eight major ERP and finance systems — SAP, Oracle, Microsoft Dynamics 365, Sage, Epicor iScala, Odoo, and QuickBooks — plus BI tools and M-Pesa.",
+        "type": "integration",
+        "role": [
+            "Software Engineer"
+        ],
+        "technologies": [],
+        "capabilities": [
+            "software-engineering",
+            "erp-integration"
+        ],
+        "featured": true,
+        "links": {},
+        "caseStudy": null
     },
     {
         "id": "auctioneers",
+        "slug": "auctioneers",
         "title": "AUCTIONEERS WEB PLATFORM",
-        "tags": "REACT / RUBY ON RAILS",
-        "link": { "href": "/#connect", "label": "VIEW PROJECT ↗", "external": false },
-        "capabilities": ["software-engineering"]
+        "type": "product",
+        "role": [
+            "Software Engineer"
+        ],
+        "technologies": [
+            "React",
+            "Ruby on Rails"
+        ],
+        "capabilities": [
+            "software-engineering"
+        ],
+        "featured": false,
+        "links": {},
+        "caseStudy": null
     },
     {
         "id": "peperuka",
+        "slug": "peperuka",
         "title": "PEPERUKA LOCAL VENDORS",
-        "tags": "REACTJS / RUBY ON RAILS",
-        "link": { "href": "/#connect", "label": "VIEW PROJECT ↗", "external": false },
-        "capabilities": ["software-engineering"]
+        "type": "product",
+        "role": [
+            "Software Engineer"
+        ],
+        "technologies": [
+            "React",
+            "Ruby on Rails"
+        ],
+        "capabilities": [
+            "software-engineering"
+        ],
+        "featured": false,
+        "links": {},
+        "caseStudy": null
     },
     {
         "id": "nahla-naturals",
+        "slug": "nahla-naturals",
         "title": "NAHLA NATURALS",
-        "tags": "NEXT.JS / SANITY CMS",
-        "link": { "href": "/#connect", "label": "VIEW PROJECT ↗", "external": false },
-        "capabilities": ["software-engineering"]
+        "type": "product",
+        "role": [
+            "Software Engineer"
+        ],
+        "technologies": [
+            "Next.js",
+            "Sanity CMS"
+        ],
+        "capabilities": [
+            "software-engineering"
+        ],
+        "featured": false,
+        "links": {},
+        "caseStudy": null
     },
     {
         "id": "vochi",
+        "slug": "vochi",
         "title": "VOCHI",
-        "tags": "LARAVEL / VUE / AI VOICE & CHAT",
-        "link": { "href": "https://vochi.io", "label": "VISIT SITE ↗", "external": true },
-        "capabilities": ["software-engineering"]
+        "type": "product",
+        "role": [
+            "Software Engineer"
+        ],
+        "technologies": [
+            "Laravel",
+            "Vue"
+        ],
+        "capabilities": [
+            "software-engineering",
+            "ai-product-development"
+        ],
+        "featured": true,
+        "links": {
+            "visit": {
+                "href": "https://vochi.io",
+                "label": "VISIT SITE ↗",
+                "external": true
+            }
+        },
+        "caseStudy": null
     },
     {
         "id": "kodiwa",
+        "slug": "kodiwa",
         "title": "KODIWA",
-        "tags": "PROPTECH / LARAVEL / REACT NATIVE",
-        "link": { "href": "https://kodiwa.com", "label": "VISIT SITE ↗", "external": true },
-        "capabilities": ["software-engineering"]
+        "type": "product",
+        "role": [
+            "Founder",
+            "Software Engineer"
+        ],
+        "technologies": [
+            "Laravel",
+            "React Native"
+        ],
+        "capabilities": [
+            "software-engineering"
+        ],
+        "featured": true,
+        "links": {
+            "visit": {
+                "href": "https://kodiwa.com",
+                "label": "VISIT SITE ↗",
+                "external": true
+            }
+        },
+        "caseStudy": null
     },
     {
         "id": "echokey",
+        "slug": "echokey",
         "title": "ECHOKEY",
-        "tags": "WINDOWS / VOICE AI / DESKTOP",
-        "link": { "href": "https://echokey.app", "label": "VISIT SITE ↗", "external": true },
-        "capabilities": ["software-engineering"]
+        "type": "product",
+        "role": [
+            "Software Engineer"
+        ],
+        "technologies": [
+            "Windows",
+            "Voice AI"
+        ],
+        "capabilities": [
+            "software-engineering",
+            "ai-product-development"
+        ],
+        "featured": true,
+        "links": {
+            "visit": {
+                "href": "https://echokey.app",
+                "label": "VISIT SITE ↗",
+                "external": true
+            }
+        },
+        "caseStudy": null
     },
     {
         "id": "asira-tms",
+        "slug": "asira-tms",
         "title": "ASIRA TMS",
-        "tags": "LOGISTICS / TMS / SAAS",
-        "link": { "href": "https://siratms.com", "label": "VISIT SITE ↗", "external": true },
-        "capabilities": ["software-engineering"]
+        "type": "product",
+        "role": [
+            "Software Engineer"
+        ],
+        "technologies": [
+            "Logistics",
+            "TMS"
+        ],
+        "capabilities": [
+            "software-engineering"
+        ],
+        "featured": true,
+        "links": {
+            "visit": {
+                "href": "https://siratms.com",
+                "label": "VISIT SITE ↗",
+                "external": true
+            }
+        },
+        "caseStudy": null
     }
 ]

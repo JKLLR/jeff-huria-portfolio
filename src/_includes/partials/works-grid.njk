@@ -8,11 +8,11 @@
         </div>
         <div class="work-info">
             <h3 class="work-title">{{ item.title }}</h3>
-            <p class="work-tags">{{ item.tags }}</p>
-            {% if item.link.external %}
-            <a href="{{ item.link.href }}" target="_blank" rel="noopener" class="work-link">{{ item.link.label }}</a>
-            {% else %}
-            <a href="{{ item.link.href }}" class="work-link">{{ item.link.label }}</a>
+            {% if item.technologies | length %}
+            <p class="work-tags">{{ item.technologies | join(" / ") }}</p>
+            {% endif %}
+            {% if item.links and item.links.visit %}
+            <a href="{{ item.links.visit.href }}"{% if item.links.visit.external %} target="_blank" rel="noopener"{% endif %} class="work-link">{{ item.links.visit.label }}</a>
             {% endif %}
         </div>
     </div>

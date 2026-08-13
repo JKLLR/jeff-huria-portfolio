@@ -7,10 +7,14 @@
             <div class="exp-head">
                 <h3>{{ item.role }}</h3>
                 <span class="exp-company">{{ item.company }}</span>
+                {% if item.current %}<span class="exp-current">CURRENT</span>{% endif %}
             </div>
-            <p>{{ item.description }}</p>
+            <p>{{ item.summary }}</p>
+            {% if item.systems | length %}
+            <p class="exp-systems">{{ item.systems | join(" · ") }}</p>
+            {% endif %}
         </div>
-        <span class="exp-dates">{{ item.dates }}</span>
+        <span class="exp-dates">{{ item.startDate | dateRange(item.endDate) }}</span>
     </div>
     {% endfor %}
 </div>

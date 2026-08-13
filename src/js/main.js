@@ -4,6 +4,9 @@
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Honor OS-level reduced-motion preference across all animation entry points
+const REDUCED_MOTION = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 // ── Rotating hero roles ─────────────────────────────
 const heroRoles = [
     'SOFTWARE ENGINEER',
@@ -40,7 +43,7 @@ const loaderPct  = document.getElementById('loaderPct');
 const site       = document.getElementById('site');
 
 // Spin the text block on Y axis — shows 3D distortion & inverted backface
-const spinTween = gsap.to(loaderSpin, {
+const spinTween = REDUCED_MOTION ? null : gsap.to(loaderSpin, {
     rotateY: 360,
     duration: 1.4,
     repeat: -1,
@@ -50,19 +53,19 @@ const spinTween = gsap.to(loaderSpin, {
 // Count to 100%
 let pct = 0;
 const countTimer = setInterval(() => {
-    pct += Math.floor(Math.random() * 9) + 3;
+    pct += REDUCED_MOTION ? 100 : Math.floor(Math.random() * 9) + 3;
     if (pct >= 100) {
         pct = 100;
         clearInterval(countTimer);
         loaderPct.textContent = '100%';
-        setTimeout(revealSite, 350);
+        setTimeout(revealSite, REDUCED_MOTION ? 0 : 350);
     } else {
         loaderPct.textContent = pct + '%';
     }
 }, 55);
 
 function revealSite() {
-    spinTween.kill();
+    if (spinTween) spinTween.kill();
 
     gsap.timeline()
         .to(loader, { yPercent: -100, duration: 0.85, ease: 'power3.inOut' })
@@ -120,6 +123,7 @@ window.addEventListener('resize', fitTitle);
 //    left-to-right stagger so it reads as a fast ripple
 //    rather than a mechanical block-swap ────────────
 function startHeroRoleRotation() {
+    if (REDUCED_MOTION) return; // static first role is left in place
     const inner = document.getElementById('heroTitleInner');
     if (!inner) return;
     if (!inner.querySelector('.htitle-letter')) {
@@ -298,6 +302,7 @@ function shatterStatement(container, letters) {
 // original text rolls out while the clone rolls in
 // underneath to replace it.
 function initNavFlip() {
+    if (REDUCED_MOTION) return; // keep plain, accessible link text
     document.querySelectorAll('.header-nav a').forEach(link => {
         const text = link.textContent;
         link.textContent = '';
@@ -376,6 +381,31 @@ function initCursorAndMagnets() {
     });
 }
 
+// ── Mobile nav toggle ──────────────────────────────
+function initNavToggle() {
+    const headerEl = document.getElementById('header');
+    const toggle = document.querySelector('.nav-toggle');
+    if (!headerEl || !toggle) return;
+
+    const setState = (open) => {
+        headerEl.classList.toggle('nav-open', open);
+        toggle.setAttribute('aria-expanded', String(open));
+        toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    };
+
+    toggle.addEventListener('click', () => {
+        setState(!headerEl.classList.contains('nav-open'));
+    });
+
+    headerEl.querySelectorAll('.header-nav a').forEach(link => {
+        link.addEventListener('click', () => setState(false));
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setState(false);
+    });
+}
+
 // ── Clip-path curtain reveal for images ────────────
 function revealImage(el, { scrollTriggered = true } = {}) {
     gsap.set(el, { clipPath: 'inset(0 0 100% 0)' });
@@ -396,12 +426,19 @@ function revealImage(el, { scrollTriggered = true } = {}) {
 
 // ── Main init (called after loader exits) ─────────
 function initSite() {
+    // Mobile nav + always-available interactions
+    initNavToggle();
+
     // Font-ready check before sizing title
     document.fonts.ready.then(fitTitle);
 
     // Hero count-up
     const heroCountEl = document.getElementById('heroCount');
     if (heroCountEl) countUp(heroCountEl, 8);
+
+    // Reduced motion: content is already visible in the HTML, so all
+    // entrance/scroll animations are skipped rather than fast-forwarded.
+    if (REDUCED_MOTION) return;
 
     // Hero entrance
     const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });

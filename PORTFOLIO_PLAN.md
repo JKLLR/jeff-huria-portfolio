@@ -1,8 +1,11 @@
-# Portfolio Content Architecture & Roadmap
+# Portfolio Architecture & Roadmap
 
 This document is the source of truth for how this portfolio is structured and
 sequenced. It exists so future work (by opencode, Claude, or anyone else)
 extends the site according to a plan instead of bolting on sections ad hoc.
+
+See also [`docs/CONTENT_MODEL.md`](docs/CONTENT_MODEL.md) for the canonical
+data model behind everything below.
 
 ## Core positioning
 
@@ -18,72 +21,80 @@ person. Each identity only gets a dedicated page once there's real evidence
 **The rule: claims stay in the rotating hero for free. Dedicated pages are
 earned by evidence.**
 
-## Content model
-
-Content lives as data (`src/_data/*.json`), not hardcoded in templates.
-Pages render from that data via Nunjucks macros/filters. This means content
-is never duplicated across pages — a project or experience entry is written
-once and tagged with which capability(ies) it's evidence for.
-
-```
-Project      → id, title, tags, link, capabilities[]
-Experience   → id, role, company, dates, description, capabilities[]
-Capability   → slug, title, tagline, description[]
-```
-
-`byCapability` (Eleventy filter) pulls all projects/experience tagged with a
-given capability slug — that's how a capability page's "evidence" section is
-built, with zero duplication.
-
-Not yet modeled (see Phase 2+): `CaseStudy`, `Venture`, `Service`,
-`Technology` as first-class entities. These get added when there's enough
-real content to justify the structure — adding empty schema ahead of content
-is premature.
-
 ## Site structure
 
 ```
 /                                  — homepage (hero, about, experience, works, services, contact)
-/capabilities/software-engineering — Phase 1
-/capabilities/erp-integration      — Phase 1
+/capabilities/software-engineering — generated from capability data
+/capabilities/erp-integration      — generated from capability data
 ```
+
+Capability pages are **generated**, not hand-written. One template
+(`src/capabilities/capability.njk`) paginates over `publishedCapabilities`
+(a filtered view of `src/_data/capabilities.json`). Adding a capability page
+is a data edit — set `"published": true` and add content. No template work.
 
 Static assets (`css/`, `js/`, `assets/`) are passthrough-copied by Eleventy,
 same paths as before the migration. Build via `npm run build` → outputs to
-`_site/`, which is what Netlify publishes (see `netlify.toml`).
+`_site/`, which is what Netlify publishes (see `netlify.toml`). Validation
+(`scripts/validate.js`) runs automatically before every build.
 
-## Phase 1 — shipped
+## Phase 1 — Foundation (complete)
 
-Scoped to what's actually evidence-backed today:
+- [x] Eleventy structure clean: shared layout, data-driven content,
+      capability pages generated from data (no duplicated templates)
+- [x] Content model: `Project`, `Experience`, `Capability` as JSON in
+      `src/_data/`, documented in `docs/CONTENT_MODEL.md`
+- [x] Consistent schemas for all three entities; `id` === `slug` everywhere
+- [x] Capability tagging is meaningful (high-level claims, not technologies)
+- [x] Project links: real external URLs only; no fake `/#connect` destinations
+      — projects without a live URL render without a link
+- [x] Experience links to projects (`experience → projects[]`); descriptions
+      no longer duplicate project content
+- [x] Build-time validation (`scripts/validate.js`): duplicate ids/slugs,
+      unknown capability/project references, malformed URLs
+- [x] Homepage stays a summary layer; content is never duplicated across
+      homepage, capability pages, or cards
+- [x] Accessibility: skip link, `main` landmark, focus-visible states,
+      reduced-motion support (loader, hero rotation, shatter, marquee),
+      no-JS fallback (loader/site never hide without JS)
+- [x] Mobile navigation restored (previously hidden below 960px with no
+      replacement)
+- [x] SEO: unique title + description + canonical + Open Graph + Twitter
+      metadata on every page
+- [x] Dead code removed: `.photo-placeholder`, `.split-title`, unused
+      `findBySlug` filter, stale local log files
 
-- [x] Migrated from static HTML to Eleventy (shared layout, data-driven
-      content, so new pages are cheap to add)
-- [x] Content model: `Project`, `Experience`, `Capability` entities as JSON
-- [x] `/capabilities/software-engineering` — full evidence (3+ years, 2
-      employers, 8 shipped projects)
-- [x] `/capabilities/erp-integration` — full evidence (Solutech's SAT
-      integrator, 8 ERP/finance platforms, both employers)
-- [x] Homepage links to both from the About section
-
-Hero still rotates through all 6 identities. Only these two are clickable —
-the other four are aspirational framing until they have evidence.
-
-## Phase 2+ — roadmap (not built yet)
-
-Build each of these **only once there's real evidence to point to** —
-otherwise a claim with a thin or empty page behind it is worse than a claim
-with no page at all.
+## Phase 2 — Evidence & Case Studies (future)
 
 | Item | Unlocked by |
 |---|---|
-| `/capabilities/cloud-architecture` | Real infrastructure/deployment case study beyond CCNA certification — actual production architecture decisions, not just "I deployed to a cloud provider" |
-| `/capabilities/ai-native-founder` + `/ventures/kodiwa` | Kodiwa reaching enough shape to be a real case study (problem, product, architecture, users) rather than a placeholder |
-| `/capabilities/technology-strategy` | An actual consulting/architecture engagement to reference |
-| `/capabilities/growth-engineering` | Real growth/automation work with a concrete definition of what "growth engineering" means for Jeff specifically |
+| `CaseStudy` entity + `/case-studies/*` | A project with enough real substance (screenshots, architecture decisions, measurable outcomes) to fill out problem → architecture → implementation → results honestly |
+| `caseStudy` value on a project record | Linking a project to its deep case-study page once it exists |
+| `/work/{slug}` project pages | When a project needs a canonical deep page that multiple entry points link to |
+
+## Phase 3 — Ventures & Founder Layer (future)
+
+| Item | Unlocked by |
+|---|---|
 | `Venture` entity + `/ventures` section | Once Kodiwa (or another venture) is real enough to need one canonical case study surfaced from multiple entry points |
-| `Service` entity + `/services/*` pages | After capabilities exist to back each service — services translate capabilities into "things you can hire me for," they shouldn't exist standalone |
-| `CaseStudy` entity (deep, progressive-disclosure page: problem → architecture → implementation → results) | Once a project has enough real substance (screenshots, architecture decisions, measurable outcomes) to fill one out honestly |
-| Migrate `Technology` into a proper entity | Only if the technology list needs to be queried/filtered somewhere — avoid a technology wall for its own sake |
+| `/capabilities/ai-product-development` page | Real AI product evidence to point to (Vochi, EchoKey are tagged now; the page stays unpublished until the evidence is deep enough) |
+| `/capabilities/cloud-architecture` page | Real infrastructure/deployment case study beyond CCNA certification — actual production architecture decisions, not just "I deployed to a cloud provider" |
+
+## Phase 4 — Consulting / Services (future)
+
+| Item | Unlocked by |
+|---|---|
+| `Service` entity + `/services/*` pages | Once capabilities exist to back each service — services translate capabilities into "things you can hire me for," they shouldn't exist standalone |
+| `/capabilities/technology-strategy` page | An actual consulting/architecture engagement to reference |
+| `/capabilities/growth-engineering` page | Real growth/automation work with a concrete definition of what "growth engineering" means for Jeff specifically |
+
+## Phase 5 — Refinement (future)
+
+- Technology as a first-class entity — only if the list needs to be
+  queried/filtered somewhere
+- Search, CMS, database — only when there is enough content to justify them
+  (Phase 1 is JSON + Eleventy data by design)
 
 ## Working principles
 
@@ -95,7 +106,8 @@ with no page at all.
    appear in both `/work` and `/ventures` someday, one canonical page gets
    linked from both.
 3. **Evidence before identity pages.** Don't build a page for a title that
-   the rest of the site can't back up yet.
+   the rest of the site can't back up yet. `published: false` in
+   `capabilities.json` is how this is enforced.
 4. **Content vs. presentation stay separate.** New projects/experience go
    into `src/_data/*.json`, tagged with the right capability slugs. Adding a
    project should never require touching a template.

@@ -1,7 +1,7 @@
 ---
 layout: layouts/base.njk
-title: JEFF .K. HURIA — Full-Stack Engineer
-description: Jeff .K. Huria — Full-Stack Engineer & ERP Integration Specialist building enterprise systems and modern web products
+title: JEFF .K. HURIA — Technology Builder
+description: Jeff .K. Huria is a technology builder — software engineer, ERP integration specialist, and AI-native founder building, connecting, and scaling systems, products, and businesses from Nairobi, Kenya.
 ---
 {% from "partials/works-grid.njk" import worksGrid %}
 {% from "partials/experience-list.njk" import experienceList %}
@@ -38,8 +38,9 @@ description: Jeff .K. Huria — Full-Stack Engineer & ERP Integration Specialist
                 <p>Outside of enterprise integration work, I build product from the ground up — auction platforms, e-commerce, multi-vendor marketplaces — with React, Next.js, and Ruby on Rails. I like the problems where a clean interface and a backend that talks to everything both have to hold up.</p>
             </div>
             <div class="capability-links">
-                <a href="/capabilities/software-engineering/" class="capability-link">SOFTWARE ENGINEER ↗</a>
-                <a href="/capabilities/erp-integration/" class="capability-link">ERP INTEGRATION SPECIALIST ↗</a>
+                {% for cap in publishedCapabilities %}
+                <a href="/capabilities/{{ cap.slug }}/" class="capability-link">{{ cap.title }} ↗</a>
+                {% endfor %}
             </div>
         </div>
         <div class="about-stats">
@@ -144,10 +145,10 @@ description: Jeff .K. Huria — Full-Stack Engineer & ERP Integration Specialist
                     <span>PHONE</span>
                     <span class="cl-arrow">↗</span>
                 </a>
-                <a href="#" class="contact-link">
+                <span class="contact-link disabled" aria-disabled="true">
                     <span>GITHUB</span>
                     <span class="cl-arrow">↗</span>
-                </a>
+                </span>
             </div>
             <div class="contact-email-big">
                 <a href="mailto:jeffhuria@gmail.com">jeffhuria@gmail.com</a>

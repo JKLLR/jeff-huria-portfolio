@@ -1,12 +1,18 @@
 ---
 layout: layouts/base.njk
-title: Software Engineer — JEFF .K. HURIA
-description: Full-stack software engineering — real products, shipped end to end, by Jeff .K. Huria.
-capabilitySlug: software-engineering
+pagination:
+  data: publishedCapabilities
+  size: 1
+  alias: cap
+permalink: /capabilities/{{ cap.slug }}/index.html
+eleventyComputed:
+  title: "{{ cap.title }} — JEFF .K. HURIA"
+  description: "{{ cap.summary }}"
 ---
 {% from "partials/works-grid.njk" import worksGrid %}
 {% from "partials/experience-list.njk" import experienceList %}
-{% set cap = capabilities | findBySlug(capabilitySlug) %}
+{% set capProjects = projects | byCapability(cap.slug) %}
+{% set capExperience = experience | byCapability(cap.slug) %}
 
 <section class="section capability-hero">
     <div class="section-label">[ CAPABILITY ]</div>
@@ -20,14 +26,30 @@ capabilitySlug: software-engineering
     {% endfor %}
 </section>
 
+{% if cap.competencies | length %}
+<section class="section capability-competencies">
+    <div class="section-label">[ APPROACH ]</div>
+    <h2 class="section-title">HOW I<br>WORK</h2>
+    <ul class="cap-comp-list">
+        {% for competency in cap.competencies %}
+        <li>{{ competency }}</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endif %}
+
+{% if capExperience | length %}
 <section class="section capability-evidence" id="experience">
     <div class="section-label">[ EVIDENCE — EXPERIENCE ]</div>
     <h2 class="section-title">WHERE IT<br>SHOWS UP</h2>
-    {{ experienceList(experience | byCapability(capabilitySlug)) }}
+    {{ experienceList(capExperience) }}
 </section>
+{% endif %}
 
+{% if capProjects | length %}
 <section class="section capability-evidence" id="works">
     <div class="section-label">[ EVIDENCE — PROJECTS ]</div>
     <h2 class="section-title">WHAT I'VE<br>SHIPPED</h2>
-    {{ worksGrid(projects | byCapability(capabilitySlug)) }}
+    {{ worksGrid(capProjects) }}
 </section>
+{% endif %}

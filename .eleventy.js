@@ -10,9 +10,16 @@ module.exports = function (eleventyConfig) {
         return (items || []).filter(item => (item.capabilities || []).includes(slug));
     });
 
-    // Finds a single object in an array by its `slug` field
-    eleventyConfig.addFilter("findBySlug", (items, slug) => {
-        return (items || []).find(item => item.slug === slug);
+    // Renders "2023-04" and "2026-06" as "APR 2023 — JUN 2026".
+    // Pass null as the end date for a role that is still current.
+    const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+    eleventyConfig.addFilter("dateRange", (start, end) => {
+        const label = (ym) => {
+            if (!ym) return 'PRESENT';
+            const [year, month] = String(ym).split('-');
+            return `${MONTHS[Number(month) - 1] || month} ${year}`;
+        };
+        return `${label(start)} — ${label(end)}`;
     });
 
     return {

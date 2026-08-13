@@ -1,18 +1,58 @@
 [
     {
         "id": "solutech",
-        "role": "SOFTWARE ENGINEER",
         "company": "SOLUTECH LIMITED",
-        "dates": "APR 2023 — JUN 2026",
-        "description": "Built and maintained the SAT ERP integrator — connecting a sales automation platform to SAP, Oracle, Microsoft Dynamics 365, Sage, Epicor iScala, Odoo, and QuickBooks. Designed RESTful and file-based APIs for real-time data exchange with Power BI, Tableau, Qlik, and M-Pesa, across manufacturing, distribution, and FMCG clients.",
-        "capabilities": ["software-engineering", "erp-integration"]
+        "role": "SOFTWARE ENGINEER",
+        "startDate": "2023-04",
+        "endDate": "2026-06",
+        "current": false,
+        "summary": "Software engineer on the SAT ERP integrator — an integration layer connecting a sales automation platform to major ERP and finance systems. Designed RESTful and file-based APIs for real-time data exchange, working across manufacturing, distribution, and FMCG clients.",
+        "technologies": [
+            "SAP",
+            "Oracle",
+            "Microsoft Dynamics 365",
+            "Sage",
+            "Epicor iScala",
+            "Odoo",
+            "QuickBooks",
+            "Power BI",
+            "Tableau",
+            "Qlik",
+            "M-Pesa"
+        ],
+        "systems": [
+            "SAT ERP integrator"
+        ],
+        "capabilities": [
+            "software-engineering",
+            "erp-integration"
+        ],
+        "projects": [
+            "sat-erp-integrator"
+        ]
     },
     {
         "id": "brisk-solution",
-        "role": "BACKEND ENGINEER",
         "company": "BRISK SOLUTION COMPANY LTD",
-        "dates": "AUG 2022 — MAR 2023",
-        "description": "Designed ERP, CRM, IFMIS, IMIS, and POS systems from the ground up for enterprise clients — covering inventory, HR, procurement, and financial reporting modules, with backend APIs and database schemas built on PostgreSQL.",
-        "capabilities": ["software-engineering", "erp-integration"]
+        "role": "BACKEND ENGINEER",
+        "startDate": "2022-08",
+        "endDate": "2023-03",
+        "current": false,
+        "summary": "Designed ERP, CRM, IFMIS, IMIS, and POS systems from the ground up for enterprise clients — covering inventory, HR, procurement, and financial reporting modules, with backend APIs and database schemas built on PostgreSQL.",
+        "technologies": [
+            "PostgreSQL"
+        ],
+        "systems": [
+            "ERP",
+            "CRM",
+            "IFMIS",
+            "IMIS",
+            "POS"
+        ],
+        "capabilities": [
+            "software-engineering",
+            "erp-integration"
+        ],
+        "projects": []
     }
 ]
