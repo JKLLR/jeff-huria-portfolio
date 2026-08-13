@@ -1,0 +1,157 @@
+---
+layout: layouts/base.njk
+title: JEFF .K. HURIA — Full-Stack Engineer
+description: Jeff .K. Huria — Full-Stack Engineer & ERP Integration Specialist building enterprise systems and modern web products
+---
+{% from "partials/works-grid.njk" import worksGrid %}
+{% from "partials/experience-list.njk" import experienceList %}
+
+<!-- Hero -->
+<section class="hero" id="hero">
+    <div class="hero-count">
+        <span id="heroCount">0</span>+ ERP PLATFORMS INTEGRATED
+    </div>
+    <div class="hero-title-wrap">
+        <h1 class="hero-title" id="heroTitle"><span class="htitle-inner" id="heroTitleInner">SOFTWARE ENGINEER</span></h1>
+    </div>
+    <div class="hero-lower">
+        <div class="hero-sub-left">
+            <p>/ ERP INTEGRATIONS</p>
+            <p>/ WEB APPLICATIONS</p>
+            <p>/ DATA &amp; BI SYSTEMS</p>
+        </div>
+        <div class="hero-photo" id="heroPhoto">
+            <img src="/assets/1760274672058.jfif" alt="Jeff .K. Huria">
+        </div>
+        <div class="hero-location">BASED IN<br>NAIROBI, KENYA</div>
+    </div>
+</section>
+
+<!-- About -->
+<section class="about section" id="about">
+    <div class="section-label">[ ABOUT ME ]</div>
+    <div class="about-inner">
+        <div class="about-bio">
+            <h2 class="section-title">I BUILD FULL-STACK<br>SYSTEMS</h2>
+            <div class="about-text">
+                <p>I'm a full-stack software engineer who spends most of my time where enterprise software meets modern web development. At Solutech, I built the integration layers connecting a sales automation platform to the ERPs that actually run businesses — SAP, Oracle, Microsoft Dynamics 365, Sage, Epicor, Odoo, and QuickBooks — plus BI tools like Power BI and payment platforms like M-Pesa.</p>
+                <p>Outside of enterprise integration work, I build product from the ground up — auction platforms, e-commerce, multi-vendor marketplaces — with React, Next.js, and Ruby on Rails. I like the problems where a clean interface and a backend that talks to everything both have to hold up.</p>
+            </div>
+            <div class="capability-links">
+                <a href="/capabilities/software-engineering/" class="capability-link">SOFTWARE ENGINEER ↗</a>
+                <a href="/capabilities/erp-integration/" class="capability-link">ERP INTEGRATION SPECIALIST ↗</a>
+            </div>
+        </div>
+        <div class="about-stats">
+            <div class="stat">
+                <span class="stat-num">3+</span>
+                <span class="stat-label">YEARS EXPERIENCE</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num">8</span>
+                <span class="stat-label">ERP &amp; FINANCE PLATFORMS</span>
+            </div>
+            <div class="stat">
+                <span class="stat-num">CCNA</span>
+                <span class="stat-label">CERTIFIED</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="about-statement" id="aboutStatement">
+        <div class="stmt-line" data-weight="bold">CODE</div>
+        <div class="stmt-line" data-weight="gray">IS NOT JUST LOGIC, BUT</div>
+        <div class="stmt-line" data-weight="bold">A BRIDGE BETWEEN SYSTEMS</div>
+        <div class="stmt-line" data-weight="bold">THAT WEREN'T BUILT TO TALK.</div>
+    </div>
+</section>
+
+<!-- Experience -->
+<section class="experience section" id="experience">
+    <div class="section-label">[ EXPERIENCE ]</div>
+    <h2 class="section-title">WHERE I'VE<br>BUILT</h2>
+    {{ experienceList(experience) }}
+</section>
+
+<!-- Works -->
+<section class="works section" id="works">
+    <div class="section-label">[ WORKS ]</div>
+    <h2 class="section-title">SELECTED<br>PROJECTS</h2>
+    {{ worksGrid(projects) }}
+</section>
+
+<!-- Services -->
+<section class="services section" id="services">
+    <div class="section-label">[ SERVICES ]</div>
+    <h2 class="section-title">WHAT I<br>DO BEST</h2>
+    <div class="services-list">
+
+        <div class="service-item">
+            <span class="service-num">01</span>
+            <div class="service-content">
+                <h3>ERP INTEGRATION CONSULTING</h3>
+                <p>Connecting your systems to SAP, Oracle, Dynamics 365, Sage, Odoo, and other major ERPs. Real-time data exchange between platforms that were never designed to talk to each other.</p>
+            </div>
+            <a href="/#connect" class="service-cta">GET STARTED ↗</a>
+        </div>
+
+        <div class="service-item">
+            <span class="service-num">02</span>
+            <div class="service-content">
+                <h3>FULL-STACK WEB DEVELOPMENT</h3>
+                <p>End-to-end product builds with React, Next.js, and Ruby on Rails — from database schema to shipped interface, built to handle real transactions and real users.</p>
+            </div>
+            <a href="/#connect" class="service-cta">GET STARTED ↗</a>
+        </div>
+
+        <div class="service-item">
+            <span class="service-num">03</span>
+            <div class="service-content">
+                <h3>API &amp; SYSTEMS ARCHITECTURE</h3>
+                <p>RESTful and SOAP API design, middleware services, and file-based integrations (CSV, XML) that hold up under production load and multiple client environments.</p>
+            </div>
+            <a href="/#connect" class="service-cta">GET STARTED ↗</a>
+        </div>
+
+        <div class="service-item">
+            <span class="service-num">04</span>
+            <div class="service-content">
+                <h3>BI &amp; DATA ANALYTICS</h3>
+                <p>Wiring up Power BI, Tableau, and Qlik to your operational data, so decisions get made on real numbers instead of guesswork.</p>
+            </div>
+            <a href="/#connect" class="service-cta">GET STARTED ↗</a>
+        </div>
+
+    </div>
+</section>
+
+<!-- Contact -->
+<section class="contact section" id="contact">
+    <div class="section-label" id="connect">[ CONNECT ]</div>
+    <div class="contact-inner">
+        <h2 class="contact-title">LET'S BUILD<br>SOMETHING<br>GREAT</h2>
+        <div class="contact-right">
+            <div class="contact-links">
+                <a href="mailto:jeffhuria@gmail.com" class="contact-link">
+                    <span>EMAIL</span>
+                    <span class="cl-arrow">↗</span>
+                </a>
+                <a href="https://www.linkedin.com/in/jefferson-huria-26ab72351/" target="_blank" rel="noopener" class="contact-link">
+                    <span>LINKEDIN</span>
+                    <span class="cl-arrow">↗</span>
+                </a>
+                <a href="tel:+254702647717" class="contact-link">
+                    <span>PHONE</span>
+                    <span class="cl-arrow">↗</span>
+                </a>
+                <a href="#" class="contact-link">
+                    <span>GITHUB</span>
+                    <span class="cl-arrow">↗</span>
+                </a>
+            </div>
+            <div class="contact-email-big">
+                <a href="mailto:jeffhuria@gmail.com">jeffhuria@gmail.com</a>
+            </div>
+        </div>
+    </div>
+</section>

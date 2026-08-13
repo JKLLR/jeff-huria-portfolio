@@ -400,7 +400,8 @@ function initSite() {
     document.fonts.ready.then(fitTitle);
 
     // Hero count-up
-    countUp(document.getElementById('heroCount'), 8);
+    const heroCountEl = document.getElementById('heroCount');
+    if (heroCountEl) countUp(heroCountEl, 8);
 
     // Hero entrance
     const heroTl = gsap.timeline({ defaults: { ease: 'power3.out' } });
@@ -424,7 +425,8 @@ function initSite() {
     startHeroRoleRotation();
 
     // Curtain-reveal the hero photo once the entrance timeline gets to it
-    revealImage(document.getElementById('heroPhoto'), { scrollTriggered: false });
+    const heroPhotoEl = document.getElementById('heroPhoto');
+    if (heroPhotoEl) revealImage(heroPhotoEl, { scrollTriggered: false });
 
     // Masked word-by-word reveal for every heading (section titles + contact title)
     document.querySelectorAll('.section-title, .contact-title').forEach(title => {

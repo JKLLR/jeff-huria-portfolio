@@ -1,0 +1,33 @@
+---
+layout: layouts/base.njk
+title: Software Engineer — JEFF .K. HURIA
+description: Full-stack software engineering — real products, shipped end to end, by Jeff .K. Huria.
+capabilitySlug: software-engineering
+---
+{% from "partials/works-grid.njk" import worksGrid %}
+{% from "partials/experience-list.njk" import experienceList %}
+{% set cap = capabilities | findBySlug(capabilitySlug) %}
+
+<section class="section capability-hero">
+    <div class="section-label">[ CAPABILITY ]</div>
+    <h1 class="section-title">{{ cap.title }}</h1>
+    <p class="capability-tagline">{{ cap.tagline }}</p>
+</section>
+
+<section class="section capability-description">
+    {% for para in cap.description %}
+    <p>{{ para }}</p>
+    {% endfor %}
+</section>
+
+<section class="section capability-evidence" id="experience">
+    <div class="section-label">[ EVIDENCE — EXPERIENCE ]</div>
+    <h2 class="section-title">WHERE IT<br>SHOWS UP</h2>
+    {{ experienceList(experience | byCapability(capabilitySlug)) }}
+</section>
+
+<section class="section capability-evidence" id="works">
+    <div class="section-label">[ EVIDENCE — PROJECTS ]</div>
+    <h2 class="section-title">WHAT I'VE<br>SHIPPED</h2>
+    {{ worksGrid(projects | byCapability(capabilitySlug)) }}
+</section>

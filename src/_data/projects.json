@@ -1,0 +1,58 @@
+[
+    {
+        "id": "sat-erp-integrator",
+        "title": "SAT ERP INTEGRATOR",
+        "tags": "ERP / API / INTEGRATION",
+        "link": { "href": "/#connect", "label": "READ CASE STUDY ↗", "external": false },
+        "capabilities": ["software-engineering", "erp-integration"]
+    },
+    {
+        "id": "auctioneers",
+        "title": "AUCTIONEERS WEB PLATFORM",
+        "tags": "REACT / RUBY ON RAILS",
+        "link": { "href": "/#connect", "label": "VIEW PROJECT ↗", "external": false },
+        "capabilities": ["software-engineering"]
+    },
+    {
+        "id": "peperuka",
+        "title": "PEPERUKA LOCAL VENDORS",
+        "tags": "REACTJS / RUBY ON RAILS",
+        "link": { "href": "/#connect", "label": "VIEW PROJECT ↗", "external": false },
+        "capabilities": ["software-engineering"]
+    },
+    {
+        "id": "nahla-naturals",
+        "title": "NAHLA NATURALS",
+        "tags": "NEXT.JS / SANITY CMS",
+        "link": { "href": "/#connect", "label": "VIEW PROJECT ↗", "external": false },
+        "capabilities": ["software-engineering"]
+    },
+    {
+        "id": "vochi",
+        "title": "VOCHI",
+        "tags": "LARAVEL / VUE / AI VOICE & CHAT",
+        "link": { "href": "https://vochi.io", "label": "VISIT SITE ↗", "external": true },
+        "capabilities": ["software-engineering"]
+    },
+    {
+        "id": "kodiwa",
+        "title": "KODIWA",
+        "tags": "PROPTECH / LARAVEL / REACT NATIVE",
+        "link": { "href": "https://kodiwa.com", "label": "VISIT SITE ↗", "external": true },
+        "capabilities": ["software-engineering"]
+    },
+    {
+        "id": "echokey",
+        "title": "ECHOKEY",
+        "tags": "WINDOWS / VOICE AI / DESKTOP",
+        "link": { "href": "https://echokey.app", "label": "VISIT SITE ↗", "external": true },
+        "capabilities": ["software-engineering"]
+    },
+    {
+        "id": "asira-tms",
+        "title": "ASIRA TMS",
+        "tags": "LOGISTICS / TMS / SAAS",
+        "link": { "href": "https://siratms.com", "label": "VISIT SITE ↗", "external": true },
+        "capabilities": ["software-engineering"]
+    }
+]

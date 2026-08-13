@@ -1,0 +1,20 @@
+[
+    {
+        "slug": "software-engineering",
+        "title": "SOFTWARE ENGINEER",
+        "tagline": "Full-stack software engineering, end to end",
+        "description": [
+            "I build products the whole way through — database schema, backend APIs, and the interface someone actually uses. My primary stack is React, Next.js, and Ruby on Rails, with PostgreSQL underneath.",
+            "This is the foundation everything else sits on. The ERP integration work, the systems architecture, the products I've shipped independently — all of it is built on the same core discipline: write backend logic that holds up under real use, and ship an interface that doesn't get in the way."
+        ]
+    },
+    {
+        "slug": "erp-integration",
+        "title": "ERP INTEGRATION SPECIALIST",
+        "tagline": "Connecting the enterprise systems that were never built to talk",
+        "description": [
+            "At Solutech, I built the integration layer connecting a sales automation platform to eight major ERP and finance systems — SAP, Oracle, Microsoft Dynamics 365, Sage, Epicor iScala, Odoo, QuickBooks — plus BI tools like Power BI, Tableau, and Qlik, and payment platforms like M-Pesa.",
+            "That work is RESTful and file-based API design (CSV, XML), real-time data exchange across platforms with fundamentally different data models, and doing it reliably across manufacturing, distribution, and FMCG clients in production. This is the differentiator most engineers don't have: making enterprise systems that were never designed to talk to each other actually exchange data correctly, at scale."
+        ]
+    }
+]

@@ -1,0 +1,18 @@
+[
+    {
+        "id": "solutech",
+        "role": "SOFTWARE ENGINEER",
+        "company": "SOLUTECH LIMITED",
+        "dates": "APR 2023 — JUN 2026",
+        "description": "Built and maintained the SAT ERP integrator — connecting a sales automation platform to SAP, Oracle, Microsoft Dynamics 365, Sage, Epicor iScala, Odoo, and QuickBooks. Designed RESTful and file-based APIs for real-time data exchange with Power BI, Tableau, Qlik, and M-Pesa, across manufacturing, distribution, and FMCG clients.",
+        "capabilities": ["software-engineering", "erp-integration"]
+    },
+    {
+        "id": "brisk-solution",
+        "role": "BACKEND ENGINEER",
+        "company": "BRISK SOLUTION COMPANY LTD",
+        "dates": "AUG 2022 — MAR 2023",
+        "description": "Designed ERP, CRM, IFMIS, IMIS, and POS systems from the ground up for enterprise clients — covering inventory, HR, procurement, and financial reporting modules, with backend APIs and database schemas built on PostgreSQL.",
+        "capabilities": ["software-engineering", "erp-integration"]
+    }
+]

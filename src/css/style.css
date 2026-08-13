@@ -329,6 +329,61 @@ a { color: inherit; text-decoration: none; }
     margin-bottom: 20px;
 }
 
+.capability-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 28px;
+    margin-top: 8px;
+}
+
+.capability-link {
+    font-family: var(--font-body);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    opacity: 0.75;
+    transition: opacity 0.2s;
+}
+
+.capability-link:hover { opacity: 1; }
+
+/* ===================================================
+   CAPABILITY PAGES
+   =================================================== */
+.capability-hero {
+    padding-bottom: 0;
+}
+
+.capability-hero .section-title {
+    margin-bottom: 20px;
+}
+
+.capability-tagline {
+    font-size: clamp(15px, 1.8vw, 22px);
+    color: #555;
+    max-width: 640px;
+    line-height: 1.5;
+}
+
+.capability-description {
+    padding-top: 24px;
+}
+
+.capability-description p {
+    font-size: 15px;
+    line-height: 1.85;
+    color: #444;
+    max-width: 720px;
+    margin-bottom: 20px;
+}
+
+.capability-evidence .section-title {
+    margin-bottom: 40px;
+}
+
 .about-stats {
     display: flex;
     flex-direction: column;

@@ -1,0 +1,21 @@
+{% macro worksGrid(items) %}
+<div class="works-grid">
+    {% for item in items %}
+    <div class="work-item">
+        <div class="work-num">{{ "0" if loop.index < 10 else "" }}{{ loop.index }}</div>
+        <div class="work-img">
+            <div class="work-img-inner"></div>
+        </div>
+        <div class="work-info">
+            <h3 class="work-title">{{ item.title }}</h3>
+            <p class="work-tags">{{ item.tags }}</p>
+            {% if item.link.external %}
+            <a href="{{ item.link.href }}" target="_blank" rel="noopener" class="work-link">{{ item.link.label }}</a>
+            {% else %}
+            <a href="{{ item.link.href }}" class="work-link">{{ item.link.label }}</a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}
