@@ -74,12 +74,26 @@ function revealSite() {
 
 // ── Hero title: auto-fit ONE font size that fits every
 //    rotating role, so the text never resizes mid-rotation ─
+let currentHeroRoleIndex = 0;
+
+function buildHeroLetters(text) {
+    const inner = document.getElementById('heroTitleInner');
+    if (!inner) return null;
+    inner.innerHTML = '';
+    [...text].forEach(ch => {
+        const span = document.createElement('span');
+        span.className = 'htitle-letter';
+        span.textContent = ch === ' ' ? '\u00A0' : ch;
+        inner.appendChild(span);
+    });
+    return inner.querySelectorAll('.htitle-letter');
+}
+
 function fitTitle() {
     const title = document.getElementById('heroTitle');
     const inner = document.getElementById('heroTitleInner');
     if (!title || !inner) return;
     const maxWidth = title.parentElement.offsetWidth;
-    const originalText = inner.textContent;
 
     let minFit = 600;
     heroRoles.forEach(role => {
@@ -93,32 +107,54 @@ function fitTitle() {
         minFit = Math.min(minFit, lo);
     });
 
-    inner.textContent = originalText;
     title.style.fontSize = minFit + 'px';
+    // Rebuild letter spans for whichever role should currently be showing
+    buildHeroLetters(heroRoles[currentHeroRoleIndex]);
 }
 
 window.addEventListener('resize', fitTitle);
 
-// ── Rotate hero title through heroRoles, seamless
-//    masked crossfade — old line slides up & out while
-//    new line slides up & in from below ────────────
+// ── Rotate hero title through heroRoles with a 3D
+//    letter-flip: each letter rolls up and away, the
+//    next word's letters roll down into place, with a
+//    left-to-right stagger so it reads as a fast ripple
+//    rather than a mechanical block-swap ────────────
 function startHeroRoleRotation() {
     const inner = document.getElementById('heroTitleInner');
     if (!inner) return;
-    let i = 0;
-
-    function step() {
-        i = (i + 1) % heroRoles.length;
-        gsap.timeline()
-            .to(inner, { yPercent: -100, opacity: 0, duration: 0.55, ease: 'power3.in' })
-            .call(() => { inner.textContent = heroRoles[i]; })
-            .set(inner, { yPercent: 100 })
-            .to(inner, { yPercent: 0, opacity: 1, duration: 0.6, ease: 'power3.out' });
+    if (!inner.querySelector('.htitle-letter')) {
+        buildHeroLetters(heroRoles[currentHeroRoleIndex]);
     }
 
-    gsap.delayedCall(3.2, function loop() {
+    function step() {
+        const outgoing = inner.querySelectorAll('.htitle-letter');
+        gsap.to(outgoing, {
+            rotateX: -100,
+            yPercent: -120,
+            opacity: 0,
+            duration: 0.4,
+            stagger: 0.018,
+            ease: 'power3.in',
+            transformOrigin: '50% 100%',
+            onComplete: () => {
+                currentHeroRoleIndex = (currentHeroRoleIndex + 1) % heroRoles.length;
+                const incoming = buildHeroLetters(heroRoles[currentHeroRoleIndex]);
+                gsap.set(incoming, { rotateX: 90, yPercent: 120, opacity: 0, transformOrigin: '50% 0%' });
+                gsap.to(incoming, {
+                    rotateX: 0,
+                    yPercent: 0,
+                    opacity: 1,
+                    duration: 0.55,
+                    stagger: 0.02,
+                    ease: 'power4.out'
+                });
+            }
+        });
+    }
+
+    gsap.delayedCall(3.4, function loop() {
         step();
-        gsap.delayedCall(3.2, loop);
+        gsap.delayedCall(3.4, loop);
     });
 }
 
@@ -255,6 +291,54 @@ function shatterStatement(container, letters) {
     gsap.ticker.add(update);
 }
 
+// ── Nav link letter-flip hover ─────────────────────
+// Splits each nav link into two stacked letter rows
+// (original + hidden clone). On hover both rows flip
+// upward together, staggered per letter, so the
+// original text rolls out while the clone rolls in
+// underneath to replace it.
+function initNavFlip() {
+    document.querySelectorAll('.header-nav a').forEach(link => {
+        const text = link.textContent;
+        link.textContent = '';
+        link.setAttribute('aria-label', text);
+
+        const original = document.createElement('span');
+        original.className = 'nav-letter-row nav-original';
+        const clone = document.createElement('span');
+        clone.className = 'nav-letter-row nav-clone';
+        clone.setAttribute('aria-hidden', 'true');
+
+        [...text].forEach(ch => {
+            const o = document.createElement('span');
+            o.className = 'nav-letter';
+            o.textContent = ch === ' ' ? '\u00A0' : ch;
+            original.appendChild(o);
+
+            const c = document.createElement('span');
+            c.className = 'nav-letter';
+            c.textContent = ch === ' ' ? '\u00A0' : ch;
+            clone.appendChild(c);
+        });
+
+        link.appendChild(original);
+        link.appendChild(clone);
+
+        const originalLetters = original.querySelectorAll('.nav-letter');
+        const cloneLetters = clone.querySelectorAll('.nav-letter');
+        gsap.set(cloneLetters, { yPercent: 100 });
+
+        link.addEventListener('mouseenter', () => {
+            gsap.to(originalLetters, { yPercent: -100, duration: 0.45, stagger: 0.02, ease: 'power3.inOut' });
+            gsap.to(cloneLetters, { yPercent: 0, duration: 0.45, stagger: 0.02, ease: 'power3.inOut' });
+        });
+        link.addEventListener('mouseleave', () => {
+            gsap.to(originalLetters, { yPercent: 0, duration: 0.45, stagger: 0.02, ease: 'power3.inOut' });
+            gsap.to(cloneLetters, { yPercent: 100, duration: 0.45, stagger: 0.02, ease: 'power3.inOut' });
+        });
+    });
+}
+
 // ── Custom cursor + magnetic hover ─────────────────
 function initCursorAndMagnets() {
     const cursor = document.getElementById('cursorDot');
@@ -332,6 +416,8 @@ function initSite() {
     if (servicesSection) buildMarquee(servicesSection.parentNode);
 
     // Cursor + magnetic buttons
+    initNavFlip();
+
     initCursorAndMagnets();
 
     // Start the hero role rotation once the entrance settles
