@@ -1,5 +1,6 @@
 // Build-time content validation for the portfolio data layer.
-// Fails the build loudly when references or schemas drift.
+// Enforces the schema documented in docs/CONTENT_MODEL.md and fails the
+// build loudly when references or schemas drift.
 // Run via `npm run validate` (also runs automatically before `npm run build`).
 
 const fs = require('fs');
@@ -15,78 +16,141 @@ const errors = [];
 const error = (msg) => { errors.push(msg); console.error('ERROR ' + msg); };
 
 const SLUG_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
-const HREF_RE = /^(https?:\/\/|mailto:|tel:|\/)/;
+const DATE_RE = /^\d{4}-\d{2}$/;
+const URL_RE = /^(https?:\/\/|mailto:|tel:|\/)/;
+const LINK_KEYS = ['website', 'github', 'demo'];
+const PROJECT_TYPES = ['product', 'client-project', 'internal', 'open-source'];
+const PROJECT_STATUSES = ['active', 'shipped'];
 
-const checkDuplicates = (items, entity, field) => {
+const isString = (v) => typeof v === 'string';
+const isNonEmptyString = (v) => isString(v) && v !== '';
+const isArray = (v) => Array.isArray(v);
+const isBoolean = (v) => typeof v === 'boolean';
+const isNullOr = (v, check) => v === null || check(v);
+
+function checkUnique(items, entity, field) {
     const seen = new Set();
     items.forEach((item) => {
         const value = item[field];
-        if (value === undefined || value === null || value === '') {
-            error(`${entity} is missing a ${field}: ${JSON.stringify(item)}`);
+        if (!isNonEmptyString(value)) {
+            error(`${entity} missing ${field}: ${JSON.stringify(item)}`);
         } else if (seen.has(value)) {
             error(`duplicate ${entity} ${field}: "${value}"`);
+        } else if (!SLUG_RE.test(value)) {
+            error(`${entity} "${value}" has an invalid ${field} (must be kebab-case)`);
         }
         seen.add(value);
     });
-};
+}
 
-const checkSlug = (items, entity) => {
-    items.forEach((item) => {
-        if (!SLUG_RE.test(item.id || '')) error(`${entity} "${item.id}" has a non-kebab-case id`);
-        if (item.slug !== undefined && item.slug !== item.id) {
-            error(`${entity} "${item.id}" has a slug ("${item.slug}") that does not match its id`);
+function checkStringField(item, ref, field) {
+    if (!isNonEmptyString(item[field])) error(`${ref} missing string field "${field}"`);
+}
+
+function checkArrayField(item, ref, field) {
+    if (!isArray(item[field])) error(`${ref} field "${field}" must be an array`);
+}
+
+// ─────────────────────────── Capabilities ───────────────────────────
+// Canonical identifier is `slug`. No separate `id` may drift.
+checkUnique(capabilities, 'capability', 'slug');
+capabilities.forEach((c) => {
+    const ref = `capability "${c.slug}"`;
+    checkStringField(c, ref, 'title');
+    checkStringField(c, ref, 'tagline');
+    checkArrayField(c, ref, 'description');
+    checkArrayField(c, ref, 'competencies');
+    checkArrayField(c, ref, 'technologies');
+    if (!isBoolean(c.published)) error(`${ref} "published" must be a boolean`);
+    if (c.published) {
+        if (!isNonEmptyString(c.summary)) error(`${ref} is published but missing "summary"`);
+        if (!c.description.length) error(`${ref} is published but has an empty "description"`);
+        if (!c.competencies.length) error(`${ref} is published but has an empty "competencies"`);
+    } else if (c.summary !== undefined && !isString(c.summary)) {
+        error(`${ref} "summary" must be a string`);
+    }
+});
+
+// ─────────────────────────── Projects ───────────────────────────
+checkUnique(projects, 'project', 'id');
+projects.forEach((p) => {
+    const ref = `project "${p.id}"`;
+    checkStringField(p, ref, 'slug');
+    checkStringField(p, ref, 'title');
+    checkStringField(p, ref, 'type');
+    checkStringField(p, ref, 'status');
+    if (p.slug !== p.id) error(`${ref} slug ("${p.slug}") does not match its id`);
+    if (!PROJECT_TYPES.includes(p.type)) {
+        error(`${ref} type "${p.type}" is not in the controlled vocabulary: ${PROJECT_TYPES.join(', ')}`);
+    }
+    if (!PROJECT_STATUSES.includes(p.status)) {
+        error(`${ref} status "${p.status}" is not in the controlled vocabulary: ${PROJECT_STATUSES.join(', ')}`);
+    }
+    if (!isNullOr(p.shortDescription, isString)) {
+        error(`${ref} "shortDescription" must be a string or null`);
+    }
+    checkArrayField(p, ref, 'role');
+    checkArrayField(p, ref, 'technologies');
+    checkArrayField(p, ref, 'capabilities');
+    if (!isBoolean(p.featured)) error(`${ref} "featured" must be a boolean`);
+    if (!p.links || typeof p.links !== 'object' || isArray(p.links)) {
+        error(`${ref} "links" must be an object`);
+    }
+    Object.entries(p.links || {}).forEach(([key, href]) => {
+        if (!LINK_KEYS.includes(key)) {
+            error(`${ref} "links" has unsupported key "${key}" (expected one of ${LINK_KEYS.join(', ')})`);
+        }
+        if (!isString(href) || !URL_RE.test(href)) {
+            error(`${ref} "links.${key}" is not a well-formed URL: ${JSON.stringify(href)}`);
         }
     });
-};
+    if (!isNullOr(p.caseStudy, isString)) {
+        error(`${ref} "caseStudy" must be a string or null`);
+    }
+});
 
-const checkCapabilityRefs = (item, entity) => {
-    (item.capabilities || []).forEach((cap) => {
-        if (!capabilityIds.has(cap)) {
-            error(`${entity} "${item.id}" references unknown capability "${cap}"`);
-        }
-    });
-};
-
-const capabilityIds = new Set(capabilities.map((c) => c.id));
-
-checkDuplicates(capabilities, 'capability', 'id');
-checkDuplicates(capabilities, 'capability', 'slug');
-checkDuplicates(projects, 'project', 'id');
-checkDuplicates(projects, 'project', 'slug');
-checkDuplicates(experience, 'experience', 'id');
-
-checkSlug(capabilities, 'capability');
-checkSlug(projects, 'project');
-checkSlug(experience, 'experience');
-
-projects.forEach((p) => checkCapabilityRefs(p, 'project'));
-experience.forEach((e) => checkCapabilityRefs(e, 'experience'));
-
-// Experience → Project references
-const projectIds = new Set(projects.map((p) => p.id));
+// ─────────────────────────── Experience ───────────────────────────
+checkUnique(experience, 'experience', 'id');
 experience.forEach((e) => {
-    (e.projects || []).forEach((pid) => {
+    const ref = `experience "${e.id}"`;
+    checkStringField(e, ref, 'company');
+    checkStringField(e, ref, 'role');
+    checkStringField(e, ref, 'summary');
+    if (!isNonEmptyString(e.startDate) || !DATE_RE.test(e.startDate)) {
+        error(`${ref} "startDate" must be a YYYY-MM date string`);
+    }
+    if (!isNullOr(e.endDate, (v) => DATE_RE.test(v))) {
+        error(`${ref} "endDate" must be a YYYY-MM date string or null`);
+    }
+    if (!isBoolean(e.current)) error(`${ref} "current" must be a boolean`);
+    checkArrayField(e, ref, 'responsibilities');
+    checkArrayField(e, ref, 'achievements');
+    checkArrayField(e, ref, 'technologies');
+    checkArrayField(e, ref, 'systems');
+    checkArrayField(e, ref, 'capabilities');
+    checkArrayField(e, ref, 'projects');
+});
+
+// ─────────────────────────── Relationships ───────────────────────────
+const capabilitySlugs = new Set(capabilities.map((c) => c.slug));
+const projectIds = new Set(projects.map((p) => p.id));
+
+projects.forEach((p) => {
+    p.capabilities.forEach((cap) => {
+        if (!capabilitySlugs.has(cap)) error(`project "${p.id}" references unknown capability "${cap}"`);
+    });
+});
+
+experience.forEach((e) => {
+    e.capabilities.forEach((cap) => {
+        if (!capabilitySlugs.has(cap)) error(`experience "${e.id}" references unknown capability "${cap}"`);
+    });
+    e.projects.forEach((pid) => {
         if (!projectIds.has(pid)) error(`experience "${e.id}" references unknown project "${pid}"`);
     });
 });
 
-// Project links must be well-formed
-projects.forEach((p) => {
-    Object.entries(p.links || {}).forEach(([key, link]) => {
-        if (!link || !link.href) {
-            error(`project "${p.id}" has a malformed "${key}" link`);
-        } else if (!HREF_RE.test(link.href)) {
-            error(`project "${p.id}" link "${key}" has a malformed URL: "${link.href}"`);
-        }
-    });
-});
-
-// Published capabilities must not share a slug with an unpublished one
-const publishedSlugs = new Set(capabilities.filter((c) => c.published).map((c) => c.slug));
-if (publishedSlugs.size < capabilities.filter((c) => c.published).length) {
-    error('duplicate slug among published capabilities');
-}
-
+// ─────────────────────────── Report ───────────────────────────
 if (errors.length) {
     console.error(`\nValidation failed with ${errors.length} error(s).`);
     process.exit(1);

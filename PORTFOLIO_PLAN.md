@@ -45,14 +45,19 @@ same paths as before the migration. Build via `npm run build` → outputs to
       capability pages generated from data (no duplicated templates)
 - [x] Content model: `Project`, `Experience`, `Capability` as JSON in
       `src/_data/`, documented in `docs/CONTENT_MODEL.md`
-- [x] Consistent schemas for all three entities; `id` === `slug` everywhere
+- [x] Consistent schemas for all three entities — projects/experiences carry
+      stable ids; capabilities use `slug` as the sole canonical identifier
+      (no drift-prone duplicate `id`)
 - [x] Capability tagging is meaningful (high-level claims, not technologies)
-- [x] Project links: real external URLs only; no fake `/#connect` destinations
-      — projects without a live URL render without a link
+- [x] Project links use the documented `links.{website,github,demo}` object —
+      real external URLs only, no fake `/#connect` destinations; projects
+      without a live URL render without a link
 - [x] Experience links to projects (`experience → projects[]`); descriptions
       no longer duplicate project content
-- [x] Build-time validation (`scripts/validate.js`): duplicate ids/slugs,
-      unknown capability/project references, malformed URLs
+- [x] Build-time validation (`scripts/validate.js`) enforces the full
+      documented schema: required fields and types, controlled vocabularies
+      for `type`/`status`, duplicate ids/slugs, malformed slugs/URLs,
+      unknown capability/project references, duplicate capability routes
 - [x] Homepage stays a summary layer; content is never duplicated across
       homepage, capability pages, or cards
 - [x] Accessibility: skip link, `main` landmark, focus-visible states,

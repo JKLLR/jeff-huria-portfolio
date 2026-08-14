@@ -1,6 +1,5 @@
 [
     {
-        "id": "software-engineering",
         "slug": "software-engineering",
         "title": "SOFTWARE ENGINEER",
         "tagline": "Full-stack software engineering, end to end",
@@ -24,7 +23,6 @@
         "published": true
     },
     {
-        "id": "erp-integration",
         "slug": "erp-integration",
         "title": "ERP INTEGRATION SPECIALIST",
         "tagline": "Connecting the enterprise systems that were never built to talk",
@@ -55,31 +53,39 @@
         "published": true
     },
     {
-        "id": "cloud-architecture",
         "slug": "cloud-architecture",
         "title": "CLOUD ARCHITECT",
         "tagline": "Designing and deploying systems that stay up under real load",
+        "description": [],
+        "competencies": [],
+        "technologies": [],
         "published": false
     },
     {
-        "id": "ai-product-development",
         "slug": "ai-product-development",
         "title": "AI-NATIVE FOUNDER",
         "tagline": "Building products that put AI to work for real users",
+        "description": [],
+        "competencies": [],
+        "technologies": [],
         "published": false
     },
     {
-        "id": "technology-strategy",
         "slug": "technology-strategy",
         "title": "TECHNOLOGY STRATEGIST",
         "tagline": "Turning technology decisions into durable business advantage",
+        "description": [],
+        "competencies": [],
+        "technologies": [],
         "published": false
     },
     {
-        "id": "growth-engineering",
         "slug": "growth-engineering",
         "title": "GROWTH ENGINEER",
         "tagline": "Building systems that help products and businesses grow",
+        "description": [],
+        "competencies": [],
+        "technologies": [],
         "published": false
     }
 ]

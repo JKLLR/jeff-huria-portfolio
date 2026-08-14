@@ -10,6 +10,20 @@
                 {% if item.current %}<span class="exp-current">CURRENT</span>{% endif %}
             </div>
             <p>{{ item.summary }}</p>
+            {% if item.responsibilities | length %}
+            <ul class="exp-resp">
+                {% for responsibility in item.responsibilities %}
+                <li>{{ responsibility }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+            {% if item.achievements | length %}
+            <ul class="exp-ach">
+                {% for achievement in item.achievements %}
+                <li>{{ achievement }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
             {% if item.systems | length %}
             <p class="exp-systems">{{ item.systems | join(" · ") }}</p>
             {% endif %}

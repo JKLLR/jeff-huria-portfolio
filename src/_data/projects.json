@@ -4,7 +4,8 @@
         "slug": "sat-erp-integrator",
         "title": "SAT ERP INTEGRATOR",
         "shortDescription": "Integration layer connecting a sales automation platform to eight major ERP and finance systems — SAP, Oracle, Microsoft Dynamics 365, Sage, Epicor iScala, Odoo, and QuickBooks — plus BI tools and M-Pesa.",
-        "type": "integration",
+        "type": "client-project",
+        "status": "shipped",
         "role": [
             "Software Engineer"
         ],
@@ -21,7 +22,9 @@
         "id": "auctioneers",
         "slug": "auctioneers",
         "title": "AUCTIONEERS WEB PLATFORM",
+        "shortDescription": null,
         "type": "product",
+        "status": "shipped",
         "role": [
             "Software Engineer"
         ],
@@ -40,7 +43,9 @@
         "id": "peperuka",
         "slug": "peperuka",
         "title": "PEPERUKA LOCAL VENDORS",
+        "shortDescription": null,
         "type": "product",
+        "status": "shipped",
         "role": [
             "Software Engineer"
         ],
@@ -59,7 +64,9 @@
         "id": "nahla-naturals",
         "slug": "nahla-naturals",
         "title": "NAHLA NATURALS",
+        "shortDescription": null,
         "type": "product",
+        "status": "shipped",
         "role": [
             "Software Engineer"
         ],
@@ -78,7 +85,9 @@
         "id": "vochi",
         "slug": "vochi",
         "title": "VOCHI",
+        "shortDescription": null,
         "type": "product",
+        "status": "active",
         "role": [
             "Software Engineer"
         ],
@@ -92,11 +101,7 @@
         ],
         "featured": true,
         "links": {
-            "visit": {
-                "href": "https://vochi.io",
-                "label": "VISIT SITE ↗",
-                "external": true
-            }
+            "website": "https://vochi.io"
         },
         "caseStudy": null
     },
@@ -104,7 +109,9 @@
         "id": "kodiwa",
         "slug": "kodiwa",
         "title": "KODIWA",
+        "shortDescription": null,
         "type": "product",
+        "status": "active",
         "role": [
             "Founder",
             "Software Engineer"
@@ -118,11 +125,7 @@
         ],
         "featured": true,
         "links": {
-            "visit": {
-                "href": "https://kodiwa.com",
-                "label": "VISIT SITE ↗",
-                "external": true
-            }
+            "website": "https://kodiwa.com"
         },
         "caseStudy": null
     },
@@ -130,7 +133,9 @@
         "id": "echokey",
         "slug": "echokey",
         "title": "ECHOKEY",
+        "shortDescription": null,
         "type": "product",
+        "status": "active",
         "role": [
             "Software Engineer"
         ],
@@ -144,11 +149,7 @@
         ],
         "featured": true,
         "links": {
-            "visit": {
-                "href": "https://echokey.app",
-                "label": "VISIT SITE ↗",
-                "external": true
-            }
+            "website": "https://echokey.app"
         },
         "caseStudy": null
     },
@@ -156,7 +157,9 @@
         "id": "asira-tms",
         "slug": "asira-tms",
         "title": "ASIRA TMS",
+        "shortDescription": null,
         "type": "product",
+        "status": "active",
         "role": [
             "Software Engineer"
         ],
@@ -169,11 +172,7 @@
         ],
         "featured": true,
         "links": {
-            "visit": {
-                "href": "https://siratms.com",
-                "label": "VISIT SITE ↗",
-                "external": true
-            }
+            "website": "https://siratms.com"
         },
         "caseStudy": null
     }

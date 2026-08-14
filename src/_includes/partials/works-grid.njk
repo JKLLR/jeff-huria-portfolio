@@ -11,8 +11,8 @@
             {% if item.technologies | length %}
             <p class="work-tags">{{ item.technologies | join(" / ") }}</p>
             {% endif %}
-            {% if item.links and item.links.visit %}
-            <a href="{{ item.links.visit.href }}"{% if item.links.visit.external %} target="_blank" rel="noopener"{% endif %} class="work-link">{{ item.links.visit.label }}</a>
+            {% if item.links and item.links.website %}
+            <a href="{{ item.links.website }}" target="_blank" rel="noopener" class="work-link">VISIT SITE ↗</a>
             {% endif %}
         </div>
     </div>

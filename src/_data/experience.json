@@ -7,6 +7,8 @@
         "endDate": "2026-06",
         "current": false,
         "summary": "Software engineer on the SAT ERP integrator — an integration layer connecting a sales automation platform to major ERP and finance systems. Designed RESTful and file-based APIs for real-time data exchange, working across manufacturing, distribution, and FMCG clients.",
+        "responsibilities": [],
+        "achievements": [],
         "technologies": [
             "SAP",
             "Oracle",
@@ -39,6 +41,8 @@
         "endDate": "2023-03",
         "current": false,
         "summary": "Designed ERP, CRM, IFMIS, IMIS, and POS systems from the ground up for enterprise clients — covering inventory, HR, procurement, and financial reporting modules, with backend APIs and database schemas built on PostgreSQL.",
+        "responsibilities": [],
+        "achievements": [],
         "technologies": [
             "PostgreSQL"
         ],
