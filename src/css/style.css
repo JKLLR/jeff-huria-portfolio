@@ -510,6 +510,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .work-item {
+    display: flex;
+    flex-direction: column;
+    min-width: 0; /* lets the clipped wordmark overflow without widening the grid column */
     background: #e6e2da;
     padding: 40px;
     transition: background 0.3s, transform 0.3s;
@@ -519,26 +522,69 @@ a { color: inherit; text-decoration: none; }
     background: #dbd7ce;
 }
 
-.work-num {
+.work-meta {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 24px;
     font-size: 10px;
     font-weight: 700;
     letter-spacing: 0.18em;
-    opacity: 0.35;
-    margin-bottom: 24px;
+    text-transform: uppercase;
+}
+
+.work-num { opacity: 0.35; }
+
+.work-type { opacity: 0.55; }
+
+.work-status {
+    margin-left: auto;
+    padding: 4px 8px;
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    opacity: 0.6;
 }
 
 .work-img {
     width: 100%;
     aspect-ratio: 16/10;
     overflow: hidden;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
+    background: #c8c4bc;
 }
 
 .work-img-inner {
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, #c8c4bc 0%, #b0aca4 100%);
     transition: transform 0.5s ease;
+}
+
+.work-img-inner img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+}
+
+/* No screenshot yet: an outlined wordmark panel instead of a fake image.
+   Oversized and clipped so it reads as texture, not a second heading. */
+.work-img-type {
+    display: flex;
+    align-items: flex-end;
+    padding: 0 0 4% 6%;
+    background: var(--black);
+    overflow: hidden;
+}
+
+.work-img-word {
+    font-family: var(--font-display);
+    font-size: clamp(72px, 11vw, 168px);
+    line-height: 0.85;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(242, 239, 234, 0.55);
 }
 
 .work-item:hover .work-img-inner {
@@ -549,7 +595,46 @@ a { color: inherit; text-decoration: none; }
     font-family: var(--font-display);
     font-size: clamp(20px, 2.4vw, 32px);
     text-transform: uppercase;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
+}
+
+.work-role {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    opacity: 0.55;
+    margin-bottom: 16px;
+}
+
+.work-desc {
+    font-size: 15px;
+    line-height: 1.6;
+    max-width: 58ch;
+    margin-bottom: 16px;
+}
+
+.work-highlights {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    border-top: 1px solid rgba(0,0,0,0.12);
+}
+
+.work-highlights li {
+    position: relative;
+    padding: 10px 0 10px 22px;
+    font-size: 13px;
+    line-height: 1.5;
+    border-bottom: 1px solid rgba(0,0,0,0.12);
+}
+
+.work-highlights li::before {
+    content: '/';
+    position: absolute;
+    left: 0;
+    font-weight: 700;
+    opacity: 0.4;
 }
 
 .work-tags {
@@ -562,6 +647,8 @@ a { color: inherit; text-decoration: none; }
 }
 
 .work-link {
+    align-self: flex-start;
+    margin-top: auto;
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -572,6 +659,18 @@ a { color: inherit; text-decoration: none; }
 }
 
 .work-link:hover { opacity: 0.45; }
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+}
 
 /* ===================================================
    EXPERIENCE
@@ -875,6 +974,8 @@ a { color: inherit; text-decoration: none; }
     }
 
     .works-grid { grid-template-columns: 1fr; }
+
+    .work-item { padding: 28px 24px; }
 
     .cap-comp-list { grid-template-columns: 1fr; }
 

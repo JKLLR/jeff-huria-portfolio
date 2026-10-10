@@ -1,5 +1,41 @@
 [
     {
+        "id": "kodiwa",
+        "slug": "kodiwa",
+        "title": "KODIWA",
+        "shortDescription": "Property and tenant management platform for Kenya's real estate market — applications, leases, automated invoicing, M-Pesa and bank collections, and maintenance, across web portals and an Android app.",
+        "type": "product",
+        "status": "active",
+        "role": [
+            "Co-founder",
+            "Software Engineer"
+        ],
+        "highlights": [
+            "Built the KCB and Stanbic bank integrations — STK push plus instant payment notifications that reconcile rent automatically",
+            "Built arrears and delinquency tracking, bulk SMS payment reminders, and WhatsApp receipts and invoices",
+            "Built the expenses module, invoice generation logic, and per-unit agent fees with landlord rent statements"
+        ],
+        "image": {
+            "src": "/assets/projects/kodiwa.jpg",
+            "alt": "Kodiwa landing page: 'Every property. Every resident. One platform.' beside a portfolio overview card showing properties, units, occupancy, and rent collected"
+        },
+        "technologies": [
+            "Laravel",
+            "Filament",
+            "Vue",
+            "React Native",
+            "M-Pesa"
+        ],
+        "capabilities": [
+            "software-engineering"
+        ],
+        "featured": true,
+        "links": {
+            "website": "https://kodiwa.com"
+        },
+        "caseStudy": null
+    },
+    {
         "id": "sat-erp-integrator",
         "slug": "sat-erp-integrator",
         "title": "SAT ERP INTEGRATOR",
@@ -9,10 +45,84 @@
         "role": [
             "Software Engineer"
         ],
+        "highlights": [],
+        "image": null,
         "technologies": [],
         "capabilities": [
             "software-engineering",
             "erp-integration"
+        ],
+        "featured": true,
+        "links": {},
+        "caseStudy": null
+    },
+    {
+        "id": "vochi",
+        "slug": "vochi",
+        "title": "VOCHI",
+        "shortDescription": "AI sales and customer-support assistant — voice calls, an embeddable website chat widget, WhatsApp, appointment booking, and CRM sync with HubSpot, Zoho, Salesforce, and Airtable.",
+        "type": "product",
+        "status": "offline",
+        "role": [
+            "Software Engineer"
+        ],
+        "highlights": [
+            "Built the first-stage conversational chatflow and the v2 workflow engine",
+            "Set up dynamic third-party integrations and the production deployment",
+            "Hardened WhatsApp messaging and the vector knowledge-base search with a test suite"
+        ],
+        "image": null,
+        "technologies": [
+            "Laravel",
+            "Vue"
+        ],
+        "capabilities": [
+            "software-engineering",
+            "ai-product-development"
+        ],
+        "featured": true,
+        "links": {},
+        "caseStudy": null
+    },
+    {
+        "id": "asira-tms",
+        "slug": "asira-tms",
+        "title": "ASIRA TMS",
+        "shortDescription": "Trucking management system — load planning, routing and dispatch, invoicing and reporting, driver payments, and revenue tracking for trucking companies.",
+        "type": "product",
+        "status": "active",
+        "role": [
+            "Software Engineer"
+        ],
+        "highlights": [],
+        "image": null,
+        "technologies": [],
+        "capabilities": [
+            "software-engineering"
+        ],
+        "featured": true,
+        "links": {},
+        "caseStudy": null
+    },
+    {
+        "id": "echokey",
+        "slug": "echokey",
+        "title": "ECHOKEY",
+        "shortDescription": null,
+        "type": "product",
+        "status": "offline",
+        "role": [
+            "Software Engineer"
+        ],
+        "highlights": [],
+        "image": null,
+        "technologies": [
+            "Windows",
+            "Voice AI"
+        ],
+        "capabilities": [
+            "software-engineering",
+            "ai-product-development"
         ],
         "featured": true,
         "links": {},
@@ -28,6 +138,8 @@
         "role": [
             "Software Engineer"
         ],
+        "highlights": [],
+        "image": null,
         "technologies": [
             "React",
             "Ruby on Rails"
@@ -49,6 +161,8 @@
         "role": [
             "Software Engineer"
         ],
+        "highlights": [],
+        "image": null,
         "technologies": [
             "React",
             "Ruby on Rails"
@@ -70,6 +184,8 @@
         "role": [
             "Software Engineer"
         ],
+        "highlights": [],
+        "image": null,
         "technologies": [
             "Next.js",
             "Sanity CMS"
@@ -79,101 +195,6 @@
         ],
         "featured": false,
         "links": {},
-        "caseStudy": null
-    },
-    {
-        "id": "vochi",
-        "slug": "vochi",
-        "title": "VOCHI",
-        "shortDescription": null,
-        "type": "product",
-        "status": "active",
-        "role": [
-            "Software Engineer"
-        ],
-        "technologies": [
-            "Laravel",
-            "Vue"
-        ],
-        "capabilities": [
-            "software-engineering",
-            "ai-product-development"
-        ],
-        "featured": true,
-        "links": {
-            "website": "https://vochi.io"
-        },
-        "caseStudy": null
-    },
-    {
-        "id": "kodiwa",
-        "slug": "kodiwa",
-        "title": "KODIWA",
-        "shortDescription": null,
-        "type": "product",
-        "status": "active",
-        "role": [
-            "Founder",
-            "Software Engineer"
-        ],
-        "technologies": [
-            "Laravel",
-            "React Native"
-        ],
-        "capabilities": [
-            "software-engineering"
-        ],
-        "featured": true,
-        "links": {
-            "website": "https://kodiwa.com"
-        },
-        "caseStudy": null
-    },
-    {
-        "id": "echokey",
-        "slug": "echokey",
-        "title": "ECHOKEY",
-        "shortDescription": null,
-        "type": "product",
-        "status": "active",
-        "role": [
-            "Software Engineer"
-        ],
-        "technologies": [
-            "Windows",
-            "Voice AI"
-        ],
-        "capabilities": [
-            "software-engineering",
-            "ai-product-development"
-        ],
-        "featured": true,
-        "links": {
-            "website": "https://echokey.app"
-        },
-        "caseStudy": null
-    },
-    {
-        "id": "asira-tms",
-        "slug": "asira-tms",
-        "title": "ASIRA TMS",
-        "shortDescription": null,
-        "type": "product",
-        "status": "active",
-        "role": [
-            "Software Engineer"
-        ],
-        "technologies": [
-            "Logistics",
-            "TMS"
-        ],
-        "capabilities": [
-            "software-engineering"
-        ],
-        "featured": true,
-        "links": {
-            "website": "https://siratms.com"
-        },
         "caseStudy": null
     }
 ]

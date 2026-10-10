@@ -22,8 +22,10 @@ case-study content belongs to a future `CaseStudy`, never here.
 | `title` | string | Display title. |
 | `shortDescription` | string \| null | One-line summary. `null` when no real copy exists — never invented. |
 | `type` | string | Controlled vocabulary: `product`, `client-project`, `internal`, `open-source`. |
-| `status` | string | Controlled vocabulary: `active` (live and maintained), `shipped` (completed/delivered). |
+| `status` | string | Controlled vocabulary: `active` (live and maintained), `shipped` (completed/delivered), `offline` (real work, but not publicly reachable right now — renders without a link and with an OFFLINE badge). |
 | `role` | string[] | Roles Jeff held on the project. Only when established. |
+| `highlights` | string[] | Jeff's own contributions, at most 3, one line each. Sourced from real work (commits, shipped features) — never the product's whole feature list. May be empty. |
+| `image` | object | null | `{ "src": "/assets/projects/{slug}.jpg", "alt": "..." }`. 16:10, captured from a **public** page or demo data — never a client's live workspace. The file must exist. `null` renders a typographic panel instead. |
 | `technologies` | string[] | Technologies, not capabilities. May be empty. |
 | `capabilities` | string[] | High-level claims this project is evidence for. Must reference `Capability.slug`. |
 | `featured` | boolean | Reserved for homepage selection logic. |
@@ -37,10 +39,12 @@ Example:
     "id": "kodiwa",
     "slug": "kodiwa",
     "title": "KODIWA",
-    "shortDescription": null,
+    "shortDescription": "Property and tenant management platform for Kenyan real estate ...",
     "type": "product",
     "status": "active",
-    "role": ["Founder", "Software Engineer"],
+    "role": ["Co-founder", "Software Engineer"],
+    "highlights": ["Built the KCB and Stanbic payment integrations ..."],
+    "image": { "src": "/assets/projects/kodiwa.jpg", "alt": "Kodiwa landing page ..." },
     "technologies": ["Laravel", "React Native"],
     "capabilities": ["software-engineering"],
     "featured": true,
@@ -150,6 +154,8 @@ Enforced at build time by `scripts/validate.js` (runs via `prebuild`):
 - every `capabilities[]` reference resolves to a `Capability.slug`
 - every `experience.projects[]` reference resolves to a `Project.id`
 - project `type`/`status` use the controlled vocabularies
+- project `image`, when set, has alt text and points to an existing file under `src/assets/`
+- project `highlights` has at most 3 items
 - project `links` only contain `website`/`github`/`demo` keys, each a
   well-formed URL
 - `published` capabilities have meaningful `summary`, `description`, and

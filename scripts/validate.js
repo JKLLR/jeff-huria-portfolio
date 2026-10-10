@@ -20,7 +20,8 @@ const DATE_RE = /^\d{4}-\d{2}$/;
 const URL_RE = /^(https?:\/\/|mailto:|tel:|\/)/;
 const LINK_KEYS = ['website', 'github', 'demo'];
 const PROJECT_TYPES = ['product', 'client-project', 'internal', 'open-source'];
-const PROJECT_STATUSES = ['active', 'shipped'];
+const PROJECT_STATUSES = ['active', 'shipped', 'offline'];
+const IMAGE_EXT_RE = /\.(jpe?g|png|webp|avif)$/i;
 
 const isString = (v) => typeof v === 'string';
 const isNonEmptyString = (v) => isString(v) && v !== '';
@@ -90,8 +91,24 @@ projects.forEach((p) => {
         error(`${ref} "shortDescription" must be a string or null`);
     }
     checkArrayField(p, ref, 'role');
+    checkArrayField(p, ref, 'highlights');
     checkArrayField(p, ref, 'technologies');
     checkArrayField(p, ref, 'capabilities');
+    if (isArray(p.highlights) && p.highlights.length > 3) {
+        error(`${ref} "highlights" has ${p.highlights.length} items — cards hold at most 3; depth belongs in a case study`);
+    }
+    if (p.image !== null) {
+        if (!p.image || typeof p.image !== 'object' || isArray(p.image)) {
+            error(`${ref} "image" must be an object or null`);
+        } else {
+            if (!isNonEmptyString(p.image.alt)) error(`${ref} "image.alt" must be a non-empty string`);
+            if (!isString(p.image.src) || !p.image.src.startsWith('/assets/') || !IMAGE_EXT_RE.test(p.image.src)) {
+                error(`${ref} "image.src" must be an /assets/ path to a jpg, png, webp, or avif file`);
+            } else if (!fs.existsSync(path.join(__dirname, '..', 'src', p.image.src))) {
+                error(`${ref} "image.src" points to a file that does not exist: src${p.image.src}`);
+            }
+        }
+    }
     if (!isBoolean(p.featured)) error(`${ref} "featured" must be a boolean`);
     if (!p.links || typeof p.links !== 'object' || isArray(p.links)) {
         error(`${ref} "links" must be an object`);
