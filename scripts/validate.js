@@ -121,6 +121,32 @@ projects.forEach((p) => {
             error(`${ref} "links.${key}" is not a well-formed URL: ${JSON.stringify(href)}`);
         }
     });
+    // ── Project page fields (optional; a page is generated once overview has content)
+    const optionalArray = (field, checkItem, shape) => {
+        if (p[field] === undefined) return;
+        if (!isArray(p[field])) return error(`${ref} "${field}" must be an array`);
+        p[field].forEach((item, i) => {
+            if (!checkItem(item)) error(`${ref} "${field}[${i}]" must be ${shape}`);
+        });
+    };
+    const isStringList = (v) => isArray(v) && v.length > 0 && v.every(isNonEmptyString);
+    optionalArray('overview', isNonEmptyString, 'a non-empty string');
+    optionalArray('features', (f) => f && isNonEmptyString(f.title) && isNonEmptyString(f.description), '{ title, description }');
+    optionalArray('contributions', (c) => c && isNonEmptyString(c.area) && isStringList(c.items), '{ area, items: [non-empty strings] }');
+    optionalArray('stack', (s) => s && isNonEmptyString(s.group) && isStringList(s.items), '{ group, items: [non-empty strings] }');
+    optionalArray('facts', (f) => f && isNonEmptyString(f.label) && isNonEmptyString(f.value), '{ label, value } strings');
+    optionalArray('gallery', (g) => g && isNonEmptyString(g.alt) && isNonEmptyString(g.caption)
+        && Number.isInteger(g.width) && Number.isInteger(g.height)
+        && isString(g.src) && g.src.startsWith('/assets/') && IMAGE_EXT_RE.test(g.src)
+        && fs.existsSync(path.join(__dirname, '..', 'src', g.src)), '{ src (existing /assets/ image), alt, caption, width, height }');
+    if (p.period !== undefined && p.period !== null) {
+        if (!DATE_RE.test(p.period.start || '') || !isNullOr(p.period.end, (v) => DATE_RE.test(v))) {
+            error(`${ref} "period" must be { start: "YYYY-MM", end: "YYYY-MM" | null }`);
+        }
+    }
+    if ((p.overview || []).length && !isNonEmptyString(p.shortDescription)) {
+        error(`${ref} has a project page (overview) but no shortDescription for its meta description`);
+    }
     if (!isNullOr(p.caseStudy, isString)) {
         error(`${ref} "caseStudy" must be a string or null`);
     }

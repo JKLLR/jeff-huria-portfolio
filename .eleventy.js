@@ -10,6 +10,10 @@ module.exports = function (eleventyConfig) {
         return (items || []).filter(item => (item.capabilities || []).includes(slug));
     });
 
+    // Human label for a project's controlled-vocabulary status
+    const STATUS_LABELS = { active: 'LIVE', shipped: 'DELIVERED', offline: 'OFFLINE' };
+    eleventyConfig.addFilter("statusLabel", (status) => STATUS_LABELS[status] || String(status).toUpperCase());
+
     // Renders "2023-04" and "2026-06" as "APR 2023 — JUN 2026".
     // Pass null as the end date for a role that is still current.
     const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];

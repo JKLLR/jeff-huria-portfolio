@@ -19,7 +19,8 @@
             {% endif %}
         </div>
         <div class="work-info">
-            <h3 class="work-title">{{ item.title }}</h3>
+            {% set hasPage = item.overview and item.overview | length %}
+            <h3 class="work-title">{% if hasPage %}<a href="/work/{{ item.slug }}/">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</h3>
             {% if item.role | length %}
             <p class="work-role">{{ item.role | join(" · ") }}</p>
             {% endif %}
@@ -36,8 +37,15 @@
             {% if item.technologies | length %}
             <p class="work-tags">{{ item.technologies | join(" / ") }}</p>
             {% endif %}
-            {% if item.links and item.links.website %}
-            <a href="{{ item.links.website }}" target="_blank" rel="noopener" class="work-link">VISIT SITE ↗<span class="visually-hidden"> — {{ item.title }} (opens in a new tab)</span></a>
+            {% if hasPage or (item.links and item.links.website) %}
+            <div class="work-links">
+                {% if hasPage %}
+                <a href="/work/{{ item.slug }}/" class="work-link">FULL PROJECT →<span class="visually-hidden"> — {{ item.title }}</span></a>
+                {% endif %}
+                {% if item.links and item.links.website %}
+                <a href="{{ item.links.website }}" target="_blank" rel="noopener" class="work-link">VISIT SITE ↗<span class="visually-hidden"> — {{ item.title }} (opens in a new tab)</span></a>
+                {% endif %}
+            </div>
             {% endif %}
         </div>
     </article>

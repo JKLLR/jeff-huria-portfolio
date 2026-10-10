@@ -18,7 +18,7 @@ case-study content belongs to a future `CaseStudy`, never here.
 | Field | Type | Notes |
 |---|---|---|
 | `id` | string | Stable, unique, kebab-case. Must equal `slug`. |
-| `slug` | string | Must equal `id`. Reserved future route: `/work/{slug}`. |
+| `slug` | string | Must equal `id`. Route of the project page: `/work/{slug}/`. |
 | `title` | string | Display title. |
 | `shortDescription` | string \| null | One-line summary. `null` when no real copy exists — never invented. |
 | `type` | string | Controlled vocabulary: `product`, `client-project`, `internal`, `open-source`. |
@@ -31,6 +31,18 @@ case-study content belongs to a future `CaseStudy`, never here.
 | `featured` | boolean | Reserved for homepage selection logic. |
 | `links` | object | Real destinations keyed by purpose. Keys: `website`, `github`, `demo` — each a URL string. Only keys with a genuine URL are present. No fake destinations. |
 | `caseStudy` | string \| null | Reserved. Slug of the future `CaseStudy` page; `null` until it exists. |
+
+**Project page fields** (all optional). A project gets a generated `/work/{slug}/` page once `overview` has content — `src/_data/projectPages.js` is the filtered list the template paginates over. Thin records stay as cards.
+
+| Field | Type | Notes |
+|---|---|---|
+| `overview` | string[] | Paragraphs: what it is, the problem, Jeff's angle. Required for a page; also requires `shortDescription`. |
+| `period` | object \| null | `{ "start": "YYYY-MM", "end": "YYYY-MM" \| null }` — Jeff's involvement, not the product's age. `null` when unconfirmed. |
+| `facts` | object[] | `{ label, value }` — scale facts counted from the code (e.g. `7` payment providers). Never business figures. |
+| `features` | object[] | `{ title, description }` — what the **product** does, whoever built it. |
+| `contributions` | object[] | `{ area, items[] }` — what **Jeff** built, grouped by area. Every item traceable to his commits; unmerged or staging-only work is labelled as such or left out. |
+| `stack` | object[] | `{ group, items[] }` — the full stack, grouped. `technologies` stays the short card list. |
+| `gallery` | object[] | `{ src, alt, caption, width, height }` — public pages or demo data only; the file must exist. |
 
 Example:
 
@@ -156,6 +168,7 @@ Enforced at build time by `scripts/validate.js` (runs via `prebuild`):
 - project `type`/`status` use the controlled vocabularies
 - project `image`, when set, has alt text and points to an existing file under `src/assets/`
 - project `highlights` has at most 3 items
+- project page fields have the documented shapes, gallery images exist, and a project with a page has a `shortDescription`
 - project `links` only contain `website`/`github`/`demo` keys, each a
   well-formed URL
 - `published` capabilities have meaningful `summary`, `description`, and

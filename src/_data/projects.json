@@ -11,9 +11,9 @@
             "Software Engineer"
         ],
         "highlights": [
-            "Built the KCB and Stanbic bank integrations — STK push plus instant payment notifications that reconcile rent automatically",
-            "Built arrears and delinquency tracking, bulk SMS payment reminders, and WhatsApp receipts and invoices",
-            "Built the expenses module, invoice generation logic, and per-unit agent fees with landlord rent statements"
+            "Took the KCB and Stanbic bank integrations to production — STK push plus instant payment notifications that reconcile rent automatically",
+            "Built a tenant credit ledger so overpayments roll into the next invoice, guarded against duplicate M-Pesa confirmations",
+            "Reworked the arrears and delinquency calculations and added bulk SMS and WhatsApp payment reminders"
         ],
         "image": {
             "src": "/assets/projects/kodiwa.jpg",
@@ -33,19 +33,234 @@
         "links": {
             "website": "https://kodiwa.com"
         },
-        "caseStudy": null
+        "caseStudy": null,
+        "period": null,
+        "overview": [
+            "Kodiwa is property and tenant management software built for Kenya's rental market. It runs the whole tenant lifecycle in one system: rental applications, offer letters, leases, rent invoicing, payment collection and reconciliation, maintenance, and landlord payouts.",
+            "Rent in Kenya arrives through M-Pesa paybills, STK pushes, bank paybills, and SMS alerts, and most agencies reconcile it by hand across statements, spreadsheets, and WhatsApp. Kodiwa collects through those same channels, matches payments to invoices as they land, follows up arrears by SMS and WhatsApp, and produces landlord statements and payouts.",
+            "It serves four audiences through separate web panels — platform admin, agency staff (owner, finance, main office, and caretaker roles), a tenant self-service portal, and a read-only landlord portal — plus an Expo / React Native app with a role-specific home screen for each. I'm a co-founder, and my engineering work centres on the money: payment integrations, billing logic, arrears, and expenses."
+        ],
+        "facts": [
+            {
+                "label": "Payment providers",
+                "value": "7"
+            },
+            {
+                "label": "Web panels",
+                "value": "4"
+            },
+            {
+                "label": "Mobile screens",
+                "value": "120"
+            }
+        ],
+        "features": [
+            {
+                "title": "Leases & onboarding",
+                "description": "A multi-step tenant onboarding wizard on web and mobile, with leases, transfers, vacate notices, and terminations."
+            },
+            {
+                "title": "Automated invoicing",
+                "description": "Scheduled and on-demand rent invoice runs, water billing from meter readings, and a credit ledger that applies overpayments automatically."
+            },
+            {
+                "title": "Multi-provider collection",
+                "description": "M-Pesa Daraja, KCB, Stanbic, Equity Jenga, and Airtel Money gateways, NCBA notifications, and Paystack for online payments."
+            },
+            {
+                "title": "Rent matching",
+                "description": "Incoming bank and M-Pesa SMS alerts and uploaded bank statements are parsed and matched to tenants and invoices, with an AI matching agent."
+            },
+            {
+                "title": "Arrears & reminders",
+                "description": "Arrears dashboards, a delinquency view, promise-to-pay tracking, and bulk payment-reminder SMS through pluggable providers."
+            },
+            {
+                "title": "WhatsApp",
+                "description": "Meta Cloud API integration with a staff inbox, tenant alerts, and invoices and receipts sent with PDFs attached."
+            },
+            {
+                "title": "Maintenance & inspections",
+                "description": "Maintenance requests and tickets, plus pre- and post-occupation inspections with item-level condition reports."
+            },
+            {
+                "title": "Expenses & ledger",
+                "description": "Expense approval workflows, recurring expense templates, and a double-entry ledger with a chart of accounts and journal entries."
+            },
+            {
+                "title": "Kodi AI assistant",
+                "description": "A chat assistant that answers plain-English questions over the portfolio's data and can take actions, streamed in real time."
+            }
+        ],
+        "contributions": [
+            {
+                "area": "Bank payment integrations",
+                "items": [
+                    "Built Stanbic instant payment notifications — the half of the integration that reconciles rent paid straight into the account — including routing for merchants on a shared paybill, verified against Stanbic's sandbox",
+                    "Fixed merchant resolution for Lipa na KCB accounts on KCB's shared paybill: prefix stripping, hyphen separators, and bare merchant numbers",
+                    "Normalised KCB STK responses so accepted pushes were no longer recorded as failed, and made the notification handler read both payload shapes and survive KCB's retries",
+                    "Took KCB to production: corrected the gateway and token endpoints, fixed the test-push guards on web and mobile, and traced a live debit-then-refund issue to the STK account reference"
+                ]
+            },
+            {
+                "area": "Payment security & observability",
+                "items": [
+                    "Stopped the callback authentication secret from being stored in payment records and logs, across all six payment providers through one shared trait",
+                    "Built a dedicated payments log channel — a structured audit trail by provider, event, and correlation id, kept for 90 days regardless of the app's log level",
+                    "Fixed flaky payment and WhatsApp webhook tests that depended on leftover database state; the WhatsApp suite went from 12 failures to green"
+                ]
+            },
+            {
+                "area": "Invoicing & credits",
+                "items": [
+                    "Built a row-locked, idempotent tenant credit ledger that captures overpayments and applies them to the next invoice",
+                    "Made the whole payment pipeline — invoice payments, lump-sum arrears, M-Pesa STK and C2B — credit overpayments instead of losing them, with a guard against duplicate confirmations",
+                    "Added onboarding for tenants migrating from a previous manager: skipped deposits, paid-through dates, arrears owed, and opening credit, on web and mobile",
+                    "Added an optional lease-agreement fee booked as agency income and kept out of landlord payouts, unified water billing across web and mobile, and automated invoice references and emailing"
+                ]
+            },
+            {
+                "area": "Arrears & reminders",
+                "items": [
+                    "Reworked arrears to count only unpaid invoices that are already due, and months behind from unpaid rent alone",
+                    "Rewrote reminder SMS to say what the balance is for and include payment details, and added bulk reminders to many residents at once",
+                    "Made the SMS log show full message text"
+                ]
+            },
+            {
+                "area": "Expenses, import & teams",
+                "items": [
+                    "Expanded the expense module: approval policy, status notifications, recurring templates with a scheduled generator, staff and owner portal views, new mobile screens, and tests",
+                    "Hardened resident import — optional lease end dates, rejecting end-before-start rows, a contacts-column fix — and added a billing-extras import command",
+                    "Fixed team invitations so invitees join the existing team instead of getting a new workspace, and redesigned the invitation email"
+                ]
+            },
+            {
+                "area": "WhatsApp & branding",
+                "items": [
+                    "Added WhatsApp as a channel for invoices and receipts with PDFs attached, shown on mobile only when a team has WhatsApp enabled, and fixed a webhook crash",
+                    "Replaced a leftover third-party favicon with the Kodiwa icon set and added a promotional modal to the landing page"
+                ]
+            }
+        ],
+        "stack": [
+            {
+                "group": "Backend",
+                "items": [
+                    "Laravel 12",
+                    "PHP 8.3",
+                    "Filament v3",
+                    "Livewire v3",
+                    "Horizon",
+                    "Octane",
+                    "Reverb",
+                    "Sanctum",
+                    "MySQL 8"
+                ]
+            },
+            {
+                "group": "Web front end",
+                "items": [
+                    "Vue 3",
+                    "Inertia.js",
+                    "Tailwind CSS"
+                ]
+            },
+            {
+                "group": "Mobile",
+                "items": [
+                    "Expo SDK 54",
+                    "React Native 0.81",
+                    "Expo Router",
+                    "NativeWind",
+                    "TypeScript"
+                ]
+            },
+            {
+                "group": "Payments",
+                "items": [
+                    "M-Pesa Daraja",
+                    "KCB Buni",
+                    "Stanbic Kilele",
+                    "Equity Jenga",
+                    "Airtel Money",
+                    "NCBA",
+                    "Paystack"
+                ]
+            },
+            {
+                "group": "Messaging",
+                "items": [
+                    "Africa's Talking",
+                    "Tilil SMS",
+                    "WhatsApp Cloud API",
+                    "Resend"
+                ]
+            },
+            {
+                "group": "AI",
+                "items": [
+                    "Laravel AI SDK",
+                    "Anthropic",
+                    "OpenAI"
+                ]
+            },
+            {
+                "group": "Quality",
+                "items": [
+                    "PHPUnit 11",
+                    "Pint",
+                    "Sentry",
+                    "Telescope"
+                ]
+            }
+        ],
+        "gallery": [
+            {
+                "src": "/assets/projects/kodiwa-features.jpg",
+                "alt": "Kodiwa platform section listing six modules: property and unit management, application workflows, payment ecosystem, resident portal, inspections, and agent management",
+                "caption": "The platform at a glance — six modules covering the full property lifecycle.",
+                "width": 1440,
+                "height": 900
+            },
+            {
+                "src": "/assets/projects/kodiwa-ai.jpg",
+                "alt": "Kodi AI section with a sample chat about arrears and a list of what Kodi can do: portfolio analytics, payment intelligence, lease automation, maintenance coordination",
+                "caption": "Kodi, the AI assistant, answering an arrears question with demo data.",
+                "width": 1440,
+                "height": 900
+            },
+            {
+                "src": "/assets/projects/kodiwa-process.jpg",
+                "alt": "Four-step onboarding process: connect your portfolio, set your rules, go live with payments, let Kodi take over",
+                "caption": "Onboarding in four steps — import, configure, connect payments, automate.",
+                "width": 1440,
+                "height": 900
+            },
+            {
+                "src": "/assets/projects/kodiwa-mobile.jpg",
+                "alt": "Kodiwa landing page on a phone, showing the headline and a portfolio overview card",
+                "caption": "The public site on mobile.",
+                "width": 390,
+                "height": 844
+            }
+        ]
     },
     {
         "id": "sat-erp-integrator",
         "slug": "sat-erp-integrator",
         "title": "SAT ERP INTEGRATOR",
-        "shortDescription": "Integration layer connecting a sales automation platform to eight major ERP and finance systems — SAP, Oracle, Microsoft Dynamics 365, Sage, Epicor iScala, Odoo, and QuickBooks — plus BI tools and M-Pesa.",
+        "shortDescription": "Integration layer connecting Solutech's sales automation platform to clients' ERPs — SAP Business One, Sage, SYSPRO, Odoo, Tally, Epicor iScala, and Acumatica — syncing master data, sales documents, and tax e-invoices in both directions.",
         "type": "client-project",
         "status": "shipped",
         "role": [
             "Software Engineer"
         ],
-        "highlights": [],
+        "highlights": [
+            "Built the Acumatica ERP connector end to end — OAuth, master-data pulls, order posting, and inbound webhooks",
+            "Built the Sage 200 Evolution API integration, with order-status tracking through a database trigger and outbox",
+            "Wrote a validator that dry-runs every ERP query pack against a live schema and suggests corrections"
+        ],
         "image": null,
         "technologies": [],
         "capabilities": [
@@ -54,22 +269,152 @@
         ],
         "featured": true,
         "links": {},
-        "caseStudy": null
+        "caseStudy": null,
+        "period": {
+            "start": "2023-04",
+            "end": "2026-06"
+        },
+        "overview": [
+            "Solutech's Sales Automation Tool (SAT) runs field sales for manufacturers and distributors — reps taking orders, collecting payments, and checking stock on the road. None of that is useful unless it reaches the ERP that actually runs the business, and every client runs a different one.",
+            "The integration layer has two halves. Inside SAT, a per-client integration registry pushes orders, invoices, credit notes, and returns to the client's ERP and accepts customers, products, prices, and stock back into staging tables. Next to the ERP, an on-premise Laravel integrator runs scheduled master-data and document syncs, reads ERP data over ODBC or the ERP's own API, maps fields through configuration, and writes documents back through the most native route each ERP offers — COM SDKs, REST, SOAP, or XML.",
+            "New clients are onboarded mostly by configuration — ERP type, field mappings, and per-ERP SQL query packs — rather than new code. I worked across both halves for three years: I built the Acumatica connector in SAT, a long run of ERP sync features, and the Sage 200 Evolution integration and diagnostics tooling in the on-premise integrator."
+        ],
+        "facts": [
+            {
+                "label": "Data & document types synced",
+                "value": "31"
+            },
+            {
+                "label": "ERP & tax connectors",
+                "value": "9"
+            },
+            {
+                "label": "Years on the platform",
+                "value": "3"
+            }
+        ],
+        "features": [
+            {
+                "title": "Pluggable connectors",
+                "description": "SAP Business One (SQL Server and HANA), Sage 200 Evolution, Sage Business Cloud, SYSPRO, Odoo, Tally Prime, Epicor iScala, and Acumatica."
+            },
+            {
+                "title": "Master-data sync",
+                "description": "Customers, items and units of measure, price lists, warehouses and stock, tax codes, ledger accounts, discounts, and account balances flow from the ERP into SAT on per-task schedules."
+            },
+            {
+                "title": "Document posting",
+                "description": "Sales orders, deliveries, invoices, credit notes, payments, transfers, and returns are written into the ERP, and the ERP's document number is returned to SAT."
+            },
+            {
+                "title": "Status feedback",
+                "description": "Sales-order and inventory-transfer status changes in the ERP are tracked and pushed back so field teams see where an order stands."
+            },
+            {
+                "title": "Tax e-invoicing",
+                "description": "Fiscal invoices and credit notes submitted to government e-invoicing systems, including Uganda's EFRIS."
+            },
+            {
+                "title": "Configuration-driven onboarding",
+                "description": "Per-ERP setup packs — object types, SQL query files, field mappings, and task definitions — managed through an admin UI with a SQL editor, scheduler, and logs."
+            }
+        ],
+        "contributions": [
+            {
+                "area": "Acumatica connector",
+                "items": [
+                    "Created the Acumatica integration in SAT: an OAuth2 token flow with cached bearer tokens and integration keys held in Redis",
+                    "Built pulls of stock items with units of measure, stock balances, customers, customer price lists, balances with open invoices, sales invoices, and vehicles — saved in chunks inside database transactions",
+                    "Built order posting with external references, error handling, status logs, and resync of failed orders, plus posting of new customers and photos captured in the field app",
+                    "Added webhook endpoints so the ERP pushes customer and price-list changes into SAT, later extended to capture tax IDs"
+                ]
+            },
+            {
+                "area": "ERP sync features in SAT",
+                "items": [
+                    "Built a customer special-prices integration — staging and live tables with pull, process, and generate endpoints — and a second-generation processing route",
+                    "Added an ERP quotations endpoint, blanket-agreement references on orders, ship-to codes on orders and sales, and delivery-address and alias sync for customers",
+                    "Added per-client ERP configuration endpoints, fixed price-list pulls, added ERP IDs to route-plan imports, and added discount-rate sync",
+                    "Built product, outlet, and order syncing to a third-party retail distribution platform through queued jobs and console commands"
+                ]
+            },
+            {
+                "area": "Sage 200 Evolution integration",
+                "items": [
+                    "Built a full service client for a REST API layer over Sage Evolution — configuration, connection testing, customer lookup and creation, and posting of sales orders, payments, and inventory requests — wired into the integrator's controllers and settings UI",
+                    "Implemented ERP-to-SAT order-status tracking: a database trigger records status changes on SAT-originated orders into an outbox table, and a scheduled task pushes them to SAT",
+                    "Hardened invoice sync with an ERP-side flag that stops re-syncs, exclusion of pre-go-live invoices and malformed lines, and batched queries that fixed memory-limit failures",
+                    "Tuned the Sage SQL query packs and field mappings for a new distribution-client rollout"
+                ]
+            },
+            {
+                "area": "Integrator tooling",
+                "items": [
+                    "Wrote a validation command that dry-runs every ERP SQL query file against the live schema without executing it, then inspects the schema to suggest corrected table and column names — across Sage, SAP, SYSPRO, and iScala",
+                    "Extended the shared price-list and stock-balance endpoints and the task processor, and made field mapping handle raw ODBC rows",
+                    "Prototyped an LLM assistant inside the integrator's admin panel"
+                ]
+            }
+        ],
+        "stack": [
+            {
+                "group": "Integrator",
+                "items": [
+                    "Laravel 10",
+                    "PHP 8.2",
+                    "Livewire 3",
+                    "Sanctum",
+                    "Guzzle",
+                    "Windows / IIS"
+                ]
+            },
+            {
+                "group": "ERP access",
+                "items": [
+                    "ODBC (SQL Server, SAP HANA)",
+                    "COM SDKs (SAP DI API, Sage Evolution)",
+                    "REST",
+                    "SOAP",
+                    "Tally XML",
+                    ".NET wrapper for SYSPRO"
+                ]
+            },
+            {
+                "group": "Sales platform",
+                "items": [
+                    "Laravel",
+                    "PHP 8.3",
+                    "Passport (OAuth2)",
+                    "MySQL 8",
+                    "Redis queues",
+                    "RabbitMQ",
+                    "Vue"
+                ]
+            },
+            {
+                "group": "Observability",
+                "items": [
+                    "Sentry",
+                    "Activity log",
+                    "Sync logs"
+                ]
+            }
+        ]
     },
     {
         "id": "vochi",
         "slug": "vochi",
         "title": "VOCHI",
-        "shortDescription": "AI sales and customer-support assistant — voice calls, an embeddable website chat widget, WhatsApp, appointment booking, and CRM sync with HubSpot, Zoho, Salesforce, and Airtable.",
+        "shortDescription": "AI customer-communication platform — AI voice calls, an embeddable chat widget, WhatsApp and Telegram, appointment booking, and CRM sync with HubSpot, Zoho, Salesforce, and Airtable.",
         "type": "product",
         "status": "offline",
         "role": [
             "Software Engineer"
         ],
         "highlights": [
-            "Built the first-stage conversational chatflow and the v2 workflow engine",
-            "Set up dynamic third-party integrations and the production deployment",
-            "Hardened WhatsApp messaging and the vector knowledge-base search with a test suite"
+            "Built a Google Drive → Qdrant knowledge-ingestion pipeline orchestrated by n8n",
+            "Built retrieval-augmented chat that answers from a team's documents across the web widget and WhatsApp",
+            "Fixed duplicate channel messages, outbound demo calls, and the WhatsApp webhook handshake"
         ],
         "image": null,
         "technologies": [
@@ -82,7 +427,158 @@
         ],
         "featured": true,
         "links": {},
-        "caseStudy": null
+        "caseStudy": null,
+        "period": {
+            "start": "2025-10",
+            "end": "2026-01"
+        },
+        "overview": [
+            "Vochi is a multi-tenant SaaS that puts AI assistants on a business's phone lines and chat channels — inbound and outbound voice calls, an embeddable website widget, WhatsApp, and Telegram. Teams configure each assistant's voice, prompt, and knowledge, and can chain several into crews that hand a conversation between specialists.",
+            "It's built for small and mid-sized teams that can't answer every call, qualify every lead, or book every meeting. Assistants answer from the team's knowledge base, book into connected calendars, sync leads to the CRM, and escalate hard cases to people as support tickets.",
+            "My work focused on knowledge: letting customers connect their own document sources and making assistants answer from them with retrieval-augmented generation, plus reliability fixes across chat, WhatsApp, voice, and lead import. Most of the knowledge work was built and tested on staging feature branches rather than merged into the production app, and Vochi is currently offline."
+        ],
+        "features": [
+            {
+                "title": "AI voice calls",
+                "description": "Inbound and outbound AI phone calls through VAPI, with call logs, webhooks, and a live 'call me' demo."
+            },
+            {
+                "title": "Assistant crews",
+                "description": "Multi-assistant squads that pass a call between specialists, generated from pre-built crew templates."
+            },
+            {
+                "title": "Chat widget & live chat",
+                "description": "An embeddable website widget with chat history, attachments, and real-time human takeover."
+            },
+            {
+                "title": "WhatsApp & Telegram",
+                "description": "Team-scoped channel webhooks that route customer messages through the same AI pipeline as web chat."
+            },
+            {
+                "title": "Scheduling",
+                "description": "Google Calendar, Calendly, and Cal.com integrations so assistants can book meetings on any channel."
+            },
+            {
+                "title": "CRM sync",
+                "description": "HubSpot, Zoho, Salesforce, and Airtable with field mapping, duplicate detection, and queued background sync."
+            },
+            {
+                "title": "Knowledge base",
+                "description": "Teams upload documents and URLs that feed their assistants' answers."
+            },
+            {
+                "title": "Escalation & tickets",
+                "description": "Conversations escalate to support tickets; technical issues are pushed to Jira or ClickUp."
+            },
+            {
+                "title": "Billing & analytics",
+                "description": "Paystack subscriptions and trials, usage billing, call and chat analytics, and an MRR/ARR admin dashboard."
+            }
+        ],
+        "contributions": [
+            {
+                "area": "Dynamic integrations",
+                "items": [
+                    "Built a module that lets customers connect external document sources to their assistants: data model, migrations, per-team quotas, policy, and a controller covering the Google Drive OAuth flow, folder selection, manual sync, token refresh, documents, and sync logs",
+                    "Built the Vue 3 / Inertia front end for it — integrations page, configure-sync, documents, sync-log, and quota components",
+                    "Wrote a Qdrant vector-database service and queued jobs that create a collection per integration, start an n8n ingestion workflow, and clean up vectors",
+                    "Added an n8n callback API so the external workflow reports sync progress back to Laravel"
+                ]
+            },
+            {
+                "area": "Sync reliability",
+                "items": [
+                    "Found and fixed a triple-execution bug: an HTTP timeout combined with job retries ran every sync three times — replaced with fire-and-forget plus callbacks and idempotency on the workflow execution id",
+                    "Added a scheduled command that fails syncs stuck past a timeout, with error alerts and status polling in the UI",
+                    "Made the completion webhook tolerant of missing ids and varied status values, and stopped missing OAuth credentials from causing fatal errors across nine integrations",
+                    "Wrote the production deployment guide and setup scripts for Qdrant and the queue worker"
+                ]
+            },
+            {
+                "area": "Retrieval-augmented chat",
+                "items": [
+                    "Built an embedding service on OpenAI text-embedding-3-small with batching, content-hash caching, and cost estimation",
+                    "Wrote an indexing job that extracts text from URLs, PDFs, and Word files, chunks it with overlap, embeds it, and upserts it into Qdrant",
+                    "Built unified search across a team's knowledge-base and integration collections and wired the ranked context into the chat API and inbound WhatsApp, degrading gracefully when search fails"
+                ]
+            },
+            {
+                "area": "Bug fixes",
+                "items": [
+                    "Fixed duplicate customer messages at the start of new channel sessions, and passed attachments through session creation",
+                    "Fixed outbound demo calls by mapping a legacy call-duration option onto VAPI's assistant overrides",
+                    "Fixed the WhatsApp webhook verification handshake and hardened lead spreadsheet import against stray columns, empty rows, and duplicates"
+                ]
+            }
+        ],
+        "stack": [
+            {
+                "group": "Backend",
+                "items": [
+                    "Laravel 12",
+                    "PHP 8.3",
+                    "Jetstream",
+                    "Filament 3",
+                    "Livewire 3",
+                    "Sanctum"
+                ]
+            },
+            {
+                "group": "Front end",
+                "items": [
+                    "Vue 3",
+                    "Inertia.js v2",
+                    "Vite",
+                    "Tailwind CSS",
+                    "ApexCharts"
+                ]
+            },
+            {
+                "group": "Real time",
+                "items": [
+                    "Laravel Echo",
+                    "Pusher"
+                ]
+            },
+            {
+                "group": "Voice",
+                "items": [
+                    "VAPI",
+                    "ElevenLabs",
+                    "Twilio"
+                ]
+            },
+            {
+                "group": "AI & retrieval",
+                "items": [
+                    "OpenAI",
+                    "OpenRouter",
+                    "Qdrant",
+                    "n8n"
+                ]
+            },
+            {
+                "group": "Integrations",
+                "items": [
+                    "HubSpot",
+                    "Zoho",
+                    "Salesforce",
+                    "Airtable",
+                    "Google Calendar",
+                    "Calendly",
+                    "Cal.com",
+                    "Google Drive",
+                    "Jira",
+                    "ClickUp"
+                ]
+            },
+            {
+                "group": "Payments",
+                "items": [
+                    "Paystack"
+                ]
+            }
+        ]
     },
     {
         "id": "asira-tms",

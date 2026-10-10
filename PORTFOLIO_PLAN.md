@@ -27,6 +27,7 @@ earned by evidence.**
 /                                  — homepage (hero, about, experience, works, services, contact)
 /capabilities/software-engineering — generated from capability data
 /capabilities/erp-integration      — generated from capability data
+/work/{slug}                       — generated per project once it has an overview
 ```
 
 Capability pages are **generated**, not hand-written. One template
@@ -76,7 +77,7 @@ same paths as before the migration. Build via `npm run build` → outputs to
 |---|---|
 | `CaseStudy` entity + `/case-studies/*` | A project with enough real substance (screenshots, architecture decisions, measurable outcomes) to fill out problem → architecture → implementation → results honestly |
 | `caseStudy` value on a project record | Linking a project to its deep case-study page once it exists |
-| `/work/{slug}` project pages | When a project needs a canonical deep page that multiple entry points link to |
+| ~~`/work/{slug}` project pages~~ | **Done.** Generated from `projects.json` (`overview`, `features`, `contributions`, `stack`, `gallery`); live for Kodiwa, SAT ERP Integrator, and Vochi |
 
 ## Phase 3 — Ventures & Founder Layer (future)
 

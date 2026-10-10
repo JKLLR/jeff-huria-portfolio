@@ -1,0 +1,147 @@
+---
+layout: layouts/base.njk
+pagination:
+  data: projectPages
+  size: 1
+  alias: project
+permalink: /work/{{ project.slug }}/index.html
+eleventyComputed:
+  title: "{{ project.title }} — JEFF .K. HURIA"
+  description: "{{ project.shortDescription }}"
+---
+{% set nextProject = projectPages[(pagination.pageNumber + 1) % (projectPages | length)] %}
+
+<section class="section project-hero">
+    <div class="section-label">[ PROJECT — {{ project.type | replace("-", " ") | upper }} ]</div>
+    <h1 class="section-title project-title">{{ project.title }}</h1>
+    {% if project.shortDescription %}
+    <p class="project-tagline">{{ project.shortDescription }}</p>
+    {% endif %}
+
+    <dl class="project-meta">
+        {% if project.role | length %}
+        <div><dt>ROLE</dt><dd>{{ project.role | join(" · ") }}</dd></div>
+        {% endif %}
+        {% if project.period %}
+        <div><dt>PERIOD</dt><dd>{{ project.period.start | dateRange(project.period.end) }}</dd></div>
+        {% endif %}
+        <div><dt>STATUS</dt><dd>{{ project.status | statusLabel }}</dd></div>
+        {% if project.links.website %}
+        <div><dt>LIVE</dt><dd><a href="{{ project.links.website }}" target="_blank" rel="noopener" class="work-link">{{ project.links.website | replace("https://", "") }} ↗</a></dd></div>
+        {% endif %}
+    </dl>
+</section>
+
+<div class="project-cover">
+    {% if project.image %}
+    <div class="work-img-inner">
+        <img src="{{ project.image.src }}" alt="{{ project.image.alt }}" width="1440" height="900" fetchpriority="high">
+    </div>
+    {% else %}
+    <div class="work-img-inner work-img-type" aria-hidden="true">
+        <span class="work-img-word">{{ project.title }}</span>
+    </div>
+    {% endif %}
+</div>
+
+<section class="section project-overview">
+    <div class="section-label">[ OVERVIEW ]</div>
+    <div class="project-overview-body">
+        {% for para in project.overview %}
+        <p>{{ para }}</p>
+        {% endfor %}
+    </div>
+    {% if project.facts | length %}
+    <div class="about-stats project-facts">
+        {% for fact in project.facts %}
+        <div class="stat">
+            <span class="stat-num">{{ fact.value }}</span>
+            <span class="stat-label">{{ fact.label }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+
+{% if project.features | length %}
+<section class="section project-features">
+    <div class="section-label">[ THE PRODUCT ]</div>
+    <h2 class="section-title">WHAT IT<br>DOES</h2>
+    <div class="feature-grid">
+        {% for feature in project.features %}
+        <div class="feature">
+            <span class="service-num">{{ "0" if loop.index < 10 else "" }}{{ loop.index }}</span>
+            <h3>{{ feature.title }}</h3>
+            <p>{{ feature.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if project.contributions | length %}
+<section class="section project-contributions">
+    <div class="section-label">[ MY WORK ]</div>
+    <h2 class="section-title">WHAT I<br>BUILT</h2>
+    <div class="contrib-list">
+        {% for group in project.contributions %}
+        <div class="contrib">
+            <h3 class="contrib-area">{{ group.area }}</h3>
+            <ul class="work-highlights">
+                {% for item in group.items %}
+                <li>{{ item }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if project.stack | length %}
+<section class="section project-stack">
+    <div class="section-label">[ STACK ]</div>
+    <dl class="stack-list">
+        {% for group in project.stack %}
+        <div class="stack-row">
+            <dt>{{ group.group }}</dt>
+            <dd>{{ group.items | join(" / ") }}</dd>
+        </div>
+        {% endfor %}
+    </dl>
+</section>
+{% endif %}
+
+{% if project.gallery | length %}
+<section class="section project-gallery">
+    <div class="section-label">[ GALLERY ]</div>
+    <div class="gallery-grid">
+        {% for shot in project.gallery %}
+        <figure class="gallery-item{% if shot.height > shot.width %} is-portrait{% endif %}">
+            <div class="gallery-frame">
+                <img src="{{ shot.src }}" alt="{{ shot.alt }}" width="{{ shot.width }}" height="{{ shot.height }}" loading="lazy" decoding="async">
+            </div>
+            <figcaption>{{ shot.caption }}</figcaption>
+        </figure>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="section project-footer-nav">
+    {% if project.capabilities | length %}
+    <div class="capability-links">
+        {% for slug in project.capabilities %}
+        {% for cap in publishedCapabilities %}{% if cap.slug == slug %}
+        <a href="/capabilities/{{ cap.slug }}/" class="capability-link">{{ cap.title }} ↗</a>
+        {% endif %}{% endfor %}
+        {% endfor %}
+    </div>
+    {% endif %}
+    {% if nextProject and nextProject.slug != project.slug %}
+    <a href="/work/{{ nextProject.slug }}/" class="next-project">
+        <span class="next-label">NEXT PROJECT</span>
+        <span class="next-title">{{ nextProject.title }} →</span>
+    </a>
+    {% endif %}
+</section>
