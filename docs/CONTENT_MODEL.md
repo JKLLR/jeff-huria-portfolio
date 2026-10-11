@@ -177,3 +177,12 @@ Enforced at build time by `scripts/validate.js` (runs via `prebuild`):
 
 **Do not invent content.** Fields without real information are omitted or
 empty — accuracy matters more than a full-looking record.
+
+## Mock data (design phase)
+
+While the redesign's copy is being written, placeholder content lives in **one file**: `src/_data/mock.json`.
+
+- `src/_data/work.js` merges `mock.projects[id]` into each project, but **only into fields the real record leaves empty** — real data in `projects.json` always wins. Fields that came from the mock file are listed in `project.mockFields`.
+- Templates mark mock-sourced content with `class="mock"` and `data-mock="<key>"`. On the page it gets a dashed orange outline and a MOCK tag; toggle it with the MOCK DATA pill (bottom left) or the `M` key.
+- `scripts/mock-report.js` runs on every build and rewrites `docs/MOCK_DATA.md`, the register of every placeholder still shown.
+- To go live with real content: replace values in `mock.json` (or fill the real field in `projects.json`, which hides the mock one), and delete entries until the register is empty.

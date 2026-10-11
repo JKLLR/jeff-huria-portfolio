@@ -1,4 +1,57 @@
-<footer class="footer">
-    <div>© 2026 JEFF .K. HURIA</div>
-    <div>TECHNOLOGY BUILDER</div>
+<footer class="footer" id="connect">
+    <section class="contact">
+        <p class="contact-kicker" data-reveal>LET'S START THE CONVERSATION</p>
+        <h2 class="contact-title" data-assemble>
+            <span class="line">GREAT SYSTEMS</span>
+            <span class="line is-thin">START WITH</span>
+            <span class="line">GREAT COLLABORATION</span>
+        </h2>
+
+        <form class="contact-form" name="contact" method="POST" data-netlify="true" netlify-honeypot="company-url" action="/thanks/">
+            <input type="hidden" name="form-name" value="contact">
+            <p class="visually-hidden"><label>Leave this empty <input name="company-url" tabindex="-1" autocomplete="off"></label></p>
+            <label class="field"><span>YOUR NAME*</span><input name="name" required autocomplete="name"></label>
+            <label class="field"><span>YOUR EMAIL*</span><input name="email" type="email" required autocomplete="email"></label>
+            <label class="field"><span>HOW CAN I HELP YOU</span><textarea name="message" rows="3"></textarea></label>
+            <fieldset class="budget mock" data-mock="contact.budgets">
+                <legend>PROJECT BUDGET (USD)</legend>
+                {% for b in mock.contact.budgets %}
+                <label class="chip"><input type="radio" name="budget" value="{{ b }}"{% if loop.first %} checked{% endif %}><span>{{ b }}</span></label>
+                {% endfor %}
+            </fieldset>
+            <button class="link-line contact-submit" type="submit" data-roll>DISCUSS THE PROJECT <span class="arr">↗</span></button>
+        </form>
+    </section>
+
+    <div class="footer-main">
+        <div class="footer-big">
+            <a href="tel:+254702647717" class="footer-phone">+254 702 647 717</a>
+            <a href="mailto:{{ site.email }}" class="footer-email">{{ site.email }}</a>
+            <div class="footer-social">
+                <a href="https://www.linkedin.com/in/jefferson-huria-26ab72351/" target="_blank" rel="noopener" class="link-line" data-roll>LINKEDIN <span class="arr">↗</span></a>
+                <a href="https://wa.me/254702647717" target="_blank" rel="noopener" class="link-line" data-roll>WHATSAPP <span class="arr">↗</span></a>
+                <a href="mailto:{{ site.email }}" class="link-line" data-roll>EMAIL <span class="arr">↗</span></a>
+            </div>
+        </div>
+        <nav class="footer-nav" aria-label="Footer">
+            <a href="/#about" data-roll>ABOUT ME</a>
+            <a href="/#services" data-roll>SERVICES</a>
+            <a href="/#works" data-roll>WORKS</a>
+        </nav>
+        <p class="footer-address mock" data-mock="contact.address">Address:<br>{{ mock.contact.address | join("<br>") | safe }}</p>
+    </div>
+
+    <div class="footer-brackets">
+        <a href="https://www.linkedin.com/in/jefferson-huria-26ab72351/" target="_blank" rel="noopener">[ LINKEDIN ]</a>
+        <a href="https://wa.me/254702647717" target="_blank" rel="noopener">[ WHATSAPP ]</a>
+        <a href="mailto:{{ site.email }}">[ EMAIL ]</a>
+    </div>
+
+    <div class="footer-name" aria-hidden="true"><span class="fit-text" data-fit>JEFF .K. HURIA</span></div>
+
+    <div class="footer-bottom">
+        <span>NAIROBI, KENYA: (GMT+3) <span id="clock">--:--</span></span>
+        <span>DESIGN &amp; DEVELOPMENT — JKH</span>
+        <span class="footer-legal">© 2026 Jeff .K. Huria. All rights reserved.</span>
+    </div>
 </footer>

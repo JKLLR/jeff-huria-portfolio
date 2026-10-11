@@ -2,157 +2,283 @@
 layout: layouts/base.njk
 title: JEFF .K. HURIA — Technology Builder
 description: Jeff .K. Huria is a technology builder — software engineer, ERP integration specialist, and AI-native founder building, connecting, and scaling systems, products, and businesses from Nairobi, Kenya.
+bodyClass: page-home
 ---
-{% from "partials/works-grid.njk" import worksGrid %}
 {% from "partials/experience-list.njk" import experienceList %}
+{% from "partials/works-index.njk" import worksIndex %}
+{% set featured = work | first %}
 
-<!-- Hero -->
-<section class="hero" id="hero">
-    <div class="hero-count">
-        <span id="heroCount">0</span>+ ERP PLATFORMS INTEGRATED
+{# ───────────────────────── HERO ───────────────────────── #}
+<section class="hero" id="top">
+    <div class="hero-counter mock" data-mock="hero.counter">
+        <span class="odometer" data-odometer="{{ mock.hero.counter.value }}">{{ mock.hero.counter.value }}</span>{{ mock.hero.counter.suffix }}
+        <span class="hero-counter-label">{{ mock.hero.counter.label }}</span>
     </div>
-    <div class="hero-title-wrap">
-        <h1 class="hero-title" id="heroTitle"><span class="htitle-inner" id="heroTitleInner">SOFTWARE ENGINEER</span></h1>
+
+    <h1 class="hero-title" aria-label="Technology builder">
+        <span class="fit-text" data-fit data-letters>TECHNOLOGY BUILDER</span>
+    </h1>
+    <p class="hero-based" aria-label="Based in Nairobi, Kenya"><span>BASED</span><span>IN</span><span>NAIROBI</span></p>
+
+    <div class="hero-visual">
+        <div class="hero-plate" aria-hidden="true"></div>
+        <ul class="hero-roles">
+            <li>/ SOFTWARE ENGINEERING</li>
+            <li>/ ERP INTEGRATION</li>
+            <li>/ AI PRODUCTS</li>
+        </ul>
+        <figure class="hero-photo">
+            <img src="/assets/1760274672058.jfif" alt="Jeff .K. Huria" width="900" height="1125" fetchpriority="high">
+        </figure>
     </div>
-    <div class="hero-lower">
-        <div class="hero-sub-left">
-            <p>/ ERP INTEGRATIONS</p>
-            <p>/ WEB APPLICATIONS</p>
-            <p>/ DATA &amp; BI SYSTEMS</p>
+
+    <div class="hero-copy">
+        <p class="mock" data-mock="hero.tagline">{{ mock.hero.tagline }}</p>
+        <p class="hero-kicker mock" data-mock="hero.kicker">{{ mock.hero.kicker }}</p>
+    </div>
+
+    <div class="hero-foot">
+        <div class="hero-avail">
+            <span class="label-arrow">AVAILABLE FOR COLLABORATION <span class="arr">↘</span></span>
+            <a href="mailto:{{ site.email }}" class="hero-mail">{{ site.email }}</a>
         </div>
-        <div class="hero-photo" id="heroPhoto">
-            <img src="/assets/1760274672058.jfif" alt="Jeff .K. Huria">
-        </div>
-        <div class="hero-location">BASED IN<br>NAIROBI, KENYA</div>
+        <a href="/work/{{ featured.slug }}/" class="hero-recent">
+            <span class="label-arrow">RECENT WORK <span class="arr">↘</span></span>
+            <strong>{{ featured.title }}</strong>
+        </a>
     </div>
 </section>
 
-<!-- About -->
-<section class="about section" id="about">
-    <div class="section-label">[ ABOUT ME ]</div>
-    <div class="about-inner">
-        <div class="about-bio">
-            <h2 class="section-title">I BUILD FULL-STACK<br>SYSTEMS</h2>
-            <div class="about-text">
-                <p>I'm a full-stack software engineer who spends most of my time where enterprise software meets modern web development. At Solutech, I spent three years on the integrations connecting a sales automation platform to the ERPs that actually run businesses — SAP Business One, Oracle, Dynamics 365 Business Central, Acumatica, Sage, SYSPRO, Odoo, Tally, and Epicor iScala. At Kodiwa, I build the payment side: M-Pesa and bank integrations that reconcile rent automatically.</p>
-                <p>Outside of enterprise integration work, I build product from the ground up — auction platforms, e-commerce, multi-vendor marketplaces — with React, Next.js, and Ruby on Rails. I like the problems where a clean interface and a backend that talks to everything both have to hold up.</p>
-            </div>
-            <div class="capability-links">
-                {% for cap in publishedCapabilities %}
-                <a href="/capabilities/{{ cap.slug }}/" class="capability-link">{{ cap.title }} ↗</a>
-                {% endfor %}
-            </div>
-        </div>
-        <div class="about-stats">
-            <div class="stat">
-                <span class="stat-num">3+</span>
-                <span class="stat-label">YEARS EXPERIENCE</span>
-            </div>
-            <div class="stat">
-                <span class="stat-num">9</span>
-                <span class="stat-label">ERP SYSTEMS INTEGRATED</span>
-            </div>
-            <div class="stat">
-                <span class="stat-num">CCNA</span>
-                <span class="stat-label">CERTIFIED</span>
-            </div>
-        </div>
-    </div>
+{# ───────────────────────── ABOUT ───────────────────────── #}
+<div class="big-title-wrap">
+    <h2 class="big-title" data-scatter>ABOUT ME</h2>
+</div>
 
-    <div class="about-statement" id="aboutStatement">
-        <div class="stmt-line" data-weight="bold">CODE</div>
-        <div class="stmt-line" data-weight="gray">IS NOT JUST LOGIC, BUT</div>
-        <div class="stmt-line" data-weight="bold">A BRIDGE BETWEEN SYSTEMS</div>
-        <div class="stmt-line" data-weight="bold">THAT WEREN'T BUILT TO TALK.</div>
+<section class="manifesto theme-dark" id="about" data-header="dark">
+    <div class="sec-bar">
+        <span class="sec-idx" data-odometer-idx>2/6</span>
+        <span class="sec-name">FOR ME</span>
+        <span class="sec-code">JKH/2</span>
+    </div>
+    <div class="manifesto-pin">
+        <p class="manifesto-text" data-manifesto>
+            <span class="m-line"><span class="b">CODE</span></span>
+            <span class="m-line"><span class="g">IS NOT JUST</span></span>
+            <span class="m-line"><span class="g">LOGIC,</span> <span class="b">BUT</span></span>
+            <span class="m-line"><span class="b">A BRIDGE FOR</span> <span class="g">SYSTEMS</span></span>
+            <span class="m-line"><span class="b">AND GROWTH.</span></span>
+        </p>
     </div>
 </section>
 
-<!-- Experience -->
+<section class="about theme-dark" data-header="dark">
+    <div class="sec-label">ABOUT ME</div>
+    <div class="about-grid">
+        <figure class="about-photo" data-curtain>
+            <img src="/assets/1760274672058.jfif" alt="" width="900" height="1125" loading="lazy">
+        </figure>
+        <p class="about-hello" data-reveal>HELLO!<br>I'M JEFF .K. HURIA</p>
+        <div class="about-block about-block-exp" data-reveal>
+            <h3 class="label-arrow is-dim">MY EXPERIENCE <span class="arr">↘</span></h3>
+            <p class="mock" data-mock="about.experience">{{ mock.about.experience }}</p>
+        </div>
+    </div>
+
+    <hr class="rule">
+
+    <h3 class="about-thin" data-lines>IT'S NOT JUST A PROFESSION — IT'S A WAY OF THINKING.</h3>
+
+    <div class="about-cols">
+        <div class="about-block" data-reveal>
+            <h3 class="label-arrow is-dim">MY WORK <span class="arr">↘</span></h3>
+            <p>At Solutech I spent three years on the integrations connecting a sales automation platform to the ERPs that run businesses — SAP Business One, Oracle, Dynamics 365 Business Central, Acumatica, Sage, SYSPRO, Odoo, Tally, and Epicor iScala. At Kodiwa I build the payment side: M-Pesa and bank integrations that reconcile rent automatically.</p>
+        </div>
+        <div class="about-block" data-reveal>
+            <h3 class="label-arrow is-dim">MY PHILOSOPHY <span class="arr">↘</span></h3>
+            <p class="mock" data-mock="about.philosophy">{{ mock.about.philosophy }}</p>
+        </div>
+        <div class="about-block" data-reveal>
+            <h3 class="label-arrow is-dim">MY LIFESTYLE <span class="arr">↘</span></h3>
+            <p class="mock" data-mock="about.lifestyle">{{ mock.about.lifestyle }}</p>
+        </div>
+        <div class="about-block" data-reveal>
+            <p class="mock" data-mock="about.closing">{{ mock.about.closing }}</p>
+            <a href="#connect" class="link-line" data-roll>LET'S CONTACT <span class="arr">↗</span></a>
+        </div>
+    </div>
+
+    <div class="stats mock" data-mock="stats">
+        {% for s in mock.stats %}
+        <div class="stat">
+            <span class="stat-num"><span class="odometer" data-odometer="{{ s.value }}">{{ s.value }}</span>{{ s.suffix }}</span>
+            <span class="stat-label">{{ s.label }}</span>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if publishedCapabilities | length %}
+    <div class="cap-links">
+        <span class="cap-links-label">CAPABILITIES</span>
+        {% for cap in publishedCapabilities %}
+        <a href="/capabilities/{{ cap.slug }}/" class="link-line" data-roll>{{ cap.title }} <span class="arr">↗</span></a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</section>
+
+{# ───────────────────────── EXPERIENCE ───────────────────────── #}
 <section class="experience section" id="experience">
-    <div class="section-label">[ EXPERIENCE ]</div>
-    <h2 class="section-title">WHERE I'VE<br>BUILT</h2>
+    <div class="sec-bar">
+        <span class="sec-idx">3/6</span>
+        <span class="sec-name">TRACK RECORD</span>
+        <span class="sec-code">JKH/3</span>
+    </div>
+    <h2 class="section-title" data-scatter>EXPERIENCE</h2>
     {{ experienceList(experience) }}
 </section>
 
-<!-- Works -->
-<section class="works section" id="works">
-    <div class="section-label">[ WORKS ]</div>
-    <h2 class="section-title">SELECTED<br>PROJECTS</h2>
-    {{ worksGrid(projects) }}
+{# ───────────────────────── WORKS ───────────────────────── #}
+<section class="works-intro theme-dark" data-header="dark">
+    <h2 class="big-title" data-scatter>RECENT WORKS</h2>
 </section>
 
-<!-- Services -->
+<section class="room theme-dark" id="works" data-header="dark" aria-roledescription="carousel" aria-label="Selected projects">
+    <div class="room-stage" id="roomStage">
+        <div class="room-box" id="roomBox">
+            <div class="room-wall room-left" aria-hidden="true"></div>
+            <div class="room-wall room-right" aria-hidden="true"></div>
+            <div class="room-floor" aria-hidden="true"></div>
+            <div class="room-ceiling" aria-hidden="true"><span class="room-projector"></span></div>
+            <div class="room-back">
+                <div class="room-screen" id="roomScreen">
+                    {% for item in work %}
+                    <a class="screen-slide{% if loop.first %} is-active{% endif %}" href="{{ '/work/' + item.slug + '/' if item.hasPage else '#works-index' }}" data-index="{{ loop.index0 }}" data-cursor="VIEW" aria-label="{{ item.title }}">
+                        {% if item.image %}
+                        <img src="{{ item.image.src }}" alt="{{ item.image.alt }}" width="1440" height="900" loading="lazy">
+                        {% else %}
+                        <span class="screen-type" aria-hidden="true">
+                            <span class="screen-type-meta">{{ item.type | replace("-", " ") | upper }} — {{ "0" if loop.index < 10 }}{{ loop.index }}</span>
+                            <span class="screen-type-word">{{ item.title }}</span>
+                            <span class="screen-type-meta">{{ (item.technologies | join(" / ")) or "SOFTWARE" }}</span>
+                        </span>
+                        {% endif %}
+                    </a>
+                    {% endfor %}
+                </div>
+                <div class="room-glow" aria-hidden="true"></div>
+            </div>
+            <div class="room-light" aria-hidden="true"></div>
+        </div>
+    </div>
+    <div class="room-ui">
+        <p class="room-title" id="roomTitle" aria-live="polite">{{ featured.title }}</p>
+        <div class="room-controls">
+            <button type="button" class="room-btn" id="roomPrev" aria-label="Previous project">←</button>
+            <span class="room-count"><span id="roomIdx">1</span>/{{ work | length }}</span>
+            <button type="button" class="room-btn" id="roomNext" aria-label="Next project">→</button>
+        </div>
+        <a class="room-view" id="roomView" href="/work/{{ featured.slug }}/" data-roll>[ VIEW CASE ]</a>
+        <span class="room-hint">DRAG / SWIPE</span>
+    </div>
+    <script type="application/json" id="roomData">[{% for item in work %}{"title": {{ item.title | dump | safe }}, "href": "{{ '/work/' + item.slug + '/' if item.hasPage else '#works-index' }}"}{% if not loop.last %},{% endif %}{% endfor %}]</script>
+</section>
+
+<section class="section works-index-wrap" id="works-index">
+    <div class="sec-bar">
+        <span class="sec-idx">4/6</span>
+        <span class="sec-name">INDEX</span>
+        <span class="sec-code">JKH/4</span>
+    </div>
+    <h2 class="section-title" data-scatter>ALL WORKS</h2>
+    {{ worksIndex(work) }}
+</section>
+
+{# ───────────────────────── MARQUEE ───────────────────────── #}
+<div class="marquee theme-dark" data-header="dark" aria-label="ERP systems integrated">
+    <div class="marquee-track" data-marquee>
+        {% set erps = ["SAP BUSINESS ONE", "ORACLE", "DYNAMICS 365", "ACUMATICA", "SAGE", "SYSPRO", "ODOO", "TALLY", "EPICOR", "M-PESA", "KCB", "STANBIC"] %}
+        {% for i in range(2) %}
+        <span class="marquee-group"{% if i == 1 %} aria-hidden="true"{% endif %}>{% for e in erps %}<span>{{ e }}</span><span class="marquee-star">✦</span>{% endfor %}</span>
+        {% endfor %}
+    </div>
+</div>
+
+{# ───────────────────────── SERVICES ───────────────────────── #}
 <section class="services section" id="services">
-    <div class="section-label">[ SERVICES ]</div>
-    <h2 class="section-title">WHAT I<br>DO BEST</h2>
+    <div class="sec-bar">
+        <span class="sec-idx">5/6</span>
+        <span class="sec-name">WHAT I DO</span>
+        <span class="sec-code">JKH/5</span>
+    </div>
+    <h2 class="section-title" data-scatter>SERVICES</h2>
+
+    {% set services = [
+        { title: "SOFTWARE ENGINEERING", items: ["FULL-STACK PRODUCTS", "WEB & MOBILE APPS", "SAAS PLATFORMS", "LARAVEL / REACT / RAILS"], text: "End-to-end product builds — from database schema to shipped interface — built to handle real transactions and real users." },
+        { title: "ERP INTEGRATION", items: ["SAP BUSINESS ONE", "DYNAMICS 365 / ORACLE", "SAGE / ODOO / SYSPRO", "MASTER-DATA & DOCUMENT SYNC"], text: "Connecting your systems to the ERP that runs the business, so orders, invoices, prices, and stock move between them reliably." },
+        { title: "PAYMENT INTEGRATIONS", items: ["M-PESA STK & C2B", "BANK PAYBILLS", "AUTOMATIC RECONCILIATION", "LEDGERS & INVOICING"], text: "Money that lands in an account is matched to the right invoice automatically — no spreadsheets, no guesswork." },
+        { title: "AI PRODUCTS", items: ["RAG & KNOWLEDGE BASES", "AI ASSISTANTS", "VOICE & CHAT AGENTS", "WORKFLOW AUTOMATION"], text: "AI that answers from your own data and does real work inside your product, not a demo bolted on the side." },
+        { title: "SYSTEMS ARCHITECTURE", items: ["REST & SOAP APIS", "MIDDLEWARE", "FILE-BASED INTEGRATIONS", "RELIABILITY & MONITORING"], text: "APIs and middleware that hold up under production load and across many client environments." }
+    ] %}
     <div class="services-list">
-
-        <div class="service-item">
-            <span class="service-num">01</span>
-            <div class="service-content">
-                <h3>ERP INTEGRATION CONSULTING</h3>
-                <p>Connecting your systems to SAP, Oracle, Dynamics 365, Sage, Odoo, and other major ERPs. Real-time data exchange between platforms that were never designed to talk to each other.</p>
+        {% for s in services %}
+        <article class="service">
+            <button class="service-head" type="button" aria-expanded="false">
+                <span class="service-num">00-{{ loop.index }}</span>
+                <span class="service-title">{{ s.title }}</span>
+                <span class="service-plus" aria-hidden="true"></span>
+            </button>
+            <div class="service-body">
+                <div class="service-body-inner">
+                    <ul class="service-items">
+                        <li class="service-items-head">// {{ s.title }}</li>
+                        {% for it in s.items %}<li>/ {{ it }}</li>{% endfor %}
+                    </ul>
+                    <p class="service-text">{{ s.text }}</p>
+                    <a href="#connect" class="link-line" data-roll>START A PROJECT <span class="arr">↗</span></a>
+                </div>
             </div>
-            <a href="/#connect" class="service-cta">GET STARTED ↗</a>
-        </div>
-
-        <div class="service-item">
-            <span class="service-num">02</span>
-            <div class="service-content">
-                <h3>FULL-STACK WEB DEVELOPMENT</h3>
-                <p>End-to-end product builds with React, Next.js, and Ruby on Rails — from database schema to shipped interface, built to handle real transactions and real users.</p>
-            </div>
-            <a href="/#connect" class="service-cta">GET STARTED ↗</a>
-        </div>
-
-        <div class="service-item">
-            <span class="service-num">03</span>
-            <div class="service-content">
-                <h3>API &amp; SYSTEMS ARCHITECTURE</h3>
-                <p>RESTful and SOAP API design, middleware services, and file-based integrations (CSV, XML) that hold up under production load and multiple client environments.</p>
-            </div>
-            <a href="/#connect" class="service-cta">GET STARTED ↗</a>
-        </div>
-
-        <div class="service-item">
-            <span class="service-num">04</span>
-            <div class="service-content">
-                <h3>PAYMENT INTEGRATIONS</h3>
-                <p>M-Pesa STK push and C2B, bank paybills like KCB and Stanbic, and the reconciliation behind them — so money that lands in an account is matched to the right invoice automatically.</p>
-            </div>
-            <a href="/#connect" class="service-cta">GET STARTED ↗</a>
-        </div>
-
+        </article>
+        {% endfor %}
     </div>
 </section>
 
-<!-- Contact -->
-<section class="contact section" id="contact">
-    <div class="section-label" id="connect">[ CONNECT ]</div>
-    <div class="contact-inner">
-        <h2 class="contact-title">LET'S BUILD<br>SOMETHING<br>GREAT</h2>
-        <div class="contact-right">
-            <div class="contact-links">
-                <a href="mailto:jeffhuria@gmail.com" class="contact-link">
-                    <span>EMAIL</span>
-                    <span class="cl-arrow">↗</span>
-                </a>
-                <a href="https://www.linkedin.com/in/jefferson-huria-26ab72351/" target="_blank" rel="noopener" class="contact-link">
-                    <span>LINKEDIN</span>
-                    <span class="cl-arrow">↗</span>
-                </a>
-                <a href="tel:+254702647717" class="contact-link">
-                    <span>PHONE</span>
-                    <span class="cl-arrow">↗</span>
-                </a>
-                <span class="contact-link disabled" aria-disabled="true">
-                    <span>GITHUB</span>
-                    <span class="cl-arrow">↗</span>
-                </span>
-            </div>
-            <div class="contact-email-big">
-                <a href="mailto:jeffhuria@gmail.com">jeffhuria@gmail.com</a>
-            </div>
+{# ───────────────────────── RECOGNITION ───────────────────────── #}
+<section class="recognition section">
+    <div class="sec-bar">
+        <span class="sec-idx">6/6</span>
+        <span class="sec-name">PROOF</span>
+        <span class="sec-code">JKH/6</span>
+    </div>
+    <h2 class="section-title" data-scatter>RECOGNITION</h2>
+    <div class="recog-grid mock" data-mock="recognition">
+        <p class="recog-headline" data-lines>{{ mock.recognition.headline }}</p>
+        <p class="recog-feature"><strong>{{ mock.recognition.feature.title }}</strong><br>{{ mock.recognition.feature.detail }}</p>
+        <ul class="recog-list">
+            {% for r in mock.recognition.items %}
+            <li class="recog-item">
+                <span class="recog-mark">{{ "0" if loop.index < 10 }}{{ loop.index }}</span>
+                <span class="recog-name">{{ r.name }}<sup>({{ r.count }})</sup></span>
+                <span class="arr">↗</span>
+            </li>
+            {% endfor %}
+        </ul>
+        <p class="recog-article">{{ mock.recognition.article.label }}<br><a href="#" class="link-line">{{ mock.recognition.article.title }}</a></p>
+    </div>
+</section>
+
+{# ───────────────────────── TESTIMONIALS ───────────────────────── #}
+<section class="words theme-dark" data-header="dark" aria-label="What clients say">
+    <div class="words-track mock" data-mock="testimonials" id="wordsTrack">
+        <div class="words-intro">
+            <span class="sec-name">WHAT THEY SAY</span>
+            <h2 class="words-title">KIND<br>WORDS</h2>
         </div>
+        {% for t in mock.testimonials %}
+        <figure class="word-card">
+            <span class="word-num">({{ "0" if loop.index < 10 }}{{ loop.index }})</span>
+            <blockquote>“{{ t.quote }}”</blockquote>
+            <figcaption><strong>{{ t.who }}</strong><br>{{ t.org }}</figcaption>
+        </figure>
+        {% endfor %}
     </div>
 </section>

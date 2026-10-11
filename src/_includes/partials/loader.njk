@@ -1,19 +1,9 @@
+{#- A 3D text cylinder: words are laid around a ring and the ring spins.
+    main.js builds the ring from the data-ring text. -#}
 <div class="loader" id="loader" aria-hidden="true">
-    <div class="loader-center">
-        <div class="loader-perspective">
-            <div class="loader-spin" id="loaderSpin">
-                <div class="loader-big">
-                    <div class="lb-line">CODE <span>THAT</span></div>
-                    <div class="lb-line inverted">CONNECTS THE</div>
-                    <div class="lb-line">ENTERPRISE</div>
-                </div>
-                <div class="loader-small">
-                    FULL-STACK DEVELOPMENT&nbsp;&nbsp;•&nbsp;&nbsp;ERP INTEGRATIONS&nbsp;&nbsp;•&nbsp;&nbsp;SYSTEM ARCHITECTURE
-                </div>
-            </div>
-        </div>
+    <div class="loader-stage">
+        <div class="ring ring-big" data-ring="CODE THAT CONNECTS THE ENTERPRISE · "></div>
+        <div class="ring ring-small" data-ring="SOFTWARE ENGINEERING • ERP INTEGRATION • AI PRODUCTS • PAYMENTS • FOUNDER • "></div>
     </div>
-    <div class="loader-counter">
-        <span id="loaderPct">0%</span>
-    </div>
+    <div class="loader-pct"><span id="loaderPct">0</span>%</div>
 </div>

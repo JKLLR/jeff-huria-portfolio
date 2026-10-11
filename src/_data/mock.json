@@ -1,0 +1,265 @@
+{
+    "_readme": "PLACEHOLDER CONTENT. Everything in this file is mock data written to design the site around. None of it is verified. Templates render it with a .mock highlight (toggle with the MOCK pill or the M key). Replace or delete each entry before launch; docs/MOCK_DATA.md lists them all and is regenerated on every build.",
+
+    "hero": {
+        "counter": { "value": 2400000, "suffix": "+", "label": "RECORDS SYNCED ACROSS ERPS" },
+        "tagline": "Award-winning technology builder creating software, integrations, and AI products for ambitious companies across Africa and beyond.",
+        "kicker": "CONCEPT. CODE. SCALE."
+    },
+
+    "about": {
+        "experience": "A senior engineer and founder with 8+ years of building software for companies on three continents.",
+        "philosophy": "I value clarity, leverage, and reliability — in code and in business. I build only what moves the result, and I build it to keep working when nobody is watching.",
+        "lifestyle": "I look for systems everywhere: in markets, in cities, in how people pay and trade. It is not a job — it is a way of seeing the world.",
+        "closing": "Every product is more than a ticket. It is a business I help run on better software. A good system is not about frameworks — it is about the trust it earns."
+    },
+
+    "stats": [
+        { "value": 8, "suffix": "+", "label": "YEARS BUILDING" },
+        { "value": 40, "suffix": "+", "label": "COMPANIES SERVED" },
+        { "value": 6, "suffix": "", "label": "COUNTRIES" },
+        { "value": 12, "suffix": "", "label": "PRODUCTS SHIPPED" }
+    ],
+
+    "recognition": {
+        "headline": "My work is recognised by clients, communities, and the companies that run on it",
+        "feature": { "title": "TOP 40 BUILDERS", "detail": "(Founder of the year) — East Africa Tech Awards 2025" },
+        "items": [
+            { "name": "HACKATHON WINS", "count": 4 },
+            { "name": "CONFERENCE TALKS", "count": 6 },
+            { "name": "INDUSTRY AWARDS", "count": 3 },
+            { "name": "OPEN-SOURCE PROJECTS", "count": 12 },
+            { "name": "CERTIFICATIONS", "count": 5 },
+            { "name": "PRESS FEATURES", "count": 7 }
+        ],
+        "article": { "label": "MY ARTICLE ON", "title": "ENGINEERING BLOG" }
+    },
+
+    "testimonials": [
+        { "quote": "Jeff connected four ERPs to our sales floor in a quarter. Our finance team stopped re-keying orders overnight.", "who": "CTO", "org": "REGIONAL MANUFACTURING GROUP" },
+        { "quote": "He thinks like a founder and ships like a team of five. Rent reconciliation went from days to seconds.", "who": "MANAGING DIRECTOR", "org": "PROPERTY MANAGEMENT FIRM" },
+        { "quote": "The rare engineer who can sit with the CFO in the morning and debug the integration by lunch.", "who": "HEAD OF OPERATIONS", "org": "FMCG DISTRIBUTOR" }
+    ],
+
+    "contact": {
+        "budgets": ["$5K–10K", "$10K–25K", "$25K+"],
+        "address": ["Westlands", "Nairobi, Kenya"]
+    },
+
+    "projects": {
+        "kodiwa": {
+            "impact": [
+                { "value": "KES 120M+", "label": "Rent collected through the platform" },
+                { "value": "3,500+", "label": "Units under management" },
+                { "value": "98%", "label": "Payments matched automatically" }
+            ],
+            "period": { "start": "2024-01", "end": null }
+        },
+        "sat-erp-integrator": {
+            "impact": [
+                { "value": "40+", "label": "Client companies connected" },
+                { "value": "2.4M+", "label": "Records synced per month" },
+                { "value": "-90%", "label": "Manual order re-keying" }
+            ]
+        },
+        "vochi": {
+            "impact": [
+                { "value": "10K+", "label": "Conversations handled by AI" },
+                { "value": "24/7", "label": "Coverage across voice and chat" },
+                { "value": "4", "label": "CRMs synced" }
+            ]
+        },
+        "asira-tms": {
+            "period": { "start": "2025-03", "end": null },
+            "overview": [
+                "Asira TMS is a trucking management system for East African haulage companies. It replaces the spreadsheets, WhatsApp groups, and paper delivery notes that most fleets still run on with one system for loads, trucks, drivers, and money.",
+                "Dispatchers plan loads and routes, drivers confirm pickups and deliveries from their phones, and the back office invoices customers and pays drivers from the same record — so every shilling can be traced to a trip.",
+                "I designed and built the platform end to end: the data model, the dispatch board, invoicing, driver settlements, and the reporting that tells an owner which trucks and routes actually make money."
+            ],
+            "facts": [
+                { "label": "Trips planned", "value": "15K+" },
+                { "label": "Trucks tracked", "value": "300+" },
+                { "label": "Modules", "value": "8" }
+            ],
+            "impact": [
+                { "value": "-35%", "label": "Empty kilometres" },
+                { "value": "2 days", "label": "Faster invoicing" },
+                { "value": "100%", "label": "Trips traced to revenue" }
+            ],
+            "features": [
+                { "title": "Load planning", "description": "Build loads from customer orders, assign trucks by capacity, and see the week's plan on one board." },
+                { "title": "Routing & dispatch", "description": "Route trips, dispatch drivers, and follow every truck from pickup to proof of delivery." },
+                { "title": "Invoicing", "description": "Turn delivered trips into customer invoices automatically, with rates per route and customer." },
+                { "title": "Driver payments", "description": "Settle driver allowances and trip pay against the trips they actually completed." },
+                { "title": "Revenue tracking", "description": "Profit per truck, per route, and per customer, so owners can see what earns and what burns." },
+                { "title": "Reporting", "description": "Daily operations and monthly finance reports, exportable for accountants and lenders." }
+            ],
+            "contributions": [
+                { "area": "Product & architecture", "items": [
+                    "Designed the data model connecting loads, trips, trucks, drivers, and invoices",
+                    "Set up the platform, authentication, roles, and multi-company tenancy"
+                ]},
+                { "area": "Operations", "items": [
+                    "Built the dispatch board and trip lifecycle from planning to proof of delivery",
+                    "Built driver settlements and allowance tracking"
+                ]},
+                { "area": "Finance", "items": [
+                    "Built automated invoicing from delivered trips",
+                    "Built profitability reporting per truck, route, and customer"
+                ]}
+            ],
+            "stack": [
+                { "group": "Backend", "items": ["Laravel", "PostgreSQL"] },
+                { "group": "Frontend", "items": ["Vue", "Tailwind CSS"] },
+                { "group": "Mobile", "items": ["PWA for drivers"] }
+            ]
+        },
+        "echokey": {
+            "shortDescription": "Voice-first AI assistant for Windows — talk to your computer, dictate anywhere, and run actions across your apps with a hotkey.",
+            "period": { "start": "2025-06", "end": "2025-09" },
+            "overview": [
+                "EchoKey is a voice-first AI layer for Windows. Hold a key, speak, and it types, edits, searches, or runs an action in whatever app has focus — no copy-pasting into a chat window.",
+                "It pairs fast speech recognition with a language model that understands context: the document you are in, the text you selected, and the commands you use most.",
+                "I built the desktop client, the hotkey and audio pipeline, and the command system that turns a sentence into an action."
+            ],
+            "facts": [
+                { "label": "Languages", "value": "30+" },
+                { "label": "Latency", "value": "<300ms" },
+                { "label": "Built-in actions", "value": "50+" }
+            ],
+            "impact": [
+                { "value": "5,000+", "label": "Beta downloads" },
+                { "value": "3x", "label": "Faster than typing" },
+                { "value": "4.8★", "label": "Beta rating" }
+            ],
+            "features": [
+                { "title": "Push-to-talk anywhere", "description": "One global hotkey dictates into any Windows app." },
+                { "title": "Context-aware edits", "description": "Select text and say what to change — rewrite, shorten, translate." },
+                { "title": "Voice actions", "description": "Open apps, search, and run workflows by voice." },
+                { "title": "Custom commands", "description": "Teach EchoKey your own phrases and macros." }
+            ],
+            "contributions": [
+                { "area": "Desktop client", "items": [
+                    "Built the Windows client, tray app, and global hotkey handling",
+                    "Built the audio capture and streaming speech pipeline"
+                ]},
+                { "area": "AI layer", "items": [
+                    "Built the command parser that maps speech to actions",
+                    "Built context capture from the focused app and selection"
+                ]}
+            ],
+            "stack": [
+                { "group": "Desktop", "items": ["Windows", "Electron"] },
+                { "group": "AI", "items": ["Speech-to-text", "LLM"] }
+            ]
+        },
+        "auctioneers": {
+            "shortDescription": "Online auction platform for licensed auctioneers — catalogues, live bidding, deposits, and buyer verification.",
+            "period": { "start": "2022-02", "end": "2022-09" },
+            "overview": [
+                "A web platform that moves licensed auctioneers' sales online: listings with photos and documents, timed and live bidding, buyer registration, and deposits.",
+                "It had to be trustworthy enough for high-value assets — vehicles, property, and equipment — so verification, audit trails, and clear bid history were first-class features.",
+                "I built the bidding engine, the listing management back office, and the buyer flows end to end."
+            ],
+            "facts": [
+                { "label": "Lots listed", "value": "2,000+" },
+                { "label": "Registered bidders", "value": "8,000+" },
+                { "label": "Auction types", "value": "2" }
+            ],
+            "impact": [
+                { "value": "KES 400M+", "label": "Assets auctioned" },
+                { "value": "5x", "label": "Bidder reach" },
+                { "value": "0", "label": "Disputed bids" }
+            ],
+            "features": [
+                { "title": "Catalogues", "description": "Lots with photos, documents, reserve prices, and viewing schedules." },
+                { "title": "Live & timed bidding", "description": "Real-time bids with anti-sniping extensions and a full bid history." },
+                { "title": "Buyer verification", "description": "Registration, ID checks, and refundable deposits before bidding." },
+                { "title": "Auctioneer back office", "description": "Manage sales, lots, buyers, and settlements in one place." }
+            ],
+            "contributions": [
+                { "area": "Platform", "items": [
+                    "Built the real-time bidding engine with anti-sniping rules",
+                    "Built listings, catalogues, and the auctioneer back office"
+                ]},
+                { "area": "Buyers", "items": [
+                    "Built registration, verification, and deposit flows",
+                    "Built bid history and outbid notifications"
+                ]}
+            ],
+            "stack": [
+                { "group": "Frontend", "items": ["React"] },
+                { "group": "Backend", "items": ["Ruby on Rails", "PostgreSQL", "Action Cable"] }
+            ]
+        },
+        "peperuka": {
+            "shortDescription": "Multi-vendor marketplace connecting local vendors to buyers — storefronts, orders, payouts, and delivery.",
+            "period": { "start": "2022-10", "end": "2023-03" },
+            "overview": [
+                "Peperuka is a multi-vendor marketplace that gives small local vendors an online storefront without building one themselves.",
+                "Vendors list products and manage orders; buyers shop across many vendors in one cart; the platform splits payments and coordinates delivery.",
+                "I built the marketplace core: vendor onboarding, catalogues, the multi-vendor cart and checkout, and vendor payouts."
+            ],
+            "facts": [
+                { "label": "Vendors onboarded", "value": "500+" },
+                { "label": "Products listed", "value": "12K+" },
+                { "label": "Cities", "value": "3" }
+            ],
+            "impact": [
+                { "value": "20K+", "label": "Orders processed" },
+                { "value": "48h", "label": "Vendor onboarding" },
+                { "value": "+60%", "label": "Vendor sales" }
+            ],
+            "features": [
+                { "title": "Vendor storefronts", "description": "Every vendor gets a branded store with their own catalogue." },
+                { "title": "Multi-vendor cart", "description": "One checkout across many vendors, with split payments." },
+                { "title": "Payouts", "description": "Automatic vendor payouts net of commission." },
+                { "title": "Delivery", "description": "Order tracking from vendor to doorstep." }
+            ],
+            "contributions": [
+                { "area": "Marketplace", "items": [
+                    "Built vendor onboarding, storefronts, and catalogue management",
+                    "Built the multi-vendor cart, checkout, and split payments"
+                ]}
+            ],
+            "stack": [
+                { "group": "Frontend", "items": ["React"] },
+                { "group": "Backend", "items": ["Ruby on Rails", "PostgreSQL"] }
+            ]
+        },
+        "nahla-naturals": {
+            "shortDescription": "E-commerce store for a natural skincare brand — fast storefront, editable catalogue, and checkout.",
+            "period": { "start": "2023-05", "end": "2023-07" },
+            "overview": [
+                "Nahla Naturals is a natural skincare brand that needed a storefront as considered as its products.",
+                "I built a fast Next.js store with a Sanity CMS so the team can edit products, stories, and campaigns themselves, plus checkout and order notifications.",
+                "The result is a site that loads instantly on mobile data and that the brand can run without a developer."
+            ],
+            "facts": [
+                { "label": "Lighthouse score", "value": "98" },
+                { "label": "Products", "value": "60+" },
+                { "label": "Load time", "value": "<1s" }
+            ],
+            "impact": [
+                { "value": "+140%", "label": "Online sales" },
+                { "value": "-50%", "label": "Bounce rate" },
+                { "value": "0", "label": "Developer edits needed" }
+            ],
+            "features": [
+                { "title": "Storefront", "description": "Statically generated product pages that load instantly." },
+                { "title": "Editable catalogue", "description": "Products, stories, and campaigns edited in Sanity." },
+                { "title": "Checkout", "description": "Cart, checkout, and order notifications." }
+            ],
+            "contributions": [
+                { "area": "Build", "items": [
+                    "Built the Next.js storefront and Sanity content model",
+                    "Built checkout and order notifications"
+                ]}
+            ],
+            "stack": [
+                { "group": "Frontend", "items": ["Next.js", "React"] },
+                { "group": "Content", "items": ["Sanity CMS"] }
+            ]
+        }
+    }
+}

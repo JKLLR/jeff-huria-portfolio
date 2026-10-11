@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "eleventy",
-    "prebuild": "node scripts/validate.js",
+    "prebuild": "node scripts/validate.js && node scripts/mock-report.js",
     "start": "eleventy --serve",
     "test": "node scripts/validate.js"
   },

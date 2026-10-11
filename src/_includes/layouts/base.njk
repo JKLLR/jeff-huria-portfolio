@@ -1,52 +1,68 @@
+{%- set metaTitle = title or 'JEFF .K. HURIA — Technology Builder' -%}
+{%- set metaDesc = description or 'Jeff .K. Huria — Technology Builder. Software engineer, ERP integration specialist, and AI-native founder building, connecting, and scaling systems, products, and businesses from Nairobi, Kenya.' -%}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="{{ description or 'Jeff .K. Huria — Technology Builder. Software engineer, ERP integration specialist, and AI-native founder building, connecting, and scaling systems, products, and businesses from Nairobi, Kenya.' }}">
-    <title>{{ title or 'JEFF .K. HURIA — Technology Builder' }}</title>
+    <meta name="description" content="{{ metaDesc }}">
+    <meta name="theme-color" content="#f6f6f4">
+    <title>{{ metaTitle }}</title>
 
     <link rel="canonical" href="{{ site.url }}{{ page.url }}">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="{{ site.name }}">
-    <meta property="og:title" content="{{ title or 'JEFF .K. HURIA — Technology Builder' }}">
-    <meta property="og:description" content="{{ description or 'Jeff .K. Huria — Technology Builder. Software engineer, ERP integration specialist, and AI-native founder building, connecting, and scaling systems, products, and businesses from Nairobi, Kenya.' }}">
+    <meta property="og:title" content="{{ metaTitle }}">
+    <meta property="og:description" content="{{ metaDesc }}">
     <meta property="og:url" content="{{ site.url }}{{ page.url }}">
     <meta property="og:image" content="{{ site.url }}{{ site.image }}">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ title or 'JEFF .K. HURIA — Technology Builder' }}">
-    <meta name="twitter:description" content="{{ description or 'Jeff .K. Huria — Technology Builder. Software engineer, ERP integration specialist, and AI-native founder building, connecting, and scaling systems, products, and businesses from Nairobi, Kenya.' }}">
+    <meta name="twitter:title" content="{{ metaTitle }}">
+    <meta name="twitter:description" content="{{ metaDesc }}">
     <meta name="twitter:image" content="{{ site.url }}{{ site.image }}">
 
-    <script>document.documentElement.classList.add('js');</script>
+    <script>
+        // js: enable entrance styles. first-visit: show the full loader once per session.
+        // mock-on: highlight placeholder content (default on while the copy is being written).
+        (function () {
+            var c = document.documentElement.classList;
+            c.add('js');
+            try {
+                if (!sessionStorage.getItem('jkh-visited')) c.add('first-visit');
+                if (localStorage.getItem('jkh-mock') !== 'off') c.add('mock-on');
+            } catch (e) { c.add('first-visit', 'mock-on'); }
+        })();
+    </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Condensed:wght@500;600;700;800;900&family=Spline+Sans+Mono:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body class="{{ bodyClass or '' }}">
 
     <a class="skip-link" href="#main">Skip to content</a>
 
-    <!-- Custom cursor (decorative) -->
-    <div class="cursor-dot" id="cursorDot" aria-hidden="true"></div>
+    <div class="cursor" id="cursor" aria-hidden="true"><span class="cursor-label" id="cursorLabel"></span></div>
 
-    <!-- ===== LOADING SCREEN ===== -->
     {% include "partials/loader.njk" %}
 
-    <!-- ===== MAIN SITE ===== -->
-    <div class="site" id="site">
-
-        {% include "partials/header.njk" %}
-
-        <main id="main">
-            {{ content | safe }}
-        </main>
-
-        {% include "partials/footer.njk" %}
-
+    <!-- Page-transition curtain -->
+    <div class="curtain" id="curtain" aria-hidden="true">
+        <span class="curtain-word" id="curtainWord">JEFF .K. HURIA</span>
     </div>
+
+    {% include "partials/header.njk" %}
+
+    <main id="main">
+        {{ content | safe }}
+    </main>
+
+    {% include "partials/footer.njk" %}
+
+    <button class="mock-toggle" id="mockToggle" type="button" aria-pressed="true" title="Highlight placeholder content (M)">
+        <span class="mock-dot"></span> MOCK DATA <span class="mock-state">ON</span>
+    </button>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>

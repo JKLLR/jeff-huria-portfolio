@@ -1,0 +1,24 @@
+{#- Index of projects as full-width rows. On pointer devices a preview
+    follows the cursor (main.js); on touch the preview sits inline. -#}
+{% macro worksIndex(items) %}
+<div class="works-index">
+    <div class="wi-head" aria-hidden="true">
+        <span>NO.</span><span>PROJECT</span><span>TYPE</span><span>ROLE</span><span>STATUS</span>
+    </div>
+    <ul class="wi-list">
+        {% for item in items %}
+        {% set href = '/work/' + item.slug + '/' if item.hasPage else '' %}
+        <li class="wi-row{% if item.mockFields and item.mockFields | length %} has-mock{% endif %}" data-preview="{{ item.image.src if item.image else '' }}" data-word="{{ item.title }}">
+            {% if href %}<a href="{{ href }}" class="wi-link" data-cursor="OPEN">{% else %}<div class="wi-link">{% endif %}
+                <span class="wi-num">{{ "0" if loop.index < 10 }}{{ loop.index }}</span>
+                <span class="wi-title"><span class="wi-title-inner">{{ item.title }}</span></span>
+                <span class="wi-type">{{ item.type | replace("-", " ") | upper }}</span>
+                <span class="wi-role">{{ item.role | join(" · ") | upper }}</span>
+                <span class="wi-status">{{ item.status | statusLabel }}{% if href %} <span class="arr">↗</span>{% endif %}</span>
+            {% if href %}</a>{% else %}</div>{% endif %}
+        </li>
+        {% endfor %}
+    </ul>
+    <div class="wi-preview" aria-hidden="true"><div class="wi-preview-inner"></div></div>
+</div>
+{% endmacro %}

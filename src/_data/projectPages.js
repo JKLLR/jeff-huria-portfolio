@@ -1,5 +1,2 @@
-const projects = require('./projects.json');
-
-// A project earns a /work/{slug}/ page only once it has a real overview —
-// thin records stay as cards. Same evidence-first rule as capabilities.
-module.exports = projects.filter((project) => (project.overview || []).length > 0);
+// Projects that get a /work/{slug}/ page — those with an overview
+module.exports = require('./work.js').filter((project) => project.hasPage);

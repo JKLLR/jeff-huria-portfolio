@@ -5,58 +5,80 @@ pagination:
   size: 1
   alias: project
 permalink: /work/{{ project.slug }}/index.html
+bodyClass: page-project
 eleventyComputed:
   title: "{{ project.title }} — JEFF .K. HURIA"
   description: "{{ project.shortDescription }}"
 ---
-{% set nextProject = projectPages[(pagination.pageNumber + 1) % (projectPages | length)] %}
+{%- set mf = project.mockFields or [] -%}
+{%- macro mockAttr(field) -%}{% if field in mf %} mock" data-mock="projects.{{ project.id }}.{{ field }}{% endif %}{%- endmacro -%}
+{%- set nextProject = projectPages[(pagination.pageNumber + 1) % (projectPages | length)] -%}
+{%- set num = pagination.pageNumber + 1 -%}
 
-<section class="section project-hero">
-    <div class="section-label">[ PROJECT — {{ project.type | replace("-", " ") | upper }} ]</div>
-    <h1 class="section-title project-title">{{ project.title }}</h1>
-    {% if project.shortDescription %}
-    <p class="project-tagline">{{ project.shortDescription }}</p>
-    {% endif %}
-
-    <dl class="project-meta">
-        {% if project.role | length %}
-        <div><dt>ROLE</dt><dd>{{ project.role | join(" · ") }}</dd></div>
+<section class="project-hero">
+    <div class="sec-bar">
+        <span class="sec-idx">{{ "0" if num < 10 }}{{ num }}/{{ "0" if projectPages | length < 10 }}{{ projectPages | length }}</span>
+        <span class="sec-name">{{ project.type | replace("-", " ") | upper }}</span>
+        <a class="sec-code link-line" href="/#works-index" data-roll>ALL WORKS <span class="arr">↗</span></a>
+    </div>
+    <h1 class="project-title"><span class="fit-text" data-fit data-letters>{{ project.title }}</span></h1>
+    <div class="project-intro">
+        {% if project.shortDescription %}
+        <p class="project-tagline{{ mockAttr('shortDescription') }}" data-lines>{{ project.shortDescription }}</p>
         {% endif %}
-        {% if project.period %}
-        <div><dt>PERIOD</dt><dd>{{ project.period.start | dateRange(project.period.end) }}</dd></div>
-        {% endif %}
-        <div><dt>STATUS</dt><dd>{{ project.status | statusLabel }}</dd></div>
-        {% if project.links.website %}
-        <div><dt>LIVE</dt><dd><a href="{{ project.links.website }}" target="_blank" rel="noopener" class="work-link">{{ project.links.website | replace("https://", "") }} ↗</a></dd></div>
-        {% endif %}
-    </dl>
+        <dl class="project-meta">
+            {% if project.role | length %}
+            <div><dt>ROLE</dt><dd>{{ project.role | join(" · ") }}</dd></div>
+            {% endif %}
+            {% if project.period %}
+            <div class="{{ mockAttr('period') }}"><dt>PERIOD</dt><dd>{{ project.period.start | dateRange(project.period.end) }}</dd></div>
+            {% endif %}
+            <div><dt>STATUS</dt><dd>{{ project.status | statusLabel }}</dd></div>
+            {% if project.links.website %}
+            <div><dt>LIVE</dt><dd><a href="{{ project.links.website }}" target="_blank" rel="noopener" class="link-line">{{ project.links.website | replace("https://", "") }} <span class="arr">↗</span></a></dd></div>
+            {% endif %}
+        </dl>
+    </div>
 </section>
 
-<div class="project-cover">
-    {% if project.image %}
-    <div class="work-img-inner">
+<div class="project-cover" data-cover>
+    <div class="project-cover-inner">
+        {% if project.image %}
         <img src="{{ project.image.src }}" alt="{{ project.image.alt }}" width="1440" height="900" fetchpriority="high">
+        {% else %}
+        <div class="cover-type" aria-hidden="true">
+            <span class="cover-type-row">{% for i in range(4) %}<span>{{ project.title }}</span>{% endfor %}</span>
+            <span class="cover-type-row is-outline">{% for i in range(4) %}<span>{{ project.title }}</span>{% endfor %}</span>
+            <span class="cover-type-row">{% for i in range(4) %}<span>{{ project.title }}</span>{% endfor %}</span>
+        </div>
+        {% endif %}
     </div>
-    {% else %}
-    <div class="work-img-inner work-img-type" aria-hidden="true">
-        <span class="work-img-word">{{ project.title }}</span>
-    </div>
-    {% endif %}
 </div>
 
+{% if project.impact | length %}
+<section class="impact{{ mockAttr('impact') }}">
+    {% for m in project.impact %}
+    <div class="impact-item">
+        <span class="impact-value">{{ m.value }}</span>
+        <span class="impact-label">{{ m.label }}</span>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
 <section class="section project-overview">
-    <div class="section-label">[ OVERVIEW ]</div>
-    <div class="project-overview-body">
+    <h2 class="label-arrow">OVERVIEW <span class="arr">↘</span></h2>
+    <div class="project-overview-body{{ mockAttr('overview') }}">
         {% for para in project.overview %}
-        <p>{{ para }}</p>
+        <p{% if loop.first %} class="lead" data-lines{% else %} data-reveal{% endif %}>{{ para }}</p>
         {% endfor %}
     </div>
     {% if project.facts | length %}
-    <div class="about-stats project-facts">
+    <div class="stats project-facts{{ mockAttr('facts') }}">
         {% for fact in project.facts %}
         <div class="stat">
             <span class="stat-num">{{ fact.value }}</span>
-            <span class="stat-label">{{ fact.label }}</span>
+            <span class="stat-label">{{ fact.label | upper }}</span>
         </div>
         {% endfor %}
     </div>
@@ -65,12 +87,16 @@ eleventyComputed:
 
 {% if project.features | length %}
 <section class="section project-features">
-    <div class="section-label">[ THE PRODUCT ]</div>
-    <h2 class="section-title">WHAT IT<br>DOES</h2>
-    <div class="feature-grid">
+    <div class="sec-bar">
+        <span class="sec-idx">01</span>
+        <span class="sec-name">THE PRODUCT</span>
+        <span class="sec-code">{{ project.features | length }} FEATURES</span>
+    </div>
+    <h2 class="section-title" data-scatter>WHAT IT DOES</h2>
+    <div class="feature-grid{{ mockAttr('features') }}">
         {% for feature in project.features %}
-        <div class="feature">
-            <span class="service-num">{{ "0" if loop.index < 10 else "" }}{{ loop.index }}</span>
+        <div class="feature" data-reveal>
+            <span class="feature-num">00-{{ loop.index }}</span>
             <h3>{{ feature.title }}</h3>
             <p>{{ feature.description }}</p>
         </div>
@@ -80,17 +106,20 @@ eleventyComputed:
 {% endif %}
 
 {% if project.contributions | length %}
-<section class="section project-contributions">
-    <div class="section-label">[ MY WORK ]</div>
-    <h2 class="section-title">WHAT I<br>BUILT</h2>
-    <div class="contrib-list">
+<section class="project-contributions theme-dark" data-header="dark">
+    <div class="sec-bar">
+        <span class="sec-idx">02</span>
+        <span class="sec-name">MY WORK</span>
+        <span class="sec-code">{{ project.role | join(" · ") | upper }}</span>
+    </div>
+    <h2 class="section-title" data-scatter>WHAT I BUILT</h2>
+    <div class="contrib-list{{ mockAttr('contributions') }}">
         {% for group in project.contributions %}
-        <div class="contrib">
+        <div class="contrib" data-reveal>
+            <span class="contrib-num">({{ "0" if loop.index < 10 }}{{ loop.index }})</span>
             <h3 class="contrib-area">{{ group.area }}</h3>
-            <ul class="work-highlights">
-                {% for item in group.items %}
-                <li>{{ item }}</li>
-                {% endfor %}
+            <ul class="contrib-items">
+                {% for item in group.items %}<li>{{ item }}</li>{% endfor %}
             </ul>
         </div>
         {% endfor %}
@@ -100,11 +129,11 @@ eleventyComputed:
 
 {% if project.stack | length %}
 <section class="section project-stack">
-    <div class="section-label">[ STACK ]</div>
-    <dl class="stack-list">
+    <h2 class="label-arrow">STACK <span class="arr">↘</span></h2>
+    <dl class="stack-list{{ mockAttr('stack') }}">
         {% for group in project.stack %}
-        <div class="stack-row">
-            <dt>{{ group.group }}</dt>
+        <div class="stack-row" data-reveal>
+            <dt>{{ group.group | upper }}</dt>
             <dd>{{ group.items | join(" / ") }}</dd>
         </div>
         {% endfor %}
@@ -113,35 +142,42 @@ eleventyComputed:
 {% endif %}
 
 {% if project.gallery | length %}
-<section class="section project-gallery">
-    <div class="section-label">[ GALLERY ]</div>
-    <div class="gallery-grid">
+<section class="project-gallery" data-hscroll>
+    <div class="gallery-track">
+        <div class="gallery-intro">
+            <span class="sec-name">GALLERY</span>
+            <h2 class="gallery-title">IN<br>DETAIL</h2>
+            <span class="gallery-hint">SCROLL →</span>
+        </div>
         {% for shot in project.gallery %}
         <figure class="gallery-item{% if shot.height > shot.width %} is-portrait{% endif %}">
             <div class="gallery-frame">
                 <img src="{{ shot.src }}" alt="{{ shot.alt }}" width="{{ shot.width }}" height="{{ shot.height }}" loading="lazy" decoding="async">
             </div>
-            <figcaption>{{ shot.caption }}</figcaption>
+            <figcaption><span>({{ "0" if loop.index < 10 }}{{ loop.index }})</span> {{ shot.caption }}</figcaption>
         </figure>
         {% endfor %}
     </div>
 </section>
 {% endif %}
 
-<section class="section project-footer-nav">
-    {% if project.capabilities | length %}
-    <div class="capability-links">
+{% if project.capabilities | length %}
+<section class="section project-caps">
+    <div class="cap-links">
+        <span class="cap-links-label">CAPABILITIES</span>
         {% for slug in project.capabilities %}
         {% for cap in publishedCapabilities %}{% if cap.slug == slug %}
-        <a href="/capabilities/{{ cap.slug }}/" class="capability-link">{{ cap.title }} ↗</a>
+        <a href="/capabilities/{{ cap.slug }}/" class="link-line" data-roll>{{ cap.title }} <span class="arr">↗</span></a>
         {% endif %}{% endfor %}
         {% endfor %}
     </div>
-    {% endif %}
-    {% if nextProject and nextProject.slug != project.slug %}
-    <a href="/work/{{ nextProject.slug }}/" class="next-project">
-        <span class="next-label">NEXT PROJECT</span>
-        <span class="next-title">{{ nextProject.title }} →</span>
-    </a>
-    {% endif %}
 </section>
+{% endif %}
+
+{% if nextProject and nextProject.slug != project.slug %}
+<a href="/work/{{ nextProject.slug }}/" class="next-project" data-cursor="NEXT">
+    <span class="next-label">NEXT PROJECT <span class="arr">↘</span></span>
+    <span class="next-title"><span class="fit-text" data-fit>{{ nextProject.title }}</span></span>
+    <span class="next-meta">{{ nextProject.type | replace("-", " ") | upper }} — {{ nextProject.status | statusLabel }}</span>
+</a>
+{% endif %}

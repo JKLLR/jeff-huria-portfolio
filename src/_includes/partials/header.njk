@@ -1,12 +1,27 @@
 <header class="header" id="header">
-    <a href="/" class="header-brand">JEFF .K.<br>HURIA</a>
-    <nav class="header-nav" id="headerNav" aria-label="Primary">
-        <a href="/#about">[ ABOUT ME ]</a>
-        <a href="/#experience">[ EXPERIENCE ]</a>
-        <a href="/#works">[ WORKS ]</a>
-        <a href="/#services">[ SERVICES ]</a>
-        <a href="/#connect">[ CONNECT ]</a>
+    <a href="/" class="brand" aria-label="Jeff .K. Huria — home">JEFF .K.<br>HURIA</a>
+    <nav class="nav" id="nav" aria-label="Primary">
+        <a href="/#about" class="nav-link" data-roll>[ ABOUT ME ]</a>
+        <a href="/#works" class="nav-link" data-roll>[ WORKS ]</a>
+        <a href="/#services" class="nav-link" data-roll>[ SERVICES ]</a>
+        <a href="/#connect" class="nav-link" data-roll>[ CONNECT ]</a>
     </nav>
-    <button class="nav-toggle" aria-expanded="false" aria-controls="headerNav" aria-label="Open menu">MENU</button>
-    <a href="/#connect" class="header-cta">CONTACT ME ↗</a>
+    <a href="/#connect" class="header-cta link-line" data-roll>CONTACT ME <span class="arr">↗</span></a>
+    <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="menu">
+        <span class="menu-btn-text">MENU</span>
+    </button>
 </header>
+
+<!-- Full-screen menu (mobile) -->
+<div class="menu" id="menu" aria-hidden="true">
+    <nav class="menu-links" aria-label="Menu">
+        <a href="/#about"><span>ABOUT ME</span></a>
+        <a href="/#works"><span>WORKS</span></a>
+        <a href="/#services"><span>SERVICES</span></a>
+        <a href="/#connect"><span>CONNECT</span></a>
+    </nav>
+    <div class="menu-foot">
+        <a href="mailto:{{ site.email }}">{{ site.email }}</a>
+        <span>NAIROBI, KENYA</span>
+    </div>
+</div>

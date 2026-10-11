@@ -1,35 +1,36 @@
 {% macro experienceList(items) %}
-<div class="experience-list">
+<ol class="exp-list">
     {% for item in items %}
-    <div class="exp-item">
-        <span class="exp-num">{{ "0" if loop.index < 10 else "" }}{{ loop.index }}</span>
-        <div class="exp-content">
-            <div class="exp-head">
-                <h3>{{ item.role }}</h3>
-                <span class="exp-company">{{ item.company }}</span>
-                {% if item.current %}<span class="exp-current">CURRENT</span>{% endif %}
+    <li class="exp">
+        <button class="exp-head" type="button" aria-expanded="false">
+            <span class="exp-num">{{ "0" if loop.index < 10 }}{{ loop.index }}</span>
+            <span class="exp-company">{{ item.company }}</span>
+            <span class="exp-role">{{ item.role }}{% if item.current %} <em class="exp-current">NOW</em>{% endif %}</span>
+            <span class="exp-dates">{{ item.startDate | dateRange(item.endDate) }}</span>
+            <span class="service-plus" aria-hidden="true"></span>
+        </button>
+        <div class="exp-body">
+            <div class="exp-body-inner">
+                <p class="exp-summary">{{ item.summary }}</p>
+                <div class="exp-cols">
+                    {% if item.responsibilities | length %}
+                    <ul class="exp-points">
+                        <li class="exp-points-head">// RESPONSIBILITIES</li>
+                        {% for r in item.responsibilities %}<li>{{ r }}</li>{% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% if item.achievements | length %}
+                    <ul class="exp-points">
+                        <li class="exp-points-head">// ACHIEVEMENTS</li>
+                        {% for a in item.achievements %}<li>{{ a }}</li>{% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+                {% if item.systems | length %}<p class="exp-systems">{{ item.systems | join(" · ") }}</p>{% endif %}
+                {% if item.technologies | length %}<p class="exp-tech">{{ item.technologies | join(" / ") }}</p>{% endif %}
             </div>
-            <p>{{ item.summary }}</p>
-            {% if item.responsibilities | length %}
-            <ul class="exp-resp">
-                {% for responsibility in item.responsibilities %}
-                <li>{{ responsibility }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-            {% if item.achievements | length %}
-            <ul class="exp-ach">
-                {% for achievement in item.achievements %}
-                <li>{{ achievement }}</li>
-                {% endfor %}
-            </ul>
-            {% endif %}
-            {% if item.systems | length %}
-            <p class="exp-systems">{{ item.systems | join(" · ") }}</p>
-            {% endif %}
         </div>
-        <span class="exp-dates">{{ item.startDate | dateRange(item.endDate) }}</span>
-    </div>
+    </li>
     {% endfor %}
-</div>
+</ol>
 {% endmacro %}

@@ -5,51 +5,86 @@ pagination:
   size: 1
   alias: cap
 permalink: /capabilities/{{ cap.slug }}/index.html
+bodyClass: page-capability
 eleventyComputed:
   title: "{{ cap.title }} — JEFF .K. HURIA"
   description: "{{ cap.summary }}"
 ---
-{% from "partials/works-grid.njk" import worksGrid %}
+{% from "partials/works-index.njk" import worksIndex %}
 {% from "partials/experience-list.njk" import experienceList %}
-{% set capProjects = projects | byCapability(cap.slug) %}
+{% set capProjects = work | byCapability(cap.slug) %}
 {% set capExperience = experience | byCapability(cap.slug) %}
 
-<section class="section capability-hero">
-    <div class="section-label">[ CAPABILITY ]</div>
-    <h1 class="section-title">{{ cap.title }}</h1>
-    <p class="capability-tagline">{{ cap.tagline }}</p>
+<section class="project-hero capability-hero">
+    <div class="sec-bar">
+        <span class="sec-idx">CAPABILITY</span>
+        <span class="sec-name">{{ cap.tagline | upper }}</span>
+        <a class="sec-code link-line" href="/#about" data-roll>ABOUT ME <span class="arr">↗</span></a>
+    </div>
+    <h1 class="project-title"><span class="fit-text" data-fit data-letters>{{ cap.title }}</span></h1>
+    <div class="project-intro">
+        <p class="project-tagline" data-lines>{{ cap.summary }}</p>
+    </div>
 </section>
 
-<section class="section capability-description">
-    {% for para in cap.description %}
-    <p>{{ para }}</p>
-    {% endfor %}
+<section class="section project-overview">
+    <h2 class="label-arrow">IN PRACTICE <span class="arr">↘</span></h2>
+    <div class="project-overview-body">
+        {% for para in cap.description %}
+        <p{% if loop.first %} class="lead" data-lines{% else %} data-reveal{% endif %}>{{ para }}</p>
+        {% endfor %}
+    </div>
 </section>
 
 {% if cap.competencies | length %}
-<section class="section capability-competencies">
-    <div class="section-label">[ APPROACH ]</div>
-    <h2 class="section-title">HOW I<br>WORK</h2>
-    <ul class="cap-comp-list">
+<section class="section project-features">
+    <div class="sec-bar">
+        <span class="sec-idx">01</span>
+        <span class="sec-name">APPROACH</span>
+        <span class="sec-code">{{ cap.competencies | length }} DISCIPLINES</span>
+    </div>
+    <h2 class="section-title" data-scatter>HOW I WORK</h2>
+    <div class="feature-grid">
         {% for competency in cap.competencies %}
-        <li>{{ competency }}</li>
+        <div class="feature" data-reveal>
+            <span class="feature-num">00-{{ loop.index }}</span>
+            <h3>{{ competency }}</h3>
+        </div>
         {% endfor %}
-    </ul>
+    </div>
 </section>
 {% endif %}
 
+{% if cap.technologies | length %}
+<div class="marquee theme-dark" data-header="dark">
+    <div class="marquee-track" data-marquee>
+        {% for i in range(2) %}
+        <span class="marquee-group"{% if i == 1 %} aria-hidden="true"{% endif %}>{% for t in cap.technologies %}<span>{{ t | upper }}</span><span class="marquee-star">✦</span>{% endfor %}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
 {% if capExperience | length %}
-<section class="section capability-evidence" id="experience">
-    <div class="section-label">[ EVIDENCE — EXPERIENCE ]</div>
-    <h2 class="section-title">WHERE IT<br>SHOWS UP</h2>
+<section class="section experience">
+    <div class="sec-bar">
+        <span class="sec-idx">02</span>
+        <span class="sec-name">EVIDENCE</span>
+        <span class="sec-code">EXPERIENCE</span>
+    </div>
+    <h2 class="section-title" data-scatter>WHERE IT SHOWS UP</h2>
     {{ experienceList(capExperience) }}
 </section>
 {% endif %}
 
 {% if capProjects | length %}
-<section class="section capability-evidence" id="works">
-    <div class="section-label">[ EVIDENCE — PROJECTS ]</div>
-    <h2 class="section-title">WHAT I'VE<br>SHIPPED</h2>
-    {{ worksGrid(capProjects) }}
+<section class="section works-index-wrap">
+    <div class="sec-bar">
+        <span class="sec-idx">03</span>
+        <span class="sec-name">EVIDENCE</span>
+        <span class="sec-code">PROJECTS</span>
+    </div>
+    <h2 class="section-title" data-scatter>WHAT I'VE SHIPPED</h2>
+    {{ worksIndex(capProjects) }}
 </section>
 {% endif %}
