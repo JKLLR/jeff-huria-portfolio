@@ -6,23 +6,23 @@
         "startDate": "2023-04",
         "endDate": "2026-06",
         "current": false,
-        "summary": "Software engineer on the SAT ERP integrator — an integration layer connecting a sales automation platform to major ERP and finance systems. Designed RESTful and file-based APIs for real-time data exchange, working across manufacturing, distribution, and FMCG clients.",
+        "summary": "Software engineer on Solutech's Sales Automation Tool — field-sales software for manufacturers and distributors — and the ERP integrations behind it, first built directly into the platform and later through a dedicated on-premise integrator, across manufacturing, distribution, and FMCG clients.",
         "responsibilities": [],
         "achievements": [],
         "technologies": [
-            "SAP",
+            "SAP Business One",
             "Oracle",
-            "Microsoft Dynamics 365",
-            "Sage",
-            "Epicor iScala",
+            "Microsoft Dynamics 365 Business Central",
+            "Acumatica",
+            "Sage 200 Evolution",
+            "Sage Business Cloud",
+            "SYSPRO",
             "Odoo",
-            "QuickBooks",
-            "Power BI",
-            "Tableau",
-            "Qlik",
-            "M-Pesa"
+            "Tally Prime",
+            "Epicor iScala"
         ],
         "systems": [
+            "Sales Automation Tool (SAT)",
             "SAT ERP integrator"
         ],
         "capabilities": [

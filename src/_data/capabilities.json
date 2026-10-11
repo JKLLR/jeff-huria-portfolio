@@ -26,29 +26,28 @@
         "slug": "erp-integration",
         "title": "ERP INTEGRATION SPECIALIST",
         "tagline": "Connecting the enterprise systems that were never built to talk",
-        "summary": "Real-time data exchange across ERP and finance platforms that were never designed to talk to each other — SAP, Oracle, Dynamics 365, Sage, Odoo, and more.",
+        "summary": "Connecting field-sales software to the ERPs that run the business — SAP Business One, Oracle, Dynamics 365 Business Central, Acumatica, Sage, SYSPRO, Odoo, Tally, and Epicor iScala — so orders, invoices, prices, and stock move between them reliably.",
         "description": [
-            "At Solutech, I built the integration layer connecting a sales automation platform to eight major ERP and finance systems — SAP, Oracle, Microsoft Dynamics 365, Sage, Epicor iScala, Odoo, QuickBooks — plus BI tools like Power BI, Tableau, and Qlik, and payment platforms like M-Pesa.",
-            "That work is RESTful and file-based API design (CSV, XML), real-time data exchange across platforms with fundamentally different data models, and doing it reliably across manufacturing, distribution, and FMCG clients in production. This is the differentiator most engineers don't have: making enterprise systems that were never designed to talk to each other actually exchange data correctly, at scale."
+            "For three years at Solutech I worked on the integrations between its Sales Automation Tool and clients' ERPs. Before the dedicated integrator existed, that meant SAP Business One and other ERPs wired directly into the platform: posting orders and sales invoices, pulling price lists, special prices, blanket agreements, and account status. I built the Acumatica connector from scratch.",
+            "Later I worked on the on-premise integrator that replaced those direct links — a configurable middleware layer that reads ERPs over ODBC or their own APIs and writes back through COM SDKs, REST, SOAP, or XML. There I built the Sage 200 Evolution API integration, order-status tracking through a database trigger and outbox, and a validator that checks every ERP query pack against a live schema. The hard part is never the API call; it's making two systems with different data models agree on what an order, a price, or a customer is."
         ],
         "competencies": [
             "ERP Integration",
             "API Architecture",
-            "Data Integration",
-            "Payment Integration"
+            "Data Synchronisation",
+            "Integration Reliability"
         ],
         "technologies": [
-            "SAP",
+            "SAP Business One",
             "Oracle",
-            "Microsoft Dynamics 365",
-            "Sage",
-            "Epicor iScala",
+            "Microsoft Dynamics 365 Business Central",
+            "Acumatica",
+            "Sage 200 Evolution",
+            "Sage Business Cloud",
+            "SYSPRO",
             "Odoo",
-            "QuickBooks",
-            "Power BI",
-            "Tableau",
-            "Qlik",
-            "M-Pesa"
+            "Tally Prime",
+            "Epicor iScala"
         ],
         "published": true
     },

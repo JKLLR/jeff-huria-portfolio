@@ -250,16 +250,16 @@
         "id": "sat-erp-integrator",
         "slug": "sat-erp-integrator",
         "title": "SAT ERP INTEGRATOR",
-        "shortDescription": "Integration layer connecting Solutech's sales automation platform to clients' ERPs — SAP Business One, Sage, SYSPRO, Odoo, Tally, Epicor iScala, and Acumatica — syncing master data, sales documents, and tax e-invoices in both directions.",
+        "shortDescription": "The integrations between Solutech's sales automation platform and clients' ERPs — SAP Business One, Oracle, Dynamics 365 Business Central, Acumatica, Sage, SYSPRO, Odoo, Tally, and Epicor iScala — syncing master data, sales documents, and tax e-invoices in both directions.",
         "type": "client-project",
         "status": "shipped",
         "role": [
             "Software Engineer"
         ],
         "highlights": [
+            "Built SAP Business One sync for blanket agreements and much of sales-invoice posting, price lists, and customer special prices",
             "Built the Acumatica ERP connector end to end — OAuth, master-data pulls, order posting, and inbound webhooks",
-            "Built the Sage 200 Evolution API integration, with order-status tracking through a database trigger and outbox",
-            "Wrote a validator that dry-runs every ERP query pack against a live schema and suggests corrections"
+            "Built the Sage 200 Evolution integration, with order-status tracking through a database trigger and outbox"
         ],
         "image": null,
         "technologies": [],
@@ -276,17 +276,17 @@
         },
         "overview": [
             "Solutech's Sales Automation Tool (SAT) runs field sales for manufacturers and distributors — reps taking orders, collecting payments, and checking stock on the road. None of that is useful unless it reaches the ERP that actually runs the business, and every client runs a different one.",
-            "The integration layer has two halves. Inside SAT, a per-client integration registry pushes orders, invoices, credit notes, and returns to the client's ERP and accepts customers, products, prices, and stock back into staging tables. Next to the ERP, an on-premise Laravel integrator runs scheduled master-data and document syncs, reads ERP data over ODBC or the ERP's own API, maps fields through configuration, and writes documents back through the most native route each ERP offers — COM SDKs, REST, SOAP, or XML.",
-            "New clients are onboarded mostly by configuration — ERP type, field mappings, and per-ERP SQL query packs — rather than new code. I worked across both halves for three years: I built the Acumatica connector in SAT, a long run of ERP sync features, and the Sage 200 Evolution integration and diagnostics tooling in the on-premise integrator."
+            "The integrations grew in two generations. First, ERPs were wired straight into SAT: controllers that post orders, sales invoices, deliveries, and payments into SAP Business One and other ERPs, and pull customers, products, price lists, and stock back into staging tables. Then came an on-premise Laravel integrator that sits next to the ERP, runs scheduled master-data and document syncs, reads over ODBC or the ERP's own API, maps fields through configuration, and writes back through the most native route each ERP offers — COM SDKs, REST, SOAP, or XML.",
+            "With the integrator, new clients are onboarded mostly by configuration — ERP type, field mappings, and per-ERP SQL query packs — rather than new code. I worked across both generations for three years: SAP Business One and Acumatica integrations in the platform, and the Sage 200 Evolution integration and diagnostics tooling in the integrator."
         ],
         "facts": [
             {
-                "label": "Data & document types synced",
-                "value": "31"
+                "label": "ERP systems",
+                "value": "9"
             },
             {
-                "label": "ERP & tax connectors",
-                "value": "9"
+                "label": "Data & document types synced",
+                "value": "31"
             },
             {
                 "label": "Years on the platform",
@@ -296,7 +296,7 @@
         "features": [
             {
                 "title": "Pluggable connectors",
-                "description": "SAP Business One (SQL Server and HANA), Sage 200 Evolution, Sage Business Cloud, SYSPRO, Odoo, Tally Prime, Epicor iScala, and Acumatica."
+                "description": "SAP Business One (SQL Server and HANA), Oracle, Dynamics 365 Business Central, Acumatica, Sage 200 Evolution, Sage Business Cloud, SYSPRO, Odoo, Tally Prime, and Epicor iScala."
             },
             {
                 "title": "Master-data sync",
@@ -321,6 +321,15 @@
         ],
         "contributions": [
             {
+                "area": "SAP Business One integration",
+                "items": [
+                    "Wrote the blanket-agreement sync end to end — pulling agreements from SAP and processing them into SAT so field orders reference the right contract",
+                    "Built a large share of sales-invoice creation in SAP from SAT sales, plus the price-list pull",
+                    "Built customer special prices across the pull, process, and generate stages, with staging and live tables and a second-generation processing route",
+                    "Contributed to customer account status, stock requests, order posting, and sales posting — 200+ commits on the SAP integration between 2024 and 2026"
+                ]
+            },
+            {
                 "area": "Acumatica connector",
                 "items": [
                     "Created the Acumatica integration in SAT: an OAuth2 token flow with cached bearer tokens and integration keys held in Redis",
@@ -330,12 +339,11 @@
                 ]
             },
             {
-                "area": "ERP sync features in SAT",
+                "area": "Platform sync features",
                 "items": [
-                    "Built a customer special-prices integration — staging and live tables with pull, process, and generate endpoints — and a second-generation processing route",
                     "Added an ERP quotations endpoint, blanket-agreement references on orders, ship-to codes on orders and sales, and delivery-address and alias sync for customers",
-                    "Added per-client ERP configuration endpoints, fixed price-list pulls, added ERP IDs to route-plan imports, and added discount-rate sync",
-                    "Built product, outlet, and order syncing to a third-party retail distribution platform through queued jobs and console commands"
+                    "Added per-client ERP configuration endpoints, ERP IDs on route-plan imports, and discount-rate sync",
+                    "Worked on requisition, transfer-request, and user account-status integrations, and synced products, outlets, and orders to a third-party retail distribution platform"
                 ]
             },
             {

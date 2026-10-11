@@ -434,7 +434,7 @@ function initSite() {
 
     // Hero count-up
     const heroCountEl = document.getElementById('heroCount');
-    if (heroCountEl) countUp(heroCountEl, 8);
+    if (heroCountEl) countUp(heroCountEl, 9);
 
     // Reduced motion: content is already visible in the HTML, so all
     // entrance/scroll animations are skipped rather than fast-forwarded.
