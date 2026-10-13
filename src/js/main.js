@@ -167,15 +167,24 @@ function initOdometers() {
 // ── Loader: 3D text cylinder ────────────────────────────
 // The only loading screen on the site. It covers every page load and every
 // internal navigation; the rings themselves are rendered in loader.njk.
+// The loader moves as one solid layer (transform only, so the compositor does
+// the work), on an expo in-out curve, and the page drifts with it.
 const loader = $('#loader');
+let markBooted;
+const booted = new Promise((r) => { markBooted = r; });
 const loaderPct = $('#loaderPct');
 const setPct = (v) => { if (loaderPct) loaderPct.textContent = Math.round(v); };
+const EASE_SHEET = 'expo.inOut';
+const nextFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+// a transform on <main> would unfix a pinned section, so the page only drifts when nothing is pinned
+const pinActive = () => ScrollTrigger.getAll().some((t) => t.pin && t.isActive);
 
 function hideLoader() {
     if (!loader) return;
-    gsap.set(loader, { clipPath: 'inset(0 0 100% 0)', visibility: 'hidden' });
+    gsap.set(loader, { yPercent: 100, visibility: 'hidden' });
 }
 
+// Resolves as the page starts to show, so the hero intro overlaps the reveal
 function runLoader() {
     return new Promise((resolve) => {
         if (REDUCED || !loader) { resolve(); return; }
@@ -184,44 +193,96 @@ function runLoader() {
         const ready = Promise.all([
             document.fonts.ready,
             new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true }))),
+            // every section is built and measured, so the reveal has the main thread to itself (never wait past 4s)
+            Promise.race([booted, new Promise((r) => setTimeout(r, 4000))]),
         ]);
         gsap.to(progress, {
             v: 92, duration: firstVisit ? 2.4 : 0.9, ease: 'power2.inOut',
             onUpdate: () => setPct(progress.v),
-            onComplete: () => ready.then(() => gsap.to(progress, {
-                v: 100, duration: 0.3, onUpdate: () => setPct(progress.v),
-                onComplete: () => {
-                    gsap.timeline({ onComplete: () => { hideLoader(); lenis && lenis.start(); resolve(); } })
-                        .to('.loader-stage', { scale: 2.6, opacity: 0, duration: 0.9, ease: 'power3.in' })
-                        .to('.loader-pct', { opacity: 0, duration: 0.3 }, 0)
-                        .to(loader, { clipPath: 'inset(0 0 100% 0)', duration: 0.9, ease: 'power4.inOut' }, 0.55);
-                },
+            onComplete: () => ready.then(prepareUncover).then(nextFrames).then((drift) => gsap.to(progress, {
+                v: 100, duration: 0.3, ease: 'power2.out', onUpdate: () => setPct(progress.v),
+                onComplete: () => uncover(drift, resolve),
             })),
         });
     });
 }
 
-// Bring the loader back up over the current page, then leave
+// Do the expensive work while the screen is still covered, so the slide itself only
+// moves layers: decode the images about to be uncovered and lift the page onto its
+// own GPU layer at its start position.
+function prepareUncover() {
+    const main = $('#main');
+    const drift = !!main && !pinActive();
+    if (drift) gsap.set(main, { y: 90, force3D: true });
+    const visible = [...document.images].filter((img) => img.getBoundingClientRect().top < innerHeight * 1.2);
+    const decoded = visible.map((img) => (img.decode ? img.decode().catch(() => {}) : null));
+    const cap = new Promise((r) => setTimeout(r, 1200));
+    return Promise.race([Promise.all(decoded), cap]).then(() => drift);
+}
+
+function uncover(drift, onShowing) {
+    const main = $('#main');
+    gsap.timeline({
+        onComplete: () => {
+            hideLoader();
+            gsap.set('.loader-stage', { clearProps: 'all' });
+            gsap.set('.loader-pct', { clearProps: 'opacity' });
+            if (drift) { gsap.set(main, { clearProps: 'transform' }); ScrollTrigger.refresh(); }
+            lenis && lenis.start();
+        },
+    })
+        .to('.loader-stage', { scale: 1.6, opacity: 0, duration: 0.8, ease: 'power3.in' })
+        .to('.loader-pct', { opacity: 0, duration: 0.3, ease: 'power1.out' }, 0)
+        .to(loader, { yPercent: -100, duration: 1.1, ease: EASE_SHEET }, 0.4)
+        .to(drift ? main : {}, { y: 0, duration: 1.1, ease: EASE_SHEET, force3D: true }, 0.4)
+        .add(onShowing, 0.85);
+}
+
+// Slide the loader up over the current page, then leave
 function coverWithLoader(href) {
     if (!loader) { location.href = href; return; }
     lenis && lenis.stop();
     setPct(0);
-    gsap.timeline({ onComplete: () => { location.href = href; } })
-        .set(loader, { visibility: 'visible', clipPath: 'inset(100% 0 0 0)' })
-        .set('.loader-stage', { scale: 0.8, opacity: 0 })
-        .set('.loader-pct', { opacity: 1 })
-        .to(loader, { clipPath: 'inset(0% 0 0 0)', duration: 0.7, ease: 'power4.inOut' })
-        .to('.loader-stage', { scale: 1, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.35);
+    const tl = gsap.timeline({ onComplete: () => { location.href = href; } })
+        .set(loader, { visibility: 'visible', yPercent: 100 })
+        .set('.loader-stage', { scale: 0.86, opacity: 0 })
+        .set('.loader-pct', { opacity: 0 })
+        .to(loader, { yPercent: 0, duration: 0.9, ease: EASE_SHEET })
+        .to('.loader-stage', { scale: 1, opacity: 1, duration: 0.7, ease: 'power3.out' }, 0.4)
+        .to('.loader-pct', { opacity: 1, duration: 0.4 }, 0.6);
+    if (!pinActive()) tl.to('#main', { y: -70, duration: 0.9, ease: EASE_SHEET, force3D: true }, 0);
+}
+
+// Fetch the next page while the pointer is on its way, so arrival is quick
+const prefetched = new Set();
+function prefetch(path) {
+    if (prefetched.has(path)) return;
+    prefetched.add(path);
+    const link = document.createElement('link');
+    link.rel = 'prefetch';
+    link.href = path;
+    document.head.appendChild(link);
+}
+function internalUrl(a) {
+    if (!a || a.target === '_blank' || a.hasAttribute('download')) return null;
+    const url = new URL(a.href, location.href);
+    if (url.origin !== location.origin || !/^https?:/.test(url.protocol)) return null;
+    return url;
 }
 
 // ── Page transitions ────────────────────────────────────
 function initTransitions() {
+    const warm = (e) => {
+        const url = internalUrl(e.target.closest && e.target.closest('a'));
+        if (url && url.pathname !== location.pathname) prefetch(url.pathname);
+    };
+    document.addEventListener('pointerover', warm, { passive: true });
+    document.addEventListener('touchstart', warm, { passive: true });
     document.addEventListener('click', (e) => {
         const a = e.target.closest('a');
         if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-        if (a.target === '_blank' || a.hasAttribute('download')) return;
-        const url = new URL(a.href, location.href);
-        if (url.origin !== location.origin || !/^https?:/.test(url.protocol)) return;
+        const url = internalUrl(a);
+        if (!url) return;
         const samePage = url.pathname === location.pathname;
         if (samePage && url.hash) { // in-page anchor: smooth scroll
             e.preventDefault();
@@ -237,7 +298,12 @@ function initTransitions() {
         coverWithLoader(url.href);
     });
     // Back/forward from the bfcache: the page comes back still covered
-    addEventListener('pageshow', (e) => { if (e.persisted) { hideLoader(); lenis && lenis.start(); } });
+    addEventListener('pageshow', (e) => {
+        if (!e.persisted) return;
+        hideLoader();
+        gsap.set('#main', { clearProps: 'transform' });
+        lenis && lenis.start();
+    });
 }
 
 // ── Menu (mobile) ───────────────────────────────────────
@@ -612,6 +678,7 @@ function initClock() {
     ScrollTrigger.refresh();
 
     if (location.hash) scrollToTarget(location.hash, true);
+    markBooted();
 
     await intro;
     firstVisit = false;

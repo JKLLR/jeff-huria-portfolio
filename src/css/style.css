@@ -199,8 +199,13 @@ input, textarea { font: inherit; color: inherit; }
 /* ── Loader: 3D text cylinder ───────────────────────── */
 .loader {
     position: fixed; inset: 0; z-index: 1500;
-    background: var(--bg);
+    /* 0.5% short of opaque, which the eye can't see: a fully opaque cover lets Chrome skip painting the
+       page beneath, so it would paint it all on the first uncovered frame and drop that frame */
+    background: rgb(246 246 244 / 0.995);
     display: none; place-items: center;
+    will-change: transform;
+    /* soft edge so the sheet reads as a layer while it slides over a light page */
+    box-shadow: 0 0 56px rgba(17, 17, 17, 0.08);
 }
 .js .loader { display: grid; }
 .loader-stage { position: relative; width: 420px; height: 300px; perspective: 900px; transform: scale(var(--loader-scale, 1)); }
