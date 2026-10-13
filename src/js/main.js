@@ -178,7 +178,7 @@ function hideLoader() {
 
 function runLoader() {
     return new Promise((resolve) => {
-        if (REDUCED || !loader || viaTransition) { resolve(); return; }
+        if (REDUCED || !loader) { resolve(); return; }
         lenis && lenis.stop();
         const progress = { v: 0 };
         const ready = Promise.all([
@@ -201,84 +201,27 @@ function runLoader() {
     });
 }
 
-// ── Page transitions: the black name curtain ────────────
-// Leaving: the curtain slides up over the page and the name rises into its mask.
-// Arriving: the new page starts covered (CSS, before first paint), the name lifts
-// out, then the curtain slides off the top while the page eases up underneath.
-const curtain = $('#curtain');
-const curtainWord = $('#curtainWord');
-const viaTransition = root.classList.contains('via-transition');
-const EASE_CURTAIN = 'expo.inOut';
-
-// Resolves part-way through, once enough of the page is showing to start its intro
-function revealCurtain() {
-    return new Promise((resolve) => {
-        if (!curtain || !viaTransition || REDUCED) { resolve(); return; }
-        const main = $('#main');
-        gsap.set(curtain, { yPercent: 0, y: 0 });
-        gsap.set(curtainWord, { yPercent: 0 });
-        if (main) gsap.set(main, { y: 90 });
-        // wait two frames so layout and the inits have settled and the tween never drops a frame
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            gsap.timeline({
-                onComplete: () => {
-                    gsap.set(curtain, { yPercent: 100 });
-                    if (main) gsap.set(main, { clearProps: 'transform' });
-                    ScrollTrigger.refresh();
-                },
-            })
-                .to(curtainWord, { yPercent: -110, duration: 0.55, ease: 'power3.in' })
-                .to(curtain, { yPercent: -100, duration: 1.1, ease: EASE_CURTAIN }, 0.3)
-                .to(main, { y: 0, duration: 1.1, ease: EASE_CURTAIN }, 0.3)
-                .add(resolve, 0.75);
-        }));
-    });
-}
-
-function leaveWithCurtain(href) {
-    if (!curtain) { location.href = href; return; }
+// Bring the loader back up over the current page, then leave
+function coverWithLoader(href) {
+    if (!loader) { location.href = href; return; }
     lenis && lenis.stop();
-    try { sessionStorage.setItem('jkh-transition', '1'); } catch (e) { /* private mode */ }
-    // a transform on <main> would unfix a pinned section mid-scroll, so only drift the page when nothing is pinned
-    const pinned = ScrollTrigger.getAll().some((t) => t.pin && t.isActive);
-    const tl = gsap.timeline({ onComplete: () => { location.href = href; } })
-        .set(curtain, { yPercent: 100, y: 0 })
-        .set(curtainWord, { yPercent: 110 })
-        .to(curtain, { yPercent: 0, duration: 0.9, ease: EASE_CURTAIN })
-        .to(curtainWord, { yPercent: 0, duration: 0.6, ease: 'power3.out' }, 0.45);
-    if (!pinned) tl.to('#main', { y: -70, duration: 0.9, ease: EASE_CURTAIN }, 0);
+    setPct(0);
+    gsap.timeline({ onComplete: () => { location.href = href; } })
+        .set(loader, { visibility: 'visible', clipPath: 'inset(100% 0 0 0)' })
+        .set('.loader-stage', { scale: 0.8, opacity: 0 })
+        .set('.loader-pct', { opacity: 1 })
+        .to(loader, { clipPath: 'inset(0% 0 0 0)', duration: 0.7, ease: 'power4.inOut' })
+        .to('.loader-stage', { scale: 1, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.35);
 }
 
-// Fetch the next page while the pointer is on its way, so arrival is instant
-const prefetched = new Set();
-function prefetch(path) {
-    if (prefetched.has(path)) return;
-    prefetched.add(path);
-    const link = document.createElement('link');
-    link.rel = 'prefetch';
-    link.href = path;
-    document.head.appendChild(link);
-}
-function internalUrl(a) {
-    if (!a || a.target === '_blank' || a.hasAttribute('download')) return null;
-    const url = new URL(a.href, location.href);
-    if (url.origin !== location.origin || !/^https?:/.test(url.protocol)) return null;
-    return url;
-}
-
+// ── Page transitions ────────────────────────────────────
 function initTransitions() {
-    if (curtain && !viaTransition) gsap.set(curtain, { yPercent: 100, y: 0 });
-    const warm = (e) => {
-        const url = internalUrl(e.target.closest && e.target.closest('a'));
-        if (url && url.pathname !== location.pathname) prefetch(url.pathname);
-    };
-    document.addEventListener('pointerover', warm, { passive: true });
-    document.addEventListener('touchstart', warm, { passive: true });
     document.addEventListener('click', (e) => {
         const a = e.target.closest('a');
         if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
-        const url = internalUrl(a);
-        if (!url) return;
+        if (a.target === '_blank' || a.hasAttribute('download')) return;
+        const url = new URL(a.href, location.href);
+        if (url.origin !== location.origin || !/^https?:/.test(url.protocol)) return;
         const samePage = url.pathname === location.pathname;
         if (samePage && url.hash) { // in-page anchor: smooth scroll
             e.preventDefault();
@@ -288,19 +231,13 @@ function initTransitions() {
             return;
         }
         if (samePage && !url.hash) { e.preventDefault(); scrollToTarget(document.body); return; }
-        if (REDUCED || !curtain) return;
+        if (REDUCED || !loader) return;
         e.preventDefault();
         closeMenu();
-        leaveWithCurtain(url.href);
+        coverWithLoader(url.href);
     });
     // Back/forward from the bfcache: the page comes back still covered
-    addEventListener('pageshow', (e) => {
-        if (!e.persisted) return;
-        if (curtain) gsap.set(curtain, { yPercent: 100 });
-        gsap.set('#main', { clearProps: 'transform' });
-        hideLoader();
-        lenis && lenis.start();
-    });
+    addEventListener('pageshow', (e) => { if (e.persisted) { hideLoader(); lenis && lenis.start(); } });
 }
 
 // ── Menu (mobile) ───────────────────────────────────────
@@ -677,7 +614,6 @@ function initClock() {
     if (location.hash) scrollToTarget(location.hash, true);
 
     await intro;
-    await revealCurtain(); // arriving from an internal link: lift the name curtain
     firstVisit = false;
     root.classList.remove('first-visit');
     if (playHero) playHero();

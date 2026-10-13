@@ -23,14 +23,12 @@
 
     <script>
         // js: enable entrance styles. first-visit: the loader runs its full count once per session (shorter after).
-        // via-transition: we arrived from an internal link, so the name curtain (already covering) reveals the page
-        // instead of the loader. mock-on: highlight placeholder content (default on while the copy is being written).
+        // mock-on: highlight placeholder content (default on while the copy is being written).
         (function () {
             var c = document.documentElement.classList;
             c.add('js');
             try {
                 if (!sessionStorage.getItem('jkh-visited')) c.add('first-visit');
-                if (sessionStorage.getItem('jkh-transition')) { c.add('via-transition'); sessionStorage.removeItem('jkh-transition'); }
                 if (localStorage.getItem('jkh-mock') !== 'off') c.add('mock-on');
             } catch (e) { c.add('first-visit', 'mock-on'); }
         })();
@@ -48,11 +46,6 @@
     <div class="cursor" id="cursor" aria-hidden="true"><span class="cursor-label" id="cursorLabel"></span></div>
 
     {% include "partials/loader.njk" %}
-
-    <!-- Page-transition curtain -->
-    <div class="curtain" id="curtain" aria-hidden="true">
-        <span class="curtain-mask"><span class="curtain-word" id="curtainWord">JEFF .K. HURIA</span></span>
-    </div>
 
     {% include "partials/header.njk" %}
 

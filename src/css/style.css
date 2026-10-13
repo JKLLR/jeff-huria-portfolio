@@ -203,7 +203,6 @@ input, textarea { font: inherit; color: inherit; }
     display: none; place-items: center;
 }
 .js .loader { display: grid; }
-.js.via-transition .loader { display: none; }
 .loader-stage { position: relative; width: 420px; height: 300px; perspective: 900px; transform: scale(var(--loader-scale, 1)); }
 .ring {
     position: absolute; left: 50%; top: 50%;
@@ -226,19 +225,6 @@ input, textarea { font: inherit; color: inherit; }
     position: absolute; left: 50%; bottom: 22vh; transform: translateX(-50%);
     font: 700 20px/1 var(--display); letter-spacing: -0.04em; font-variant-numeric: tabular-nums;
 }
-
-/* ── Curtain (page transitions) ─────────────────────── */
-.curtain {
-    position: fixed; inset: 0; z-index: 1400;
-    background: var(--dark); color: var(--on-dark);
-    display: grid; place-items: center;
-    transform: translate3d(0, 100%, 0);
-    will-change: transform;
-    pointer-events: none;
-}
-.js.via-transition .curtain { transform: none; }
-.curtain-mask { display: block; overflow: hidden; padding: 0.06em 0.04em 0.1em; }
-.curtain-word { display: block; font: 800 clamp(40px, 7vw, 110px)/0.85 var(--display); letter-spacing: -0.03em; will-change: transform; }
 
 /* ── Header ──────────────────────────────────────────── */
 .header {
@@ -892,5 +878,5 @@ a.wi-link:hover { color: var(--bg); padding-left: 16px; }
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
     .js [data-reveal] { opacity: 1; transform: none; }
-    .js .loader, .js .curtain { display: none !important; }
+    .js .loader { display: none !important; }
 }
