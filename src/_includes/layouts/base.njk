@@ -22,7 +22,7 @@
     <meta name="twitter:image" content="{{ site.url }}{{ site.image }}">
 
     <script>
-        // js: enable entrance styles. first-visit: show the full loader once per session.
+        // js: enable entrance styles. first-visit: the loader runs its full count once per session (shorter after).
         // mock-on: highlight placeholder content (default on while the copy is being written).
         (function () {
             var c = document.documentElement.classList;
@@ -46,11 +46,6 @@
     <div class="cursor" id="cursor" aria-hidden="true"><span class="cursor-label" id="cursorLabel"></span></div>
 
     {% include "partials/loader.njk" %}
-
-    <!-- Page-transition curtain -->
-    <div class="curtain" id="curtain" aria-hidden="true">
-        <span class="curtain-word" id="curtainWord">JEFF .K. HURIA</span>
-    </div>
 
     {% include "partials/header.njk" %}
 

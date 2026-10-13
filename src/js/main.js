@@ -165,70 +165,57 @@ function initOdometers() {
 }
 
 // ── Loader: 3D text cylinder ────────────────────────────
-function buildRings() {
-    $$('.ring').forEach((ring) => {
-        const text = ring.dataset.ring;
-        const spin = document.createElement('div');
-        spin.className = 'ring-spin';
-        const big = ring.classList.contains('ring-big');
-        const chars = [...text];
-        const radius = big ? 170 : 185;
-        chars.forEach((c, i) => {
-            const s = document.createElement('span');
-            s.className = 'ring-ch';
-            s.textContent = c;
-            s.style.transform = `rotateY(${(360 / chars.length) * i}deg) translateZ(${radius}px)`;
-            spin.appendChild(s);
-        });
-        ring.appendChild(spin);
-    });
+// The only loading screen on the site. It covers every page load and every
+// internal navigation; the rings themselves are rendered in loader.njk.
+const loader = $('#loader');
+const loaderPct = $('#loaderPct');
+const setPct = (v) => { if (loaderPct) loaderPct.textContent = Math.round(v); };
+
+function hideLoader() {
+    if (!loader) return;
+    gsap.set(loader, { clipPath: 'inset(0 0 100% 0)', visibility: 'hidden' });
 }
 
 function runLoader() {
     return new Promise((resolve) => {
-        const loader = $('#loader');
-        if (!firstVisit || REDUCED || !loader) { resolve(); return; }
-        buildRings();
+        if (REDUCED || !loader) { resolve(); return; }
         lenis && lenis.stop();
-        const pctEl = $('#loaderPct');
         const progress = { v: 0 };
-        let loaded = false;
-        Promise.all([document.fonts.ready, new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true })))])
-            .then(() => { loaded = true; });
-        const minTime = 2.4;
+        const ready = Promise.all([
+            document.fonts.ready,
+            new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true }))),
+        ]);
         gsap.to(progress, {
-            v: 92, duration: minTime, ease: 'power2.inOut',
-            onUpdate: () => { pctEl.textContent = Math.round(progress.v); },
-            onComplete: function finish() {
-                const end = () => gsap.to(progress, {
-                    v: 100, duration: 0.4, onUpdate: () => { pctEl.textContent = Math.round(progress.v); },
-                    onComplete: () => {
-                        gsap.timeline({ onComplete: () => { loader.remove(); lenis && lenis.start(); resolve(); } })
-                            .to('.loader-stage', { scale: 2.6, opacity: 0, duration: 0.9, ease: 'power3.in' })
-                            .to('.loader-pct', { opacity: 0, duration: 0.3 }, 0)
-                            .to(loader, { clipPath: 'inset(0 0 100% 0)', duration: 0.9, ease: 'power4.inOut' }, 0.55);
-                    }
-                });
-                loaded ? end() : Promise.resolve(document.fonts.ready).then(end);
-            }
+            v: 92, duration: firstVisit ? 2.4 : 0.9, ease: 'power2.inOut',
+            onUpdate: () => setPct(progress.v),
+            onComplete: () => ready.then(() => gsap.to(progress, {
+                v: 100, duration: 0.3, onUpdate: () => setPct(progress.v),
+                onComplete: () => {
+                    gsap.timeline({ onComplete: () => { hideLoader(); lenis && lenis.start(); resolve(); } })
+                        .to('.loader-stage', { scale: 2.6, opacity: 0, duration: 0.9, ease: 'power3.in' })
+                        .to('.loader-pct', { opacity: 0, duration: 0.3 }, 0)
+                        .to(loader, { clipPath: 'inset(0 0 100% 0)', duration: 0.9, ease: 'power4.inOut' }, 0.55);
+                },
+            })),
         });
     });
 }
 
-// ── Page transitions ────────────────────────────────────
-const curtain = $('#curtain');
-function revealCurtain() {
-    return new Promise((resolve) => {
-        if (!curtain || firstVisit || REDUCED) { resolve(); return; }
-        gsap.timeline({ onComplete: resolve })
-            .fromTo('#curtainWord', { yPercent: 0 }, { yPercent: -110, duration: 0.5, ease: 'power3.in' })
-            .to(curtain, { yPercent: -100, duration: 0.9, ease: 'power4.inOut' }, 0.15)
-            .set(curtain, { yPercent: 100 });
-    });
+// Bring the loader back up over the current page, then leave
+function coverWithLoader(href) {
+    if (!loader) { location.href = href; return; }
+    lenis && lenis.stop();
+    setPct(0);
+    gsap.timeline({ onComplete: () => { location.href = href; } })
+        .set(loader, { visibility: 'visible', clipPath: 'inset(100% 0 0 0)' })
+        .set('.loader-stage', { scale: 0.8, opacity: 0 })
+        .set('.loader-pct', { opacity: 1 })
+        .to(loader, { clipPath: 'inset(0% 0 0 0)', duration: 0.7, ease: 'power4.inOut' })
+        .to('.loader-stage', { scale: 1, opacity: 1, duration: 0.6, ease: 'power3.out' }, 0.35);
 }
+
+// ── Page transitions ────────────────────────────────────
 function initTransitions() {
-    // GSAP owns the curtain's transform from here on (CSS only sets the first frame)
-    if (curtain) gsap.set(curtain, { y: 0, yPercent: firstVisit || REDUCED ? 100 : 0 });
     document.addEventListener('click', (e) => {
         const a = e.target.closest('a');
         if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
@@ -244,16 +231,13 @@ function initTransitions() {
             return;
         }
         if (samePage && !url.hash) { e.preventDefault(); scrollToTarget(document.body); return; }
-        if (REDUCED || !curtain) return;
+        if (REDUCED || !loader) return;
         e.preventDefault();
         closeMenu();
-        gsap.timeline({ onComplete: () => { location.href = url.href; } })
-            .set(curtain, { yPercent: 100 })
-            .to(curtain, { yPercent: 0, duration: 0.8, ease: 'power4.inOut' })
-            .fromTo('#curtainWord', { yPercent: 110 }, { yPercent: 0, duration: 0.5, ease: 'power3.out' }, 0.35);
+        coverWithLoader(url.href);
     });
-    // Back/forward from the bfcache: make sure the curtain is out of the way
-    addEventListener('pageshow', (e) => { if (e.persisted && curtain) gsap.set(curtain, { yPercent: 100 }); });
+    // Back/forward from the bfcache: the page comes back still covered
+    addEventListener('pageshow', (e) => { if (e.persisted) { hideLoader(); lenis && lenis.start(); } });
 }
 
 // ── Menu (mobile) ───────────────────────────────────────
@@ -599,7 +583,7 @@ function initClock() {
 
 // ── Boot ────────────────────────────────────────────────
 (async function boot() {
-    const intro = firstVisit ? runLoader() : null;
+    const intro = runLoader();
     initMockToggle();
     initMenu();
     initTransitions();
@@ -629,7 +613,7 @@ function initClock() {
 
     if (location.hash) scrollToTarget(location.hash, true);
 
-    await (intro || revealCurtain());
+    await intro;
     firstVisit = false;
     root.classList.remove('first-visit');
     if (playHero) playHero();

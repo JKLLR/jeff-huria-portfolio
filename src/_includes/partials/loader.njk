@@ -1,9 +1,18 @@
-{#- A 3D text cylinder: words are laid around a ring and the ring spins.
-    main.js builds the ring from the data-ring text. -#}
+{#- The site's only loading screen: a 3D text cylinder, shown on every page load
+    and on the way out of every internal link. The rings are rendered here, not
+    by JS, so they are already spinning before any script has loaded. -#}
+{%- macro ring(cls, text, radius) -%}
+{%- set chars = text | list -%}
+<div class="ring {{ cls }}"><div class="ring-spin">
+{%- for c in chars -%}
+<span class="ring-ch" style="transform:rotateY({{ (360 / (chars | length) * loop.index0) | round(3) }}deg) translateZ({{ radius }}px)">{{ c }}</span>
+{%- endfor -%}
+</div></div>
+{%- endmacro -%}
 <div class="loader" id="loader" aria-hidden="true">
     <div class="loader-stage">
-        <div class="ring ring-big" data-ring="CODE THAT CONNECTS THE ENTERPRISE · "></div>
-        <div class="ring ring-small" data-ring="SOFTWARE ENGINEERING • ERP INTEGRATION • AI PRODUCTS • PAYMENTS • FOUNDER • "></div>
+        {{ ring("ring-big", "CODE THAT CONNECTS THE ENTERPRISE · ", 170) }}
+        {{ ring("ring-small", "SOFTWARE ENGINEERING • ERP INTEGRATION • AI PRODUCTS • PAYMENTS • FOUNDER • ", 185) }}
     </div>
     <div class="loader-pct"><span id="loaderPct">0</span>%</div>
 </div>
