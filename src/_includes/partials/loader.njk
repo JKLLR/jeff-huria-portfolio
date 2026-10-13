@@ -10,9 +10,39 @@
 </div></div>
 {%- endmacro -%}
 <div class="loader" id="loader" aria-hidden="true">
+    {#- loader-stage is animated by main.js; loader-fit holds the small-screen scale, so the two never fight -#}
     <div class="loader-stage">
-        {{ ring("ring-big", "CODE THAT CONNECTS THE ENTERPRISE · ", 170) }}
-        {{ ring("ring-small", "SOFTWARE ENGINEERING • ERP INTEGRATION • AI PRODUCTS • PAYMENTS • FOUNDER • ", 185) }}
+        <div class="loader-fit">
+            {{ ring("ring-big", "CODE THAT CONNECTS THE ENTERPRISE · ", 170) }}
+            {{ ring("ring-small", "SOFTWARE ENGINEERING • ERP INTEGRATION • AI PRODUCTS • PAYMENTS • FOUNDER • ", 185) }}
+        </div>
     </div>
     <div class="loader-pct"><span id="loaderPct">0</span>%</div>
 </div>
+<script>
+    // One continuous spin for the whole visit: every page starts the rings at the angle they would have
+    // reached since they first started, so they never snap back to "CODE" when a new page loads.
+    // Runs inline, before first paint, so the rings are never drawn at the wrong angle.
+    // main.js calls window.jkhSyncSpin() again if anything restarts the animation.
+    (function () {
+        var epoch = Date.now();
+        try {
+            epoch = +sessionStorage.getItem('jkh-spin-epoch') || epoch;
+            sessionStorage.setItem('jkh-spin-epoch', epoch);
+        } catch (e) { /* private mode: start fresh */ }
+        var spins = document.querySelectorAll('#loader .ring-spin');
+        // Pin each animation's start time to the page clock. A delay or a seek both wait for the browser to
+        // actually start the animation (up to a few hundred ms into loading), so they land several degrees late;
+        // a start time is absolute, so the angle is exact from the first frame.
+        (window.jkhSyncSpin = function () {
+            var elapsed = Date.now() - epoch;
+            for (var i = 0; i < spins.length; i++) {
+                var anim = spins[i].getAnimations ? spins[i].getAnimations()[0] : null;
+                var period = parseFloat(getComputedStyle(spins[i]).animationDuration) * 1000;
+                if (!(period > 0)) continue;
+                if (anim) anim.startTime = performance.now() - (elapsed % period);
+                else spins[i].style.animationDelay = -(elapsed % period) + 'ms';
+            }
+        })();
+    })();
+</script>

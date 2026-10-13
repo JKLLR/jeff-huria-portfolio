@@ -190,6 +190,10 @@ const loader = $('#loader');
 let markBooted;
 const booted = new Promise((r) => { markBooted = r; });
 const loaderPct = $('#loaderPct');
+// The first time GSAP transforms a fixed element with no transform, it measures it by briefly taking it out
+// of the DOM, and that restarts the rings' CSS spin at 0deg (a visible jerk as the loader lifts). Let that
+// happen once, now, and put the spin back on the shared clock in the same frame so nothing moves.
+if (loader) { gsap.set(loader, { yPercent: 0 }); window.jkhSyncSpin && window.jkhSyncSpin(); }
 const setPct = (v) => { if (loaderPct) loaderPct.textContent = Math.round(v); };
 const EASE_SHEET = 'expo.inOut';
 const nextFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
