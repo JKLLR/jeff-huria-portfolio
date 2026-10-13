@@ -25,6 +25,23 @@ if (lenis) {
     gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
 }
+// Pause scrolling by blocking the input, never with overflow: hidden. Hiding overflow removes the
+// scrollbar, which widens the page ~15px and makes everything (the fitted titles most of all) jump.
+const SCROLL_KEYS = new Set([' ', 'PageUp', 'PageDown', 'Home', 'End', 'ArrowUp', 'ArrowDown']);
+let scrollPaused = false;
+const blockScroll = (e) => {
+    if (!scrollPaused) return;
+    const target = e.target.closest ? e.target : document.body;
+    if (target.closest('#menu')) return; // the open menu may scroll itself on short screens
+    if (e.type === 'keydown' && (!SCROLL_KEYS.has(e.key) || target.closest('input, textarea, select, [contenteditable]'))) return;
+    e.preventDefault();
+};
+addEventListener('wheel', blockScroll, { passive: false });
+addEventListener('touchmove', blockScroll, { passive: false });
+addEventListener('keydown', blockScroll);
+function pauseScroll() { scrollPaused = true; lenis && lenis.stop(); }
+function resumeScroll() { scrollPaused = false; lenis && lenis.start(); }
+
 const scrollToTarget = (target, immediate = false) => {
     const el = typeof target === 'string' ? $(target) : target;
     if (!el) return;
@@ -188,7 +205,7 @@ function hideLoader() {
 function runLoader() {
     return new Promise((resolve) => {
         if (REDUCED || !loader) { resolve(); return; }
-        lenis && lenis.stop();
+        pauseScroll();
         const progress = { v: 0 };
         const ready = Promise.all([
             document.fonts.ready,
@@ -228,7 +245,7 @@ function uncover(drift, onShowing) {
             gsap.set('.loader-stage', { clearProps: 'all' });
             gsap.set('.loader-pct', { clearProps: 'opacity' });
             if (drift) { gsap.set(main, { clearProps: 'transform' }); ScrollTrigger.refresh(); }
-            lenis && lenis.start();
+            resumeScroll();
         },
     })
         .to('.loader-stage', { scale: 1.6, opacity: 0, duration: 0.8, ease: 'power3.in' })
@@ -241,7 +258,7 @@ function uncover(drift, onShowing) {
 // Slide the loader up over the current page, then leave
 function coverWithLoader(href) {
     if (!loader) { location.href = href; return; }
-    lenis && lenis.stop();
+    pauseScroll();
     setPct(0);
     const tl = gsap.timeline({ onComplete: () => { location.href = href; } })
         .set(loader, { visibility: 'visible', yPercent: 100 })
@@ -302,7 +319,7 @@ function initTransitions() {
         if (!e.persisted) return;
         hideLoader();
         gsap.set('#main', { clearProps: 'transform' });
-        lenis && lenis.start();
+        resumeScroll();
     });
 }
 
@@ -314,7 +331,7 @@ function closeMenu() {
     menuBtn.setAttribute('aria-expanded', 'false');
     $('.menu-btn-text').textContent = 'MENU';
     $('#menu').setAttribute('aria-hidden', 'true');
-    lenis && lenis.start();
+    resumeScroll();
 }
 function initMenu() {
     if (!menuBtn) return;
@@ -325,7 +342,7 @@ function initMenu() {
         menuBtn.setAttribute('aria-expanded', 'true');
         $('.menu-btn-text').textContent = 'CLOSE';
         $('#menu').setAttribute('aria-hidden', 'false');
-        lenis && lenis.stop();
+        pauseScroll();
     });
     addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
 }

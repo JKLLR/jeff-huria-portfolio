@@ -27,10 +27,11 @@
 
 /* ── Reset ───────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { -webkit-text-size-adjust: 100%; }
+/* Always reserve the scrollbar's space: the loader pauses scrolling (overflow: hidden) and short
+   pages have no scrollbar, so without this the page width jumps ~15px and everything reflows */
+html { -webkit-text-size-adjust: 100%; scrollbar-gutter: stable; }
 html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth { scroll-behavior: auto !important; }
-.lenis.lenis-stopped { overflow: hidden; }
 body {
     background: var(--bg);
     color: var(--ink);
