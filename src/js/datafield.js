@@ -1,0 +1,366 @@
+/* =====================================================
+   Data field: a grid of business records (invoices, orders, payments, sync
+   statuses) whose brightness is driven by slow flowing noise, so the data
+   seems to form shapes. The cursor parts it like a hand through water.
+
+   Rendering is one WebGL fragment shader: the glyphs come from an atlas
+   texture, which glyph sits in each cell comes from a small data texture, and
+   the noise is computed per pixel on the GPU. The CPU only rewrites a handful
+   of cells per frame (new records "typing in"). Pauses when off-screen.
+
+   Usage: DataField.mount(canvas, { reduced, getVelocity }) -> controller | null
+   ===================================================== */
+(function () {
+    'use strict';
+
+    // Index 0 must stay a space: empty cells read as 0
+    const CHARSET = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-·.,:/+';
+    const INDEX = new Map([...CHARSET].map((c, i) => [c, i]));
+
+    // ── Records: what an ERP sync log looks like up close ──
+    const pick = (list) => list[(Math.random() * list.length) | 0];
+    const digits = (n) => { let s = ''; for (let i = 0; i < n; i++) s += (Math.random() * 10) | 0; return s; };
+    const alnum = (n) => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'; let s = ''; for (let i = 0; i < n; i++) s += a[(Math.random() * a.length) | 0]; return s; };
+    const money = () => (Math.round(Math.random() * 480000) + 1200).toLocaleString('en-US');
+    const clock = () => [24, 60, 60].map((m) => String((Math.random() * m) | 0).padStart(2, '0')).join(':');
+    const RECORDS = [
+        () => `INV-26-${digits(5)}`,
+        () => `SO-${digits(4)}`,
+        () => `PO-${digits(5)}`,
+        () => `GRN-${digits(4)}`,
+        () => `CN-${digits(4)}`,
+        () => `SKU ${alnum(3)}-${digits(3)}`,
+        () => `KES ${money()}`,
+        () => `MPESA ${alnum(10)}`,
+        () => `${clock()}`,
+        () => pick(['SYNC OK', 'POSTED', '200 OK', 'ACK', 'QUEUED', 'MATCHED', 'RECONCILED', 'BATCH DONE']),
+        () => pick(['SAP.B1', 'ODOO', 'SAGE', 'SYSPRO', 'DYNAMICS', 'ACUMATICA', 'TALLY']),
+        () => `QTY ${(Math.random() * 900 + 1) | 0}`,
+        () => `WH/${pick(['NBO', 'MSA', 'KSM', 'EDL'])}/${digits(2)}`,
+    ];
+    const record = () => pick(RECORDS)();
+    const logLine = (len) => { let s = ''; while (s.length < len) s += record() + ' · '; return s; };
+
+    // ── Shaders ──
+    const VERT = `
+attribute vec2 aPos;
+void main() { gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+    const FRAG = `
+precision highp float;
+uniform vec2 uRes;        // canvas size, device px
+uniform vec2 uCell;       // cell size, device px
+uniform vec2 uGrid;       // cols, rows
+uniform vec2 uAtlasGrid;  // glyph columns, rows in the atlas
+uniform float uTime;
+uniform float uMax;       // brightest a glyph gets (alpha)
+uniform vec3 uInk;
+uniform sampler2D uGlyphs;
+uniform sampler2D uChars;
+uniform vec3 uTrail[12];  // x, y (device px, top-left origin), strength
+uniform float uRadius;
+uniform vec4 uSafe;       // x0, y0, x1, y1 (device px): the headline's box, kept quiet
+uniform float uFeather;
+
+// Simplex noise, Ashima Arts / Stefan Gustavson (MIT)
+vec3 permute(vec3 x) { return mod(((x * 34.0) + 1.0) * x, 289.0); }
+float snoise(vec2 v) {
+    const vec4 C = vec4(0.211324865405187, 0.366025403784439, -0.577350269189626, 0.024390243902439);
+    vec2 i = floor(v + dot(v, C.yy));
+    vec2 x0 = v - i + dot(i, C.xx);
+    vec2 i1 = (x0.x > x0.y) ? vec2(1.0, 0.0) : vec2(0.0, 1.0);
+    vec4 x12 = x0.xyxy + C.xxzz;
+    x12.xy -= i1;
+    i = mod(i, 289.0);
+    vec3 p = permute(permute(i.y + vec3(0.0, i1.y, 1.0)) + i.x + vec3(0.0, i1.x, 1.0));
+    vec3 m = max(0.5 - vec3(dot(x0, x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0);
+    m = m * m; m = m * m;
+    vec3 x = 2.0 * fract(p * C.www) - 1.0;
+    vec3 h = abs(x) - 0.5;
+    vec3 ox = floor(x + 0.5);
+    vec3 a0 = x - ox;
+    m *= 1.79284291400159 - 0.85373472095314 * (a0 * a0 + h * h);
+    vec3 g;
+    g.x = a0.x * x0.x + h.x * x0.y;
+    g.yz = a0.yz * x12.xz + h.yz * x12.yw;
+    return 130.0 * dot(m, g);
+}
+
+void main() {
+    vec2 px = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);   // top-left origin
+    vec2 cell = floor(px / uCell);
+    vec2 local = fract(px / uCell);
+    vec2 center = (cell + 0.5) * uCell;
+
+    // The cursor's wake: push the flow aside and hollow it out, with a bright rim
+    vec2 push = vec2(0.0);
+    float hollow = 0.0;
+    float rim = 0.0;
+    for (int i = 0; i < 12; i++) {
+        vec3 t = uTrail[i];
+        if (t.z <= 0.001) continue;
+        vec2 d = center - t.xy;
+        float r = length(d) / uRadius;
+        float f = exp(-r * r);
+        push += normalize(d + 0.0001) * f * t.z;
+        hollow = max(hollow, f * t.z);
+        rim = max(rim, exp(-pow(r - 1.05, 2.0) * 7.0) * t.z); // strongest rim only: summed rims fill the hollow
+    }
+
+    // Flow field: domain-warped simplex noise, drifting slowly
+    vec2 p = center / uRes.y * 1.05 - push * 0.22;   // low frequency: a few large forms, not patches
+    float t = uTime * 0.045;
+    vec2 q = vec2(snoise(p + vec2(0.0, t)), snoise(p + vec2(5.2, -t * 0.8)));
+    float n = snoise(p * 0.85 + 1.35 * q + vec2(t * 0.55, -t * 0.25)) * 0.5 + 0.5;
+
+    // Mostly dark, so the shapes read: solid masses plus thin contour lines at their edges
+    float blob = smoothstep(0.6, 0.84, n);
+    float contour = 1.0 - smoothstep(0.0, 0.028, abs(n - 0.52));
+    float b = 0.022 + 0.55 * blob + 0.5 * contour;
+
+    // Quiet behind the headline so the words stay the hero
+    vec2 inS = smoothstep(uSafe.xy - uFeather, uSafe.xy + uFeather, px) * (1.0 - smoothstep(uSafe.zw - uFeather, uSafe.zw + uFeather, px));
+    b *= 1.0 - 0.62 * inS.x * inS.y;
+
+    float h = clamp(hollow, 0.0, 1.0);
+    b *= 1.0 - 0.94 * h;
+    b += 0.45 * clamp(rim, 0.0, 1.0) * (1.0 - h);
+
+    // Fade into the sections above and below
+    float v = px.y / uRes.y;
+    b *= smoothstep(0.0, 0.16, v) * smoothstep(1.0, 0.82, v);
+
+    float idx = floor(texture2D(uChars, (cell + 0.5) / uGrid).r * 255.0 + 0.5);
+    vec2 g = vec2(mod(idx, uAtlasGrid.x), floor(idx / uAtlasGrid.x));
+    float glyph = texture2D(uGlyphs, (g + local) / uAtlasGrid).a;
+
+    float a = glyph * clamp(b, 0.0, 1.0) * uMax;
+    gl_FragColor = vec4(uInk * a, a);
+}`;
+
+    function compile(gl, type, src) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src);
+        gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { console.warn('[datafield]', gl.getShaderInfoLog(s)); return null; }
+        return s;
+    }
+
+    function mount(canvas, opts = {}) {
+        const reduced = !!opts.reduced;
+        const getVelocity = opts.getVelocity || (() => 0);
+        const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: 'low-power' });
+        if (!gl) return null;
+
+        const vs = compile(gl, gl.VERTEX_SHADER, VERT);
+        const fs = compile(gl, gl.FRAGMENT_SHADER, FRAG);
+        if (!vs || !fs) return null;
+        const prog = gl.createProgram();
+        gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.warn('[datafield]', gl.getProgramInfoLog(prog)); return null; }
+        gl.useProgram(prog);
+
+        const buf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW); // one big triangle
+        const aPos = gl.getAttribLocation(prog, 'aPos');
+        gl.enableVertexAttribArray(aPos);
+        gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+
+        const U = {};
+        ['uRes', 'uCell', 'uGrid', 'uAtlasGrid', 'uTime', 'uMax', 'uInk', 'uGlyphs', 'uChars', 'uTrail', 'uRadius', 'uSafe', 'uFeather']
+            .forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
+        gl.uniform1i(U.uGlyphs, 0);
+        gl.uniform1i(U.uChars, 1);
+        gl.uniform3f(U.uInk, 243 / 255, 243 / 255, 241 / 255);
+        gl.uniform1f(U.uMax, opts.max || 0.62);
+        gl.uniform4f(U.uSafe, -1, -1, -1, -1);
+        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+
+        const makeTex = (unit) => {
+            const tex = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(gl.TEXTURE_2D, tex);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            return tex;
+        };
+        const glyphTex = makeTex(0);
+        const charTex = makeTex(1);
+
+        let cols = 0, rows = 0, cells = null, dirty = false;
+        let cellW = 0, cellH = 0, dpr = 1;
+        const writers = [];   // records currently typing in
+
+        function buildAtlas() {
+            const small = canvas.clientWidth < 700;
+            const fontPx = (small ? 10 : 11) * dpr;
+            const c = document.createElement('canvas');
+            const ctx = c.getContext('2d');
+            const font = `400 ${fontPx}px "Spline Sans Mono", ui-monospace, monospace`;
+            ctx.font = font;
+            cellW = Math.ceil(ctx.measureText('M').width + 0.6 * dpr);
+            cellH = Math.round(fontPx * 1.42);
+            const ac = 8, ar = Math.ceil(CHARSET.length / ac);
+            c.width = ac * cellW; c.height = ar * cellH;
+            ctx.font = font;
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            [...CHARSET].forEach((ch, i) => {
+                ctx.fillText(ch, (i % ac) * cellW + cellW / 2, ((i / ac) | 0) * cellH + cellH / 2 + 0.5 * dpr);
+            });
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, glyphTex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, c);
+            gl.uniform2f(U.uAtlasGrid, ac, ar);
+            gl.uniform2f(U.uCell, cellW, cellH);
+        }
+
+        function writeString(row, col, str) {
+            for (let i = 0; i < str.length; i++) {
+                const x = col + i;
+                if (x < 0 || x >= cols) continue;
+                cells[row * cols + x] = INDEX.get(str[i]) || 0;
+            }
+            dirty = true;
+        }
+
+        function fill() {
+            cells = new Uint8Array(cols * rows);
+            for (let r = 0; r < rows; r++) {
+                const line = logLine(cols + 40);
+                writeString(r, 0, line.slice((Math.random() * 30) | 0));
+            }
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, charTex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, cols, rows, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, cells);
+            gl.uniform2f(U.uGrid, cols, rows);
+            dirty = false;
+        }
+
+        function resize() {
+            dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
+            const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+            if (w === canvas.width && h === canvas.height && cells) return;
+            canvas.width = w; canvas.height = h;
+            gl.viewport(0, 0, w, h);
+            gl.uniform2f(U.uRes, w, h);
+            gl.uniform1f(U.uRadius, (canvas.clientWidth < 700 ? 70 : 120) * dpr);
+            buildAtlas();
+            cols = Math.ceil(w / cellW); rows = Math.ceil(h / cellH);
+            fill();
+            if (!running) draw(); // keep a correct still frame
+        }
+
+        // ── New records typing in: random glyphs, then the record settles left to right ──
+        const SCRAMBLE_MS = 26;
+        let spawnClock = 0;
+        function stepWriters(now, dt) {
+            spawnClock += dt;
+            while (spawnClock > 55) {
+                spawnClock -= 55;
+                if (writers.length < 40) {
+                    const text = record() + ' · ';
+                    writers.push({ row: (Math.random() * rows) | 0, col: ((Math.random() * (cols + 10)) | 0) - 5, text, t0: now });
+                }
+            }
+            for (let w = writers.length - 1; w >= 0; w--) {
+                const wr = writers[w];
+                const settled = Math.floor((now - wr.t0) / SCRAMBLE_MS);
+                let out = '';
+                for (let i = 0; i < wr.text.length; i++) {
+                    out += i < settled - 4 ? wr.text[i] : (i < settled ? CHARSET[1 + ((Math.random() * (CHARSET.length - 1)) | 0)] : '');
+                }
+                writeString(wr.row, wr.col, out);
+                if (settled - 4 >= wr.text.length) writers.splice(w, 1);
+            }
+        }
+
+        // ── Pointer wake ──
+        const trail = new Float32Array(36);
+        const points = [];   // { x, y, born }
+        let lastX = -1e4, lastY = -1e4;
+        function onPointer(e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left, y = e.clientY - rect.top;
+            if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
+            if (Math.hypot(x - lastX, y - lastY) < 14) return;
+            lastX = x; lastY = y;
+            points.push({ x: x * dpr, y: y * dpr, born: performance.now() });
+            if (points.length > 12) points.shift();
+        }
+        function stepTrail(now) {
+            for (let i = 0; i < 12; i++) {
+                const p = points[i];
+                const life = p ? Math.max(0, 1 - (now - p.born) / 1100) : 0;
+                trail[i * 3] = p ? p.x : 0;
+                trail[i * 3 + 1] = p ? p.y : 0;
+                trail[i * 3 + 2] = life * life * (3 - 2 * life); // ease out
+            }
+            gl.uniform3fv(U.uTrail, trail);
+        }
+
+        // The quiet zone follows the element passed as opts.quiet (the headline)
+        function stepSafe() {
+            if (!opts.quiet) return;
+            const c = canvas.getBoundingClientRect(), r = opts.quiet.getBoundingClientRect();
+            gl.uniform4f(U.uSafe, (r.left - c.left) * dpr, (r.top - c.top) * dpr, (r.right - c.left) * dpr, (r.bottom - c.top) * dpr);
+            gl.uniform1f(U.uFeather, 90 * dpr);
+        }
+
+        let time = Math.random() * 100, running = false, raf = 0, last = 0, visible = false;
+        function draw() {
+            if (dirty) {
+                gl.activeTexture(gl.TEXTURE1);
+                gl.bindTexture(gl.TEXTURE_2D, charTex);
+                gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, cols, rows, gl.LUMINANCE, gl.UNSIGNED_BYTE, cells);
+                dirty = false;
+            }
+            gl.uniform1f(U.uTime, time);
+            gl.clearColor(0, 0, 0, 0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+        }
+        function frame(now) {
+            raf = requestAnimationFrame(frame);
+            const dt = Math.min(64, last ? now - last : 16);
+            last = now;
+            // scrolling stirs the flow a little
+            time += (dt / 1000) * (1 + Math.min(6, Math.abs(getVelocity()) * 0.12));
+            stepWriters(now, dt);
+            stepTrail(now);
+            stepSafe();
+            draw();
+        }
+        function start() {
+            if (running || reduced || !visible || document.hidden) return;
+            running = true; last = 0;
+            raf = requestAnimationFrame(frame);
+        }
+        function stop() { running = false; cancelAnimationFrame(raf); }
+
+        resize();
+        stepTrail(0);
+        stepSafe();
+        draw();
+
+        const ro = new ResizeObserver(() => resize());
+        ro.observe(canvas);
+        const io = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; visible ? start() : stop(); }, { rootMargin: '120px 0px' });
+        io.observe(canvas);
+        document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+        if (!reduced) addEventListener('pointermove', onPointer, { passive: true });
+        canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); });
+
+        canvas.classList.add('is-ready');
+        const controller = { start, stop, resize, points };
+        canvas._dataField = controller;
+        return controller;
+    }
+
+    window.DataField = { mount };
+})();

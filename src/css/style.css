@@ -344,7 +344,16 @@ input, textarea { font: inherit; color: inherit; }
 /* ── Manifesto (pinned, letters assemble) ───────────── */
 .manifesto { padding: 40px var(--gutter) 0; position: relative; }
 .manifesto .sec-bar { margin-bottom: 0; padding-top: 40px; }
-.manifesto-pin { min-height: 100vh; display: flex; align-items: center; }
+.manifesto-pin { min-height: 100vh; display: flex; align-items: center; position: relative; }
+/* Full-bleed behind the text; fades in once WebGL has drawn its first frame */
+.data-field {
+    position: absolute; top: 0; bottom: 0;
+    left: calc(-1 * var(--gutter)); width: calc(100% + 2 * var(--gutter));
+    height: 100%; pointer-events: none;
+    opacity: 0; transition: opacity 1.2s ease;
+}
+.data-field.is-ready { opacity: 1; }
+.manifesto-text { position: relative; z-index: 1; }
 .manifesto-text {
     font: 700 clamp(54px, 9.2vw, 140px)/0.92 var(--display);
     letter-spacing: -0.03em; text-transform: uppercase;

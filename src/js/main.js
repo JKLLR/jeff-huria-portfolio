@@ -505,6 +505,8 @@ function initHeroScroll() {
 function initManifesto() {
     const text = $('[data-manifesto]');
     if (!text) return;
+    const field = $('#dataField');
+    if (field && window.DataField) DataField.mount(field, { reduced: REDUCED, quiet: text, getVelocity: () => (lenis ? lenis.velocity : 0) });
     if (REDUCED) return;
     const chars = splitChars(text);
     const pin = $('.manifesto-pin');
