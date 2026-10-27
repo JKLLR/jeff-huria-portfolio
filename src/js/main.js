@@ -481,7 +481,7 @@ function prepareHero() {
         gsap.set('.hero-plate', { scaleX: 0, transformOrigin: 'left' });
     }
     return () => {
-        const tl = gsap.timeline({ defaults: { ease: 'power4.out' } });
+        const tl = gsap.timeline({ defaults: { ease: 'power4.out' }, onComplete: () => { heroIntroDone = true; syncPortrait(); } });
         tl.to(chars, { yPercent: 0, duration: 1.3, stagger: 0.035 })
           .to(parts, { opacity: 1, y: 0, duration: 1, stagger: 0.06 }, 0.35);
         if ($('.hero-photo')) {
@@ -494,9 +494,25 @@ function prepareHero() {
     };
 }
 
+// Scrolling past the hero: the portrait decodes into records and streams down the page.
+// It takes over from the <img> only once the intro has finished, so the photo's reveal is untouched.
+let heroIntroDone = false;
+let syncPortrait = () => {};
 function initHeroScroll() {
     if (REDUCED || !$('.hero')) return;
-    gsap.to('.hero-photo', { yPercent: -18, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
+    const visual = $('.hero-visual'), img = $('.hero-photo img'), wrap = $('.hero-ascii');
+    const portrait = wrap && img && window.DataField ? DataField.portrait($('canvas', wrap), img, { box: $('.hero-photo'), plate: $('.hero-plate') }) : null;
+    if (portrait) {
+        let last = 0;
+        syncPortrait = (p = last) => {
+            last = p;
+            if (!heroIntroDone || !portrait.isReady()) return;
+            visual.classList.toggle('is-decoding', p > 0.002);
+            portrait.setProgress(p);
+        };
+        ScrollTrigger.create({ trigger: '.hero', start: 'top top', end: 'bottom top', onUpdate: (self) => syncPortrait(self.progress) });
+    }
+    gsap.to(['.hero-photo', '.hero-ascii'], { yPercent: -18, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
     gsap.to('.hero-plate', { yPercent: 10, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
     gsap.to('.hero-title', { yPercent: 30, opacity: 0.2, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
 }
@@ -707,4 +723,5 @@ function initClock() {
     firstVisit = false;
     root.classList.remove('first-visit');
     if (playHero) playHero();
+    else { heroIntroDone = true; syncPortrait(); }
 })();

@@ -318,6 +318,12 @@ input, textarea { font: inherit; color: inherit; }
     overflow: hidden; background: #d9d9d6;
 }
 .hero-photo img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) contrast(1.05); }
+/* Same box as the photo but unclipped, so the decoded data can fall out of the frame */
+.hero-ascii { position: absolute; z-index: 2; left: 37%; top: -6%; width: 59%; bottom: 6%; pointer-events: none; visibility: hidden; }
+.hero-ascii canvas { position: absolute; left: 0; top: 0; width: 100%; height: 240%; }
+.hero-visual.is-decoding .hero-ascii { visibility: visible; }
+.hero-visual.is-decoding .hero-photo { background: transparent; }
+.hero-visual.is-decoding .hero-photo img { opacity: 0; }
 .hero-roles {
     position: absolute; z-index: 3; left: 0; bottom: 12%;
     font: 700 clamp(17px, 1.75vw, 25px)/1.38 var(--display); letter-spacing: -0.04em;
@@ -807,7 +813,7 @@ a.wi-link:hover { color: var(--bg); padding-left: 16px; }
     .hero-based { align-self: center; margin: 16px 0 0; gap: 1.6em; font-size: 11px; letter-spacing: 0.6em; }
     .hero-visual { width: min(460px, 92vw); height: min(98vw, 470px); margin-top: 26px; }
     .hero-plate { top: 22%; }
-    .hero-photo { left: 30%; width: 66%; top: 0; bottom: 8%; }
+    .hero-photo, .hero-ascii { left: 30%; width: 66%; top: 0; bottom: 8%; }
     .hero-roles { bottom: 4%; font-size: 17px; }
     .hero-foot { flex-direction: column; align-items: flex-start; }
     .hero-mail { margin-left: 0; font-size: 20px; }
