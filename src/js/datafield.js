@@ -92,10 +92,10 @@ void main() {
     vec2 local = fract(px / uCell);
     vec2 center = (cell + 0.5) * uCell;
 
-    // The cursor's wake: push the flow aside and hollow it out, with a bright rim
+    // The cursor's wake: bends the flow aside and lights up the records beneath it (a hollow would be
+    // invisible here, the field is mostly dark already), leaving a fading trail
     vec2 push = vec2(0.0);
-    float hollow = 0.0;
-    float rim = 0.0;
+    float glow = 0.0;
     for (int i = 0; i < 12; i++) {
         vec3 t = uTrail[i];
         if (t.z <= 0.001) continue;
@@ -103,8 +103,7 @@ void main() {
         float r = length(d) / uRadius;
         float f = exp(-r * r);
         push += normalize(d + 0.0001) * f * t.z;
-        hollow = max(hollow, f * t.z);
-        rim = max(rim, exp(-pow(r - 1.05, 2.0) * 7.0) * t.z); // strongest rim only: summed rims fill the hollow
+        glow = max(glow, f * t.z); // strongest point only, so overlapping samples don't pile up
     }
 
     // Flow field: domain-warped simplex noise, drifting slowly
@@ -122,9 +121,8 @@ void main() {
     vec2 inS = smoothstep(uSafe.xy - uFeather, uSafe.xy + uFeather, px) * (1.0 - smoothstep(uSafe.zw - uFeather, uSafe.zw + uFeather, px));
     b *= 1.0 - 0.62 * inS.x * inS.y;
 
-    float h = clamp(hollow, 0.0, 1.0);
-    b *= 1.0 - 0.94 * h;
-    b += 0.45 * clamp(rim, 0.0, 1.0) * (1.0 - h);
+    // under the cursor the data shows clearly, brightest where the shapes already are
+    b = max(b, glow * (0.42 + 0.5 * blob));
 
     // Fade into the sections above and below
     float v = px.y / uRes.y;
@@ -249,7 +247,7 @@ void main() {
             canvas.width = w; canvas.height = h;
             gl.viewport(0, 0, w, h);
             gl.uniform2f(U.uRes, w, h);
-            gl.uniform1f(U.uRadius, (canvas.clientWidth < 700 ? 70 : 120) * dpr);
+            gl.uniform1f(U.uRadius, (canvas.clientWidth < 700 ? 64 : 96) * dpr);
             buildAtlas();
             cols = Math.ceil(w / cellW); rows = Math.ceil(h / cellH);
             fill();
