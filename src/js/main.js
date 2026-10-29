@@ -196,13 +196,15 @@ const loaderPct = $('#loaderPct');
 if (loader) { gsap.set(loader, { yPercent: 0 }); window.jkhSyncSpin && window.jkhSyncSpin(); }
 const setPct = (v) => { if (loaderPct) loaderPct.textContent = Math.round(v); };
 const EASE_SHEET = 'expo.inOut';
+// how far the sheet travels to be fully off screen, its ragged data edges (26% of its height) included
+const OFF = 126;
 const nextFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 // a transform on <main> would unfix a pinned section, so the page only drifts when nothing is pinned
 const pinActive = () => ScrollTrigger.getAll().some((t) => t.pin && t.isActive);
 
 function hideLoader() {
     if (!loader) return;
-    gsap.set(loader, { yPercent: 100, visibility: 'hidden' });
+    gsap.set(loader, { yPercent: OFF, visibility: 'hidden' });
 }
 
 // Resolves as the page starts to show, so the hero intro overlaps the reveal
@@ -254,7 +256,7 @@ function uncover(drift, onShowing) {
     })
         .to('.loader-stage', { scale: 1.6, opacity: 0, duration: 0.8, ease: 'power3.in' })
         .to('.loader-pct', { opacity: 0, duration: 0.3, ease: 'power1.out' }, 0)
-        .to(loader, { yPercent: -100, duration: 1.1, ease: EASE_SHEET }, 0.4)
+        .to(loader, { yPercent: -OFF, duration: 1.2, ease: EASE_SHEET }, 0.4)
         .to(drift ? main : {}, { y: 0, duration: 1.1, ease: EASE_SHEET, force3D: true }, 0.4)
         .add(onShowing, 0.85);
 }
@@ -265,10 +267,10 @@ function coverWithLoader(href) {
     pauseScroll();
     setPct(0);
     const tl = gsap.timeline({ onComplete: () => { location.href = href; } })
-        .set(loader, { visibility: 'visible', yPercent: 100 })
+        .set(loader, { visibility: 'visible', yPercent: OFF })
         .set('.loader-stage', { scale: 0.86, opacity: 0 })
         .set('.loader-pct', { opacity: 0 })
-        .to(loader, { yPercent: 0, duration: 0.9, ease: EASE_SHEET })
+        .to(loader, { yPercent: 0, duration: 1, ease: EASE_SHEET })
         .to('.loader-stage', { scale: 1, opacity: 1, duration: 0.7, ease: 'power3.out' }, 0.4)
         .to('.loader-pct', { opacity: 1, duration: 0.4 }, 0.6);
     if (!pinActive()) tl.to('#main', { y: -70, duration: 0.9, ease: EASE_SHEET, force3D: true }, 0);
@@ -293,6 +295,7 @@ function internalUrl(a) {
 
 // ── Page transitions ────────────────────────────────────
 function initTransitions() {
+    if (loader && window.DataField) $$('.loader-edge', loader).forEach((c) => DataField.edge(c, { side: c.classList.contains('is-top') ? 'top' : 'bottom' }));
     const warm = (e) => {
         const url = internalUrl(e.target.closest && e.target.closest('a'));
         if (url && url.pathname !== location.pathname) prefetch(url.pathname);
@@ -491,7 +494,20 @@ function prepareHero() {
         const tl = gsap.timeline({ defaults: { ease: 'power4.out' }, onComplete: () => { heroIntroDone = true; syncPortrait(); } });
         tl.to(chars, { yPercent: 0, duration: 1.3, stagger: 0.035 })
           .to(parts, { opacity: 1, y: 0, duration: 1, stagger: 0.06 }, 0.35);
-        if ($('.hero-photo')) {
+        if ($('.hero-photo') && heroPortrait && heroPortrait.isReady()) {
+            // The portrait arrives as data: its record halftone wipes in, then develops into the photo
+            // (the scroll decode, played backwards). At 0 the canvas matches the <img> exactly.
+            const dec = { p: 0.2 };
+            $('.hero-visual').classList.add('is-decoding');
+            heroPortrait.setProgress(dec.p);
+            gsap.set('.hero-photo', { clipPath: 'inset(0% 0 0 0)' });
+            gsap.set('.hero-photo img', { scale: 1 });
+            gsap.set('.hero-ascii', { clipPath: 'inset(100% 0 0 0)' });
+            tl.to('.hero-plate', { scaleX: 1, duration: 1.2, ease: 'power3.inOut' }, 0.3)
+              .to('.hero-ascii', { clipPath: 'inset(0% 0 0 0)', duration: 1.3, ease: 'power4.inOut' }, 0.45)
+              .to(dec, { p: 0, duration: 1.7, ease: 'power2.inOut', onUpdate: () => heroPortrait.setProgress(dec.p) }, 1.05)
+              .set('.hero-ascii', { clearProps: 'clipPath' });
+        } else if ($('.hero-photo')) {
             tl.to('.hero-plate', { scaleX: 1, duration: 1.2, ease: 'power3.inOut' }, 0.3)
               .to('.hero-photo', { clipPath: 'inset(0% 0 0 0)', duration: 1.3, ease: 'power4.inOut' }, 0.45)
               .to('.hero-photo img', { scale: 1, duration: 1.8, ease: 'power3.out' }, 0.45);
@@ -504,11 +520,13 @@ function prepareHero() {
 // Scrolling past the hero: the portrait decodes into records and streams down the page.
 // It takes over from the <img> only once the intro has finished, so the photo's reveal is untouched.
 let heroIntroDone = false;
+let heroPortrait = null;
 let syncPortrait = () => {};
 function initHeroScroll() {
     if (REDUCED || !$('.hero')) return;
     const visual = $('.hero-visual'), img = $('.hero-photo img'), wrap = $('.hero-ascii');
     const portrait = wrap && img && window.DataField ? DataField.portrait($('canvas', wrap), img, { box: $('.hero-photo'), plate: $('.hero-plate') }) : null;
+    heroPortrait = portrait;
     if (portrait) {
         let last = 0;
         syncPortrait = (p = last) => {
@@ -525,6 +543,12 @@ function initHeroScroll() {
 }
 
 // ── Manifesto: pinned, letters fly in and assemble ──────
+// A quieter field behind the footer name: dark ink on the light page
+function initFooterField() {
+    const field = $('#footerField');
+    if (field && window.DataField) DataField.mount(field, { reduced: REDUCED, ink: [17 / 255, 17 / 255, 17 / 255], max: 0.34, getVelocity: () => (lenis ? lenis.velocity : 0) });
+}
+
 function initManifesto() {
     const text = $('[data-manifesto]');
     if (!text) return;
@@ -691,6 +715,19 @@ function initProject() {
         $$('.cover-type-row', cover).forEach((row, i) => {
             gsap.fromTo(row, { xPercent: i % 2 ? -20 : 0 }, { xPercent: i % 2 ? 0 : -20, ease: 'none', scrollTrigger: { trigger: cover, start: 'top bottom', end: 'bottom top', scrub: true } });
         });
+        // The cover is transmitted like the works projector: standby static, then it develops out of records
+        if (window.DataField) {
+            const canvas = document.createElement('canvas');
+            canvas.className = 'screen-signal';
+            canvas.setAttribute('aria-hidden', 'true');
+            cover.appendChild(canvas);
+            // a screenshot cover is light paper; a typographic cover is light type on dark
+            const signal = DataField.screen(canvas, cover, $('img', cover) ? {} : { paper: [17 / 255, 17 / 255, 17 / 255] });
+            if (signal) {
+                signal.standby();
+                ScrollTrigger.create({ trigger: cover, start: 'top 72%', once: true, onEnter: () => signal.play(null, cover) });
+            } else canvas.remove();
+        }
     }
     $$('.impact-value, .project-facts .stat-num').forEach((el) => {
         gsap.from(el, { yPercent: 60, opacity: 0, duration: 1.1, ease: 'power4.out', scrollTrigger: { trigger: el, start: 'top 92%' } });
@@ -732,6 +769,7 @@ function initClock() {
     initHeroScroll();
     initReveals();
     initManifesto();
+    initFooterField();
     initRoom();
     initWorksIndex();
     initMarquees();

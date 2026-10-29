@@ -8,7 +8,7 @@
    the noise is computed per pixel on the GPU. The CPU only rewrites a handful
    of cells per frame (new records "typing in"). Pauses when off-screen.
 
-   Usage: DataField.mount(canvas, { reduced, getVelocity }) -> controller | null
+   Usage: DataField.mount(canvas, { reduced, quiet, getVelocity, ink, max }) -> controller | null
    ===================================================== */
 (function () {
     'use strict';
@@ -190,7 +190,7 @@ void main() {
             .forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
         gl.uniform1i(U.uGlyphs, 0);
         gl.uniform1i(U.uChars, 1);
-        gl.uniform3f(U.uInk, 243 / 255, 243 / 255, 241 / 255);
+        gl.uniform3fv(U.uInk, opts.ink || [243 / 255, 243 / 255, 241 / 255]);   // light on dark by default
         gl.uniform1f(U.uMax, opts.max || 0.62);
         gl.uniform4f(U.uSafe, -1, -1, -1, -1);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
@@ -592,10 +592,12 @@ float glyphAt(vec2 cell, vec2 local, float idx) {
 }
 
 vec3 halftone(vec3 src, float glyph) {
-    // whatever stands out from the paper inks hard; the paper itself still carries faint records
+    // whatever stands out from the paper inks hard; the paper itself still carries faint records.
+    // Ink pushes away from the paper: darker on light paper, brighter on dark
     float ink = 0.16 + 0.84 * smoothstep(0.03, 0.3, length(src - uPaper));
     vec3 ghost = mix(uPaper, src, 0.3);
-    return mix(ghost, src * 0.3, glyph * ink);
+    vec3 inkCol = dot(uPaper, vec3(0.299, 0.587, 0.114)) > 0.5 ? src * 0.3 : mix(src, vec3(1.0), 0.45);
+    return mix(ghost, inkCol, glyph * ink);
 }
 
 void main() {
@@ -639,28 +641,42 @@ void main() {
 
     // Paints a slide into a 2D canvas exactly as the page shows it: an image (object-fit: cover, top),
     // or a typographic card, drawn glyph by glyph at the positions the browser laid them out
+    const CLEAR = 'rgba(0, 0, 0, 0)';
     function paintSlide(ctx, slide, w, h) {
         const ref = slide.getBoundingClientRect();
         const scale = w / ref.width;
-        const bg = getComputedStyle(slide.parentElement).backgroundColor;
-        ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+        const own = getComputedStyle(slide).backgroundColor;
+        ctx.fillStyle = own !== CLEAR ? own : getComputedStyle(slide.parentElement).backgroundColor;
+        ctx.fillRect(0, 0, w, h);
         const img = slide.querySelector('img');
         if (img) {
             if (!img.naturalWidth) return;
-            const s = Math.max(w / img.naturalWidth, h / img.naturalHeight);
-            ctx.drawImage(img, (w - img.naturalWidth * s) / 2, 0, img.naturalWidth * s, img.naturalHeight * s);
+            // where the browser actually put it (it may be taller than the frame and shifted by parallax),
+            // object-fit: cover, anchored to the top
+            const r = img.getBoundingClientRect();
+            const bx = (r.left - ref.left) * scale, by = (r.top - ref.top) * scale, bw = r.width * scale, bh = r.height * scale;
+            const s = Math.max(bw / img.naturalWidth, bh / img.naturalHeight);
+            ctx.save();
+            ctx.beginPath(); ctx.rect(bx, by, bw, bh); ctx.clip();
+            ctx.drawImage(img, bx + (bw - img.naturalWidth * s) / 2, by, img.naturalWidth * s, img.naturalHeight * s);
+            ctx.restore();
             return;
         }
         slide.querySelectorAll('*').forEach((el) => {
             const cs = getComputedStyle(el);
             const r = el.getBoundingClientRect();
-            if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+            if (el.tagName === 'CANVAS') return;
+            if (cs.backgroundColor !== CLEAR) {
                 ctx.fillStyle = cs.backgroundColor;
                 ctx.fillRect((r.left - ref.left) * scale, (r.top - ref.top) * scale, r.width * scale, r.height * scale);
             }
             const upper = cs.textTransform === 'uppercase';
             ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${parseFloat(cs.fontSize) * scale}px ${cs.fontFamily}`;
+            // outlined type (-webkit-text-stroke with a transparent fill) is stroked, not filled
+            const stroke = parseFloat(cs.webkitTextStrokeWidth) || 0;
+            const outline = stroke > 0 && cs.color === CLEAR;
             ctx.fillStyle = cs.color;
+            ctx.strokeStyle = cs.webkitTextStrokeColor; ctx.lineWidth = stroke * scale;
             ctx.textBaseline = 'alphabetic';
             const m = ctx.measureText('Hg');
             const asc = m.fontBoundingBoxAscent || m.actualBoundingBoxAscent, desc = m.fontBoundingBoxDescent || m.actualBoundingBoxDescent;
@@ -675,13 +691,15 @@ void main() {
                     if (!cr.width) continue;
                     // CSS centres the font's content box in the line box, so the baseline sits here
                     const top = (cr.top - ref.top) * scale + (cr.height * scale - (asc + desc)) / 2;
-                    ctx.fillText(upper ? ch.toUpperCase() : ch, (cr.left - ref.left) * scale, top + asc);
+                    const x = (cr.left - ref.left) * scale, c = upper ? ch.toUpperCase() : ch;
+                    if (outline) ctx.strokeText(c, x, top + asc); else ctx.fillText(c, x, top + asc);
                 }
             });
         });
     }
 
-    function screen(canvas, surface) {
+    // opts.paper: the surface's paper colour as [r, g, b] 0-1 (default: the page's light paper)
+    function screen(canvas, surface, opts = {}) {
         const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
         if (!gl) return null;
         const vs = compile(gl, gl.VERTEX_SHADER, VERT);
@@ -701,7 +719,7 @@ void main() {
         ['uRes', 'uCell', 'uGrid', 'uAtlasGrid', 'uP', 'uTime', 'uStandby', 'uPaper', 'uGlyphs', 'uChars', 'uFrom', 'uTo']
             .forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
         gl.uniform1i(U.uGlyphs, 0); gl.uniform1i(U.uChars, 1); gl.uniform1i(U.uFrom, 2); gl.uniform1i(U.uTo, 3);
-        gl.uniform3f(U.uPaper, 246 / 255, 246 / 255, 244 / 255);
+        gl.uniform3fv(U.uPaper, opts.paper || [246 / 255, 246 / 255, 244 / 255]);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
         const tex = (unit, filter) => {
             const t = gl.createTexture();
@@ -824,6 +842,45 @@ void main() {
         return { play, standby };
     }
 
+    // ── Edge: the loader sheet's ragged data edge ──
+    // Columns of records hanging off the sheet: solid next to it, thinning to loose glyphs at the tips,
+    // so the sheet sweeping over the page reads as a slab of data. Drawn once (2D canvas); it rides the
+    // sheet's own transform, so it costs nothing per frame. side: 'top' (grows upward) or 'bottom'.
+    function edge(canvas, opts = {}) {
+        const side = opts.side || 'bottom';
+        const paper = opts.paper || 'rgba(246, 246, 244, 0.995)';
+        const ink = opts.ink || '17, 17, 17';
+        function draw() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const w = Math.round(canvas.clientWidth * dpr), h = Math.round(canvas.clientHeight * dpr);
+            if (!w || !h) return;
+            canvas.width = w; canvas.height = h;
+            const ctx = canvas.getContext('2d');
+            const fontPx = (canvas.clientWidth < 700 ? 9 : 10) * dpr;
+            ctx.font = `500 ${fontPx}px "Spline Sans Mono", ui-monospace, monospace`;
+            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            const cw = Math.ceil(ctx.measureText('M').width + 0.6 * dpr), ch = Math.round(fontPx * 1.42);
+            const cols = Math.ceil(w / cw), rows = Math.floor(h / ch);
+            for (let c = 0; c < cols; c++) {
+                // mostly short drips, a few long ones; neighbours loosely related so it reads as a front
+                const len = Math.max(1, Math.round(rows * Math.pow(Math.random(), 2.2)));
+                const solid = Math.round(len * (0.45 + Math.random() * 0.3));
+                const text = logLine(len + 4).replace(/ /g, '');
+                for (let i = 0; i < len; i++) {
+                    const y = side === 'top' ? h - (i + 1) * ch : i * ch;
+                    if (i < solid) { ctx.fillStyle = paper; ctx.fillRect(c * cw, y, cw, ch); }
+                    const a = (i < solid ? 0.5 : 0.75) * (1 - i / len) + 0.08;
+                    ctx.fillStyle = `rgba(${ink}, ${a.toFixed(3)})`;
+                    ctx.fillText(text[i], c * cw + cw / 2, y + ch / 2 + 0.5 * dpr);
+                }
+            }
+        }
+        const fonts = document.fonts ? document.fonts.load('500 10px "Spline Sans Mono"').catch(() => {}) : Promise.resolve();
+        fonts.then(draw);
+        let rt = 0;
+        addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(draw, 200); });
+    }
+
     // ── Scramble: text types in like a record, random glyphs settling left to right ──
     function scramble(el, text, opts = {}) {
         const dur = opts.duration || 700;
@@ -846,5 +903,5 @@ void main() {
         el._scramble = requestAnimationFrame(step);
     }
 
-    window.DataField = { mount, portrait, screen, scramble };
+    window.DataField = { mount, portrait, screen, scramble, edge };
 })();

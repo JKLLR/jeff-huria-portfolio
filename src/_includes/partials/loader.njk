@@ -10,6 +10,9 @@
 </div></div>
 {%- endmacro -%}
 <div class="loader" id="loader" aria-hidden="true">
+    {#- ragged data edges: records hanging off the sheet as it sweeps over the page (drawn by datafield.js) -#}
+    <canvas class="loader-edge is-top"></canvas>
+    <canvas class="loader-edge is-bottom"></canvas>
     {#- loader-stage is animated by main.js; loader-fit holds the small-screen scale, so the two never fight -#}
     <div class="loader-stage">
         <div class="loader-fit">
