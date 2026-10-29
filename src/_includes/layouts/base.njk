@@ -23,14 +23,18 @@
 
     <script>
         // js: enable entrance styles. first-visit: the loader runs its full count once per session (shorter after).
-        // mock-on: highlight placeholder content (default on while the copy is being written).
+        // mock-on: highlight placeholder content (previews only; the live build leaves it out).
         (function () {
             var c = document.documentElement.classList;
             c.add('js');
             try {
                 if (!sessionStorage.getItem('jkh-visited')) c.add('first-visit');
+{%- if build.showMock %}
                 if (localStorage.getItem('jkh-mock') !== 'off') c.add('mock-on');
             } catch (e) { c.add('first-visit', 'mock-on'); }
+{%- else %}
+            } catch (e) { c.add('first-visit'); }
+{%- endif %}
         })();
     </script>
 
@@ -55,9 +59,11 @@
 
     {% include "partials/footer.njk" %}
 
+    {%- if build.showMock %}
     <button class="mock-toggle" id="mockToggle" type="button" aria-pressed="true" title="Highlight placeholder content (M)">
         <span class="mock-dot"></span> MOCK DATA <span class="mock-state">ON</span>
     </button>
+    {%- endif %}
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
