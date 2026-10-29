@@ -442,6 +442,13 @@ function initReveals() {
         if (img) gsap.fromTo(img, { scale: 1.3 }, { scale: 1, duration: 1.8, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } });
     });
 
+    // Section labels type in like records as they arrive
+    $$('.sec-bar > span').forEach((el) => {
+        if (!window.DataField || el.children.length || !el.textContent.trim()) return;
+        const text = el.textContent;
+        ScrollTrigger.create({ trigger: el, start: 'top 92%', once: true, onEnter: () => DataField.scramble(el, text, { duration: 650 }) });
+    });
+
     // Big titles: scattered letters assemble as they scroll into view
     $$('[data-scatter]').forEach((el) => {
         const chars = splitChars(el);
@@ -544,19 +551,33 @@ function initRoom() {
     const titleEl = $('#roomTitle');
     const idxEl = $('#roomIdx');
     const view = $('#roomView');
-    let index = 0;
+    const live = $('#roomLive');
+    let index = 0, revealed = false;
+
+    // The projector transmits each project as data (WebGL); without it, a white flash
+    let signal = null;
+    if (!REDUCED && window.DataField) {
+        const canvas = document.createElement('canvas');
+        canvas.className = 'screen-signal';
+        canvas.setAttribute('aria-hidden', 'true');
+        screen.appendChild(canvas);
+        signal = DataField.screen(canvas, screen);
+        if (!signal) canvas.remove();
+    }
 
     const go = (next) => {
+        const prev = index;
         index = (next + slides.length) % slides.length;
+        if (index === prev) return;
+        revealed = true;
+        if (signal) signal.play(slides[prev], slides[index]);
+        else { screen.classList.remove('is-flash'); void screen.offsetWidth; screen.classList.add('is-flash'); }
         slides.forEach((s, i) => s.classList.toggle('is-active', i === index));
-        screen.classList.remove('is-flash'); void screen.offsetWidth; screen.classList.add('is-flash');
         idxEl.textContent = index + 1;
         view.href = data[index].href;
+        live.textContent = data[index].title;
         if (REDUCED) { titleEl.textContent = data[index].title; return; }
-        gsap.timeline()
-            .to(titleEl, { yPercent: -60, opacity: 0, duration: 0.25, ease: 'power2.in' })
-            .add(() => { titleEl.textContent = data[index].title; })
-            .fromTo(titleEl, { yPercent: 60, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.45, ease: 'power3.out' });
+        DataField.scramble(titleEl, data[index].title.toUpperCase(), { duration: 900 });
     };
     $('#roomPrev').addEventListener('click', () => go(index - 1));
     $('#roomNext').addEventListener('click', () => go(index + 1));
@@ -584,6 +605,11 @@ function initRoom() {
     stage.addEventListener('dragstart', (e) => e.preventDefault());
 
     if (REDUCED) return;
+    // The first project arrives out of the projector's standby static as the room comes into view
+    if (signal) {
+        signal.standby();
+        ScrollTrigger.create({ trigger: room, start: 'top 35%', once: true, onEnter: () => { if (!revealed) { revealed = true; signal.play(null, slides[index]); } } });
+    }
     // Camera dolly as the room scrolls into view
     gsap.fromTo('#roomBox', { scale: 1.55 }, { scale: 1, ease: 'none', scrollTrigger: { trigger: room, start: 'top bottom', end: 'top top', scrub: true } });
     gsap.from('.room-ui > *', { opacity: 0, y: 30, stagger: 0.08, duration: 0.9, ease: 'power3.out', scrollTrigger: { trigger: room, start: 'top 30%' } });

@@ -560,5 +560,291 @@ void main() {
         return { setProgress, resize, isReady: () => ready };
     }
 
-    window.DataField = { mount, portrait };
+    // ── Screen: the works projector transmits each project as data ──
+    // Progress 0 -> 1 (time-driven, ~1.4s): every cell runs its own timeline, offset by a noisy sweep
+    // down from the projector: picture A dissolves into a halftone of itself drawn in records, the
+    // records churn and re-form as picture B's halftone, and B develops out of it. At 0 and 1 it draws A and B exactly, so the canvas
+    // can be laid over the real slides and removed without a visible change.
+    // With no A (the first time the room comes into view), A is the projector on standby: faint static.
+    const SCREEN_FRAG = `
+precision highp float;
+uniform vec2 uRes;
+uniform vec2 uCell;
+uniform vec2 uGrid;
+uniform vec2 uAtlasGrid;
+uniform float uP;
+uniform float uTime;
+uniform float uStandby;   // 1: there is no picture A, the screen starts dark with faint data
+uniform vec3 uPaper;      // the screen's paper colour
+uniform sampler2D uGlyphs;
+uniform sampler2D uChars;
+uniform sampler2D uFrom;
+uniform sampler2D uTo;
+
+const float GLYPHS = ${CHARSET.length}.0;
+const vec3 DARK = vec3(0.043);
+
+float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+
+float glyphAt(vec2 cell, vec2 local, float idx) {
+    vec2 g = vec2(mod(idx, uAtlasGrid.x), floor(idx / uAtlasGrid.x));
+    return texture2D(uGlyphs, (g + local) / uAtlasGrid).a;
+}
+
+vec3 halftone(vec3 src, float glyph) {
+    // whatever stands out from the paper inks hard; the paper itself still carries faint records
+    float ink = 0.16 + 0.84 * smoothstep(0.03, 0.3, length(src - uPaper));
+    vec3 ghost = mix(uPaper, src, 0.3);
+    return mix(ghost, src * 0.3, glyph * ink);
+}
+
+void main() {
+    vec2 px = vec2(gl_FragCoord.x, uRes.y - gl_FragCoord.y);
+    vec2 uv = px / uRes;
+    vec2 cell = floor(px / uCell);
+    vec2 local = fract(px / uCell);
+    float h = hash(cell);
+    float idx = floor(texture2D(uChars, (cell + 0.5) / uGrid).r * 255.0 + 0.5);
+
+    // this cell's own timeline: the beam sweeps down from the projector, broken up by noise
+    float order = 0.55 * h + 0.45 * (cell.y / uGrid.y);
+    float t = clamp(uP * 1.6 - order * 0.6, 0.0, 1.0);
+
+    vec4 A = texture2D(uFrom, uv);
+    vec4 B = texture2D(uTo, uv);
+    if (uStandby > 0.5) A = vec4(DARK + 0.11 * glyphAt(cell, local, idx), 1.0);
+    if (t <= 0.0) { gl_FragColor = A; return; }
+    if (t >= 1.0) { gl_FragColor = B; return; }
+
+    // records churn hardest mid-flight
+    float calm = abs(t - 0.5) * 2.0;
+    float tick = floor(uTime * 14.0 + h * 9.0);
+    if (hash(cell + tick) > calm * 0.9 + 0.1) idx = 1.0 + floor(hash(cell * 1.7 + tick) * (GLYPHS - 1.0));
+    float glyph = glyphAt(cell, local, idx);
+
+    // Each picture as a halftone of itself made of records (the hero portrait's language): the paper
+    // stays, a ghost of the picture stays faintly, and whatever stands out from the paper becomes ink
+    vec3 hb = halftone(B.rgb, glyph);
+    vec3 ha = uStandby > 0.5 ? DARK + 0.11 * glyph : halftone(A.rgb, glyph);
+    float k = smoothstep(0.3, 0.7, t + (hash(cell + 3.1) - 0.5) * 0.3);
+    vec3 signal = mix(ha, hb, k);
+
+    // cells flip crisply into and out of the signal (no muddy cross-fades), each at its own moment
+    vec3 col = t < 0.5 ? mix(A.rgb, signal, smoothstep(0.0, 0.1, t)) : mix(signal, B.rgb, smoothstep(0.86, 1.0, t));
+    // the projector's light sweeping down the screen
+    float beam = uv.y - (uP * 1.4 - 0.2);
+    col += 0.09 * exp(-beam * beam / 0.006) * sin(3.14159 * uP);
+    gl_FragColor = vec4(min(col, 1.0), 1.0);
+}`;
+
+    // Paints a slide into a 2D canvas exactly as the page shows it: an image (object-fit: cover, top),
+    // or a typographic card, drawn glyph by glyph at the positions the browser laid them out
+    function paintSlide(ctx, slide, w, h) {
+        const ref = slide.getBoundingClientRect();
+        const scale = w / ref.width;
+        const bg = getComputedStyle(slide.parentElement).backgroundColor;
+        ctx.fillStyle = bg; ctx.fillRect(0, 0, w, h);
+        const img = slide.querySelector('img');
+        if (img) {
+            if (!img.naturalWidth) return;
+            const s = Math.max(w / img.naturalWidth, h / img.naturalHeight);
+            ctx.drawImage(img, (w - img.naturalWidth * s) / 2, 0, img.naturalWidth * s, img.naturalHeight * s);
+            return;
+        }
+        slide.querySelectorAll('*').forEach((el) => {
+            const cs = getComputedStyle(el);
+            const r = el.getBoundingClientRect();
+            if (cs.backgroundColor !== 'rgba(0, 0, 0, 0)') {
+                ctx.fillStyle = cs.backgroundColor;
+                ctx.fillRect((r.left - ref.left) * scale, (r.top - ref.top) * scale, r.width * scale, r.height * scale);
+            }
+            const upper = cs.textTransform === 'uppercase';
+            ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${parseFloat(cs.fontSize) * scale}px ${cs.fontFamily}`;
+            ctx.fillStyle = cs.color;
+            ctx.textBaseline = 'alphabetic';
+            const m = ctx.measureText('Hg');
+            const asc = m.fontBoundingBoxAscent || m.actualBoundingBoxAscent, desc = m.fontBoundingBoxDescent || m.actualBoundingBoxDescent;
+            const range = document.createRange();
+            el.childNodes.forEach((node) => {
+                if (node.nodeType !== 3) return;
+                for (let i = 0; i < node.length; i++) {
+                    const ch = node.data[i];
+                    if (!ch.trim()) continue;
+                    range.setStart(node, i); range.setEnd(node, i + 1);
+                    const cr = range.getBoundingClientRect();
+                    if (!cr.width) continue;
+                    // CSS centres the font's content box in the line box, so the baseline sits here
+                    const top = (cr.top - ref.top) * scale + (cr.height * scale - (asc + desc)) / 2;
+                    ctx.fillText(upper ? ch.toUpperCase() : ch, (cr.left - ref.left) * scale, top + asc);
+                }
+            });
+        });
+    }
+
+    function screen(canvas, surface) {
+        const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
+        if (!gl) return null;
+        const vs = compile(gl, gl.VERTEX_SHADER, VERT);
+        const fs = compile(gl, gl.FRAGMENT_SHADER, SCREEN_FRAG);
+        if (!vs || !fs) return null;
+        const prog = gl.createProgram();
+        gl.attachShader(prog, vs); gl.attachShader(prog, fs); gl.linkProgram(prog);
+        if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) { console.warn('[datafield]', gl.getProgramInfoLog(prog)); return null; }
+        gl.useProgram(prog);
+        const buf = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+        const aPos = gl.getAttribLocation(prog, 'aPos');
+        gl.enableVertexAttribArray(aPos);
+        gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
+        const U = {};
+        ['uRes', 'uCell', 'uGrid', 'uAtlasGrid', 'uP', 'uTime', 'uStandby', 'uPaper', 'uGlyphs', 'uChars', 'uFrom', 'uTo']
+            .forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
+        gl.uniform1i(U.uGlyphs, 0); gl.uniform1i(U.uChars, 1); gl.uniform1i(U.uFrom, 2); gl.uniform1i(U.uTo, 3);
+        gl.uniform3f(U.uPaper, 246 / 255, 246 / 255, 244 / 255);
+        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+        const tex = (unit, filter) => {
+            const t = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(gl.TEXTURE_2D, t);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            return t;
+        };
+        const glyphTex = tex(0, gl.NEAREST), charTex = tex(1, gl.NEAREST);
+        const fromTex = tex(2, gl.LINEAR), toTex = tex(3, gl.LINEAR);
+
+        let w = 0, h = 0, sized = false;
+        const shots = new Map();   // slide -> its painted canvas, at the current size
+        function size() {
+            const dpr = Math.min(window.devicePixelRatio || 1, 2);
+            const nw = Math.round(surface.clientWidth * dpr), nh = Math.round(surface.clientHeight * dpr);
+            if (!nw || !nh) return false;
+            if (nw === w && nh === h && sized) return true;
+            w = nw; h = nh; shots.clear();
+            canvas.width = w; canvas.height = h;
+            gl.viewport(0, 0, w, h);
+            gl.uniform2f(U.uRes, w, h);
+            const atlas = renderAtlas((surface.clientWidth < 360 ? 6 : 8) * dpr, dpr, 500);
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, glyphTex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, atlas.canvas);
+            gl.uniform2f(U.uAtlasGrid, atlas.ac, atlas.ar);
+            gl.uniform2f(U.uCell, atlas.cellW, atlas.cellH);
+            const cols = Math.ceil(w / atlas.cellW), rows = Math.ceil(h / atlas.cellH);
+            const cells = new Uint8Array(cols * rows);
+            for (let r = 0; r < rows; r++) {
+                const line = logLine(cols + 30).slice((Math.random() * 20) | 0);
+                for (let c = 0; c < cols; c++) cells[r * cols + c] = INDEX.get(line[c]) || 0;
+            }
+            gl.activeTexture(gl.TEXTURE1);
+            gl.bindTexture(gl.TEXTURE_2D, charTex);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, cols, rows, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, cells);
+            gl.uniform2f(U.uGrid, cols, rows);
+            sized = true;
+            return true;
+        }
+        function shot(slide) {
+            if (!shots.has(slide)) {
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                paintSlide(c.getContext('2d'), slide, w, h);
+                shots.set(slide, c);
+            }
+            return shots.get(slide);
+        }
+        function upload(unit, t, source) {
+            gl.activeTexture(gl.TEXTURE0 + unit);
+            gl.bindTexture(gl.TEXTURE_2D, t);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
+        }
+        function draw(p, time) {
+            gl.uniform1f(U.uP, p);
+            gl.uniform1f(U.uTime, time);
+            gl.drawArrays(gl.TRIANGLES, 0, 3);
+        }
+
+        // Images inside the slides load lazily: make sure the ones we paint are ready
+        const ready = (slide) => {
+            const img = slide && slide.querySelector('img');
+            if (!img) return Promise.resolve();
+            img.loading = 'eager';
+            return (img.decode ? img.decode() : Promise.resolve()).catch(() => {});
+        };
+        const fonts = document.fonts ? document.fonts.load('500 8px "Spline Sans Mono"').catch(() => {}) : Promise.resolve();
+
+        let raf = 0, p = 0, from = null, to = null, t0 = 0, dur = 1400, done = null;
+        const ease = (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+        function frame(now) {
+            if (!t0) t0 = now;
+            p = Math.min(1, (now - t0) / dur);
+            draw(ease(p), now / 1000);
+            if (p < 1) { raf = requestAnimationFrame(frame); return; }
+            raf = 0;
+            canvas.classList.remove('is-on');   // the real slide underneath is identical now
+            if (done) done();
+        }
+
+        // Show the projector on standby (dark, faint data) until the first transmission
+        function standby() {
+            return fonts.then(() => {
+                if (to || !size()) return;   // a transmission already started
+                gl.uniform1f(U.uStandby, 1);
+                draw(0, 0);
+                canvas.classList.add('is-on');
+            });
+        }
+
+        // Transmit from one slide to another (from = null: out of standby). A new call mid-flight picks up
+        // from the picture that is landing, so rapid clicks never jump.
+        function play(fromSlide, toSlide) {
+            return Promise.all([fonts, ready(fromSlide), ready(toSlide)]).then(() => new Promise((resolve) => {
+                if (!size()) { resolve(); return; }
+                const midFlight = raf && to;
+                cancelAnimationFrame(raf); raf = 0;
+                if (done) done();
+                if (midFlight) fromSlide = to;
+                from = fromSlide; to = toSlide;
+                gl.uniform1f(U.uStandby, from ? 0 : 1);
+                if (from) upload(2, fromTex, shot(from));
+                upload(3, toTex, shot(to));
+                draw(0, performance.now() / 1000);
+                canvas.classList.add('is-on');
+                dur = +surface.dataset.signalMs || 1400;   // data-signal-ms slows it down for inspection
+                t0 = 0; done = () => { done = null; resolve(); };
+                raf = requestAnimationFrame(frame);
+            }));
+        }
+
+        let rt = 0;
+        addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { sized = false; }, 150); });
+        canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); cancelAnimationFrame(raf); canvas.classList.remove('is-on'); });
+        return { play, standby };
+    }
+
+    // ── Scramble: text types in like a record, random glyphs settling left to right ──
+    function scramble(el, text, opts = {}) {
+        const dur = opts.duration || 700;
+        const pool = CHARSET.slice(1);
+        if (el._scramble) cancelAnimationFrame(el._scramble);
+        let t0 = 0;
+        const step = (now) => {
+            if (!t0) t0 = now;
+            const k = Math.min(1, (now - t0) / dur);
+            const settled = Math.floor(k * (text.length + 3)) - 3;
+            let out = '';
+            for (let i = 0; i < text.length; i++) {
+                const ch = text[i];
+                out += i < settled || ch === ' ' ? ch : (i < settled + 4 ? pool[(Math.random() * pool.length) | 0] : '');
+            }
+            el.textContent = out;
+            el._scramble = k < 1 ? requestAnimationFrame(step) : 0;
+            if (k >= 1) el.textContent = text;
+        };
+        el._scramble = requestAnimationFrame(step);
+    }
+
+    window.DataField = { mount, portrait, screen, scramble };
 })();

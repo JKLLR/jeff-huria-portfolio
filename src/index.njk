@@ -174,7 +174,8 @@ bodyClass: page-home
         </div>
     </div>
     <div class="room-ui">
-        <p class="room-title" id="roomTitle" aria-live="polite">{{ featured.title }}</p>
+        <p class="room-title" id="roomTitle" aria-hidden="true">{{ featured.title }}</p>
+        <p class="visually-hidden" id="roomLive" aria-live="polite">{{ featured.title }}</p>
         <div class="room-controls">
             <button type="button" class="room-btn" id="roomPrev" aria-label="Previous project">←</button>
             <span class="room-count"><span id="roomIdx">1</span>/{{ work | length }}</span>
