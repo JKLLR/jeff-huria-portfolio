@@ -1,9 +1,20 @@
+const fs = require('fs');
+const path = require('path');
+
 module.exports = function (eleventyConfig) {
     // Static assets — copied as-is, same paths as before the migration
     eleventyConfig.addPassthroughCopy("src/css");
     eleventyConfig.addPassthroughCopy("src/js");
     eleventyConfig.addPassthroughCopy("src/assets");
     eleventyConfig.addPassthroughCopy("src/favicon.ico");
+    eleventyConfig.addPassthroughCopy("src/_headers");
+
+    // The WebP twin of a .jpg/.png under src/, when one exists ("" otherwise), for <picture> sources
+    eleventyConfig.addFilter("webp", (src) => {
+        if (!src || !/\.(jpe?g|png)$/i.test(src)) return '';
+        const twin = src.replace(/\.(jpe?g|png)$/i, '.webp');
+        return fs.existsSync(path.join('src', twin)) ? twin : '';
+    });
 
     // Filters items (projects, experience) down to ones tagged as
     // evidence for a given capability slug

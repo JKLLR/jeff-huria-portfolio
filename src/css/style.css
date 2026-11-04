@@ -72,6 +72,9 @@ input, textarea { font: inherit; color: inherit; }
 /* on dark surfaces the secondary grey goes lighter instead (6.9:1 on #111) */
 .theme-dark, .menu, .next-project { --gray: #9a9a9a; }
 
+/* <picture> wrappers (WebP with a JPEG fallback) leave layout to the <img> inside */
+picture { display: contents; }
+
 /* 404: the address that had no record, then the way back */
 .notfound-record { font: 400 13px/1 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--gray); overflow-wrap: anywhere; }
 .notfound-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 48px; }

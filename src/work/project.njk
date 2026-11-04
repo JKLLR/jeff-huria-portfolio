@@ -46,7 +46,8 @@ eleventyComputed:
 <div class="project-cover" data-cover>
     <div class="project-cover-inner">
         {% if project.image %}
-        <img src="{{ project.image.src }}" alt="{{ project.image.alt }}" width="1440" height="900" fetchpriority="high">
+        {%- set wp = project.image.src | webp %}
+        <picture>{% if wp %}<source srcset="{{ wp }}" type="image/webp">{% endif %}<img src="{{ project.image.src }}" alt="{{ project.image.alt }}" width="1440" height="900" fetchpriority="high"></picture>
         {% else %}
         <div class="cover-type" aria-hidden="true">
             <span class="cover-type-row">{% for i in range(4) %}<span>{{ project.title }}</span>{% endfor %}</span>
@@ -154,7 +155,8 @@ eleventyComputed:
         {% for shot in project.gallery %}
         <figure class="gallery-item{% if shot.height > shot.width %} is-portrait{% endif %}">
             <div class="gallery-frame">
-                <img src="{{ shot.src }}" alt="{{ shot.alt }}" width="{{ shot.width }}" height="{{ shot.height }}" loading="lazy" decoding="async">
+                {%- set wp = shot.src | webp %}
+                <picture>{% if wp %}<source srcset="{{ wp }}" type="image/webp">{% endif %}<img src="{{ shot.src }}" alt="{{ shot.alt }}" width="{{ shot.width }}" height="{{ shot.height }}" loading="lazy" decoding="async"></picture>
             </div>
             <figcaption><span>({{ "0" if loop.index < 10 }}{{ loop.index }})</span> {{ shot.caption }}</figcaption>
         </figure>

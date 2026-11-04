@@ -1,0 +1,11 @@
+# Netlify response headers (copied to the site root by Eleventy)
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://gc.zgo.at; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://jeffhuria.goatcounter.com; connect-src 'self' https://jeffhuria.goatcounter.com; worker-src 'self' blob:; frame-ancestors 'none'; form-action 'self'; base-uri 'self'; object-src 'none'
+
+# images, icons and share cards change rarely: a day in the browser, then revalidate
+/assets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800

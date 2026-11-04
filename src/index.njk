@@ -160,7 +160,8 @@ bodyClass: page-home
                     {% for item in work %}
                     <a class="screen-slide{% if loop.first %} is-active{% endif %}" href="{{ '/work/' + item.slug + '/' if item.hasPage else '#works-index' }}" data-index="{{ loop.index0 }}" data-cursor="VIEW" aria-label="{{ item.title }}">
                         {% if item.image %}
-                        <img src="{{ item.image.src }}" alt="{{ item.image.alt }}" width="1440" height="900" loading="lazy">
+                        {%- set wp = item.image.src | webp %}
+                        <picture>{% if wp %}<source srcset="{{ wp }}" type="image/webp">{% endif %}<img src="{{ item.image.src }}" alt="{{ item.image.alt }}" width="1440" height="900" loading="lazy"></picture>
                         {% else %}
                         <span class="screen-type" aria-hidden="true">
                             <span class="screen-type-meta">{{ item.type | replace("-", " ") | upper }} — {{ "0" if loop.index < 10 }}{{ loop.index }}</span>
