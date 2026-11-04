@@ -344,12 +344,22 @@ function initTransitions() {
 
 // ── Menu (mobile) ───────────────────────────────────────
 const menuBtn = $('#menuBtn');
+// While the menu is open it is a modal: everything else on the page is inert (no focus, no clicks, hidden
+// from screen readers) except the button that closes it, and focus returns to that button afterwards
+function menuBackdrop() {
+    const header = $('.header'), menu = $('#menu');
+    const outside = [...document.body.children].filter((el) => el !== header && el !== menu && el.tagName !== 'SCRIPT');
+    const inHeader = header ? [...header.children].filter((el) => el !== menuBtn) : [];
+    return [...outside, ...inHeader];
+}
 function closeMenu() {
     if (!root.classList.contains('menu-open')) return;
     root.classList.remove('menu-open');
     menuBtn.setAttribute('aria-expanded', 'false');
     $('.menu-btn-text').textContent = 'MENU';
     $('#menu').setAttribute('aria-hidden', 'true');
+    menuBackdrop().forEach((el) => { el.inert = false; });
+    if ($('#menu').contains(document.activeElement) || document.activeElement === document.body) menuBtn.focus();
     resumeScroll();
 }
 function initMenu() {
@@ -361,6 +371,9 @@ function initMenu() {
         menuBtn.setAttribute('aria-expanded', 'true');
         $('.menu-btn-text').textContent = 'CLOSE';
         $('#menu').setAttribute('aria-hidden', 'false');
+        menuBackdrop().forEach((el) => { el.inert = true; });
+        const first = $('#menu a');
+        if (first) first.focus({ preventScroll: true });
         pauseScroll();
     });
     addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
@@ -856,7 +869,7 @@ function initProject() {
 // ── The whole page as data ──────────────────────────────
 // The button (or the ` key) transmits what is on screen into records, which hold there, churning;
 // the cursor is a lens that shows the real page through the data. Again (or Esc) develops it back.
-// Scrolling pauses while the data view is up.
+// The page keeps scrolling underneath, as data.
 function initDataView() {
     const btn = $('#viewToggle'), view = $('#dataView');
     if (!btn || !view) return;
@@ -865,14 +878,19 @@ function initDataView() {
     let on = false, busy = false, px = innerWidth / 2, py = innerHeight / 2;
     const R = FINE_POINTER ? 130 : 0;
     addEventListener('pointermove', (e) => { px = e.clientX; py = e.clientY; if (on) scr.lensAt(px, py, R); }, { passive: true });
-    const paint = (ctx, w, h) => DataField.paintView(ctx, w, h, [$('#main'), $('#connect')].filter(Boolean));
+    const paint = (ctx, w, h, top) => DataField.paintView(ctx, w, h, [$('#main'), $('#connect')].filter(Boolean), top);
     async function set(next) {
         if (busy || next === on) return;
         busy = true; on = next;
         btn.setAttribute('aria-pressed', String(on));
         btn.textContent = on ? '[ VIEW AS PAGE ]' : '[ VIEW AS DATA ]';
-        if (on) { pauseScroll(); scr.lensAt(px, py, R); await scr.hold(paint); }
-        else { await scr.release(); resumeScroll(); }
+        if (on) {
+            scr.lensAt(px, py, R);
+            // counted as an event in the analytics, when they are on
+            if (window.goatcounter && goatcounter.count) goatcounter.count({ path: 'view-as-data', title: 'View as data', event: true });
+            await scr.hold(paint);
+        }
+        else { await scr.release(); }
         busy = false;
     }
     btn.addEventListener('click', () => set(!on));

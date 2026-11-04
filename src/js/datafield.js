@@ -597,6 +597,8 @@ uniform float uStandby;   // 1: there is no picture A, the screen starts dark wi
 uniform vec3 uPaper;      // the screen's paper colour
 uniform float uAuto;      // 1: whole-page view, the paper follows the page (light or dark) under each pixel
 uniform vec3 uLens;       // whole-page view: x, y (device px), radius of the cursor lens showing the real page
+uniform vec2 uSrc;        // whole-page view: the capture is taller than the screen; x = scroll offset into it,
+                          // y = its height (device px). 0 height: the pictures are screen-sized
 uniform sampler2D uGlyphs;
 uniform sampler2D uChars;
 uniform sampler2D uFrom;
@@ -642,6 +644,11 @@ void main() {
 
     vec4 A = texture2D(uFrom, uv);
     vec4 B = texture2D(uTo, uv);
+    if (uSrc.y > 0.0) {
+        float sy = (px.y + uSrc.x) / uSrc.y;
+        A = (sy < 0.0 || sy > 1.0) ? vec4(uPaper, 1.0) : texture2D(uFrom, vec2(uv.x, sy));
+        B = A;
+    }
     if (uStandby > 0.5) A = vec4(DARK + 0.11 * glyphAt(cell, local, idx), 1.0);
     if (t <= 0.0) { gl_FragColor = A; return; }
     if (t >= 1.0) { gl_FragColor = B; return; }
@@ -746,11 +753,11 @@ void main() {
         gl.enableVertexAttribArray(aPos);
         gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
         const U = {};
-        ['uRes', 'uCell', 'uGrid', 'uAtlasGrid', 'uP', 'uTime', 'uStandby', 'uPaper', 'uAuto', 'uLens', 'uGlyphs', 'uChars', 'uFrom', 'uTo']
+        ['uRes', 'uCell', 'uGrid', 'uAtlasGrid', 'uP', 'uTime', 'uStandby', 'uPaper', 'uAuto', 'uLens', 'uSrc', 'uGlyphs', 'uChars', 'uFrom', 'uTo']
             .forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
         gl.uniform1i(U.uGlyphs, 0); gl.uniform1i(U.uChars, 1); gl.uniform1i(U.uFrom, 2); gl.uniform1i(U.uTo, 3);
         gl.uniform3fv(U.uPaper, opts.paper || [246 / 255, 246 / 255, 244 / 255]);
-        gl.uniform1f(U.uAuto, 0); gl.uniform3f(U.uLens, 0, 0, 0);
+        gl.uniform1f(U.uAuto, 0); gl.uniform3f(U.uLens, 0, 0, 0); gl.uniform2f(U.uSrc, 0, 0);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
         const tex = (unit, filter) => {
             const t = gl.createTexture();
@@ -875,22 +882,36 @@ void main() {
         // cursor is a lens showing the real page through the data. release() develops it back.
         let holding = false, hraf = 0, lens = [0, 0, 0];
         function lensAt(x, y, r) { lens = [x, y, r]; }
+        // The capture is a band three screens tall (one above, one below), painted at CSS-pixel scale, and the
+        // shader slides through it as the page scrolls. When the scroll settles near the band's edge (or runs
+        // past it), the band is painted again around the new position.
         function hold(paint) {
             return fonts.then(() => {
                 cancelAnimationFrame(raf); raf = 0; cancelAnimationFrame(hraf);
                 sized = false;
                 if (!size()) return;
-                const page = document.createElement('canvas');
-                page.width = w; page.height = h;
-                paint(page.getContext('2d'), w, h);
-                upload(2, fromTex, page); upload(3, toTex, page);
+                const dpr = w / surface.clientWidth;
+                const band = document.createElement('canvas');
+                let capY = 0, lastY = scrollY, still = 0;
+                const capture = () => {
+                    const vw = innerWidth, vh = innerHeight;
+                    band.width = vw; band.height = vh * 3;
+                    paint(band.getContext('2d'), vw, vh * 3, -vh);
+                    upload(2, fromTex, band); upload(3, toTex, band);
+                    capY = scrollY;
+                };
+                capture();
                 gl.uniform1f(U.uStandby, 0); gl.uniform1f(U.uAuto, 1);
                 holding = true; canvas.classList.add('is-on');
-                const dpr = w / surface.clientWidth;
                 let t0 = 0;
                 const loop = (now) => {
                     if (!t0) t0 = now;
                     const k = Math.min(1, (now - t0) / 1100);
+                    const vh = innerHeight, y = scrollY;
+                    if (y !== lastY) { lastY = y; still = now; }
+                    const off = Math.abs(y - capY);
+                    if (off > vh * 0.95 || (off > vh * 0.3 && now - still > 160)) capture();
+                    gl.uniform2f(U.uSrc, (scrollY - capY + vh) * dpr, vh * 3 * dpr);
                     gl.uniform3f(U.uLens, lens[0] * dpr, lens[1] * dpr, lens[2] * dpr * Math.min(1, k * 2));
                     draw(0.5 * ease(k), now / 1000);   // at 0.5 every cell is mid-signal
                     if (holding) hraf = requestAnimationFrame(loop);
@@ -909,7 +930,7 @@ void main() {
                     gl.uniform3f(U.uLens, 0, 0, 0);
                     draw(0.5 + 0.5 * ease(k), now / 1000);
                     if (k < 1) { hraf = requestAnimationFrame(loop); return; }
-                    canvas.classList.remove('is-on'); gl.uniform1f(U.uAuto, 0);
+                    canvas.classList.remove('is-on'); gl.uniform1f(U.uAuto, 0); gl.uniform2f(U.uSrc, 0, 0);
                     resolve();
                 };
                 hraf = requestAnimationFrame(loop);
@@ -924,12 +945,14 @@ void main() {
 
     // Paints what is on screen into a 2D canvas (backgrounds, images, the data fields' canvases, text glyph
     // by glyph), for the whole-page data view. Only what intersects the viewport.
-    function paintView(ctx, w, h, roots) {
+    function paintView(ctx, w, h, roots, top = 0) {
         const scale = w / innerWidth;
         ctx.fillStyle = getComputedStyle(document.body).backgroundColor;
         ctx.fillRect(0, 0, w, h);
+        ctx.setTransform(1, 0, 0, 1, 0, -top * scale);   // viewport y = top lands at the canvas's first row
+        const y0 = top, y1 = top + h / scale;
         const range = document.createRange();
-        const visible = (r) => r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth && r.width && r.height;
+        const visible = (r) => r.bottom > y0 && r.top < y1 && r.right > 0 && r.left < innerWidth && r.width && r.height;
         // what an element may paint into: the intersection of every ancestor that clips its overflow
         // (odometer windows, masked lines, image frames), so hidden parts stay hidden
         const clips = new Map();
@@ -995,7 +1018,7 @@ void main() {
                     if (!ch.trim()) continue;
                     range.setStart(node, i); range.setEnd(node, i + 1);
                     const cr = range.getBoundingClientRect();
-                    if (!cr.width || cr.bottom < 0 || cr.top > innerHeight) continue;
+                    if (!cr.width || cr.bottom < y0 || cr.top > y1) continue;
                     const top = cr.top * scale + (cr.height * scale - (asc + desc)) / 2;
                     const c = upper ? ch.toUpperCase() : ch;
                     if (outline) ctx.strokeText(c, cr.left * scale, top + asc); else ctx.fillText(c, cr.left * scale, top + asc);

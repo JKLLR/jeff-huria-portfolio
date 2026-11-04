@@ -83,6 +83,10 @@
     </button>
     {%- endif %}
 
+    {%- if site.goatcounter and not build.showMock %}
+    {#- visit counts: GoatCounter, no cookies (so no banner); live site only. Set site.json "goatcounter" to the site code. -#}
+    <script data-goatcounter="https://{{ site.goatcounter }}.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
+    {%- endif %}
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.3/dist/lenis.min.js"></script>
