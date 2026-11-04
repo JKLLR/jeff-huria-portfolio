@@ -2,7 +2,9 @@
     inside the letters of a word lock one by one until the word stands, made of data. The word is
     where you are going: the name on the home page, the project or capability title elsewhere, so a
     click on KODIWA starts spelling KODIWA before the page has even been requested.
-    It is drawn by the inline script below (not main.js) so it is alive from the first paint. -#}
+    It is drawn by the inline script below (not main.js) so it is alive from the first paint, on the GPU,
+    from a worker thread where the browser allows it: the page boots on the main thread behind the
+    loader, and none of that work can make the field stutter. -#}
 <div class="loader" id="loader" aria-hidden="true">
     {#- ragged data edges: records hanging off the sheet as it sweeps over the page (drawn by datafield.js) -#}
     <canvas class="loader-edge is-top"></canvas>
@@ -20,144 +22,207 @@
     WORDS['/capabilities/{{ c.slug }}/'] = {{ c.title | upper | dump | safe }};
 {%- endfor %}
     var CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-·.,:/+';
-    var INK = '#111111', PAPER = '#f6f6f4';
     var canvas = document.getElementById('loaderField');
     var destEl = document.getElementById('loaderDest');
-    if (!canvas || !canvas.getContext) return;
-    var ctx = canvas.getContext('2d');
+    if (!canvas) return;
 
-    var S = { p: 0, out: 0, word: '', path: '', running: false };
-    var W, H, dpr, cw, ch, cols, rows, band0, band1, cells = [], prevP = 0, last = 0, fontReady = false;
+    // ── The renderer. Self-contained (it is also stringified into the worker), so no outside names.
+    // One full-screen triangle; each pixel finds its grid cell, reads that cell's state (inside the word?
+    // which letter? how near?) from a tiny texture and picks a glyph from the atlas. All the per-cell
+    // logic is in the shader, so a frame costs the main thread nothing.
+    function Renderer(canvas, NGLYPH) {
+        var gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: 'low-power' });
+        if (!gl) return null;
+        var VS = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
+        var FS = [
+            'precision mediump float;',
+            'uniform sampler2D uState,uAtlas;uniform vec2 uGrid,uCell,uRes,uAG;uniform float uP,uOut,uFlash,uTime;',
+            'float hash(vec2 p,float k){vec3 q=fract(vec3(p.xyx+k*17.13)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}',
+            'float glyph(float i,vec2 f){vec2 a=vec2(mod(i,uAG.x),floor(i/uAG.x));return texture2D(uAtlas,(a+f)/uAG).a;}',
+            'void main(){',
+            ' vec2 px=vec2(gl_FragCoord.x,uRes.y-gl_FragCoord.y);vec2 cell=floor(px/uCell);',
+            ' if(cell.x>=uGrid.x||cell.y>=uGrid.y){gl_FragColor=vec4(0.);return;}',
+            ' vec4 st=texture2D(uState,(cell+.5)/uGrid);vec2 f=fract(px/uCell);',
+            ' float tick=floor(uTime*14.);',
+            ' float rnd=floor(hash(cell+vec2(tick*13.1,tick*7.7),5.)*' + NGLYPH + '.);',
+            ' float flick=hash(cell+vec2(tick*3.3,tick*11.9),6.);',
+            ' float h=hash(cell,1.),h2=hash(cell,2.),h3=hash(cell,3.);',
+            ' float noise=1.-smoothstep(.35,1.,uP);vec3 ink=vec3(.067);vec3 paper=vec3(.965,.965,.957);',
+            ' vec4 c=vec4(0.);float a;',
+            ' if(st.r>.5){',
+            '  float at=.04+h*.9,go=h2*.85+.1,letter=floor(st.g*255.+.5);',
+            '  if(uOut>go){}',
+            '  else if(uP>=at){',
+            '   if(uOut>go-.1){a=.9*glyph(rnd,f);c=vec4(ink*a,a);}',
+            '   else if(at>uP-uFlash){float g=glyph(letter,f);c=vec4(mix(ink,paper,g),1.);}',
+            '   else{a=.07+.93*glyph(letter,f);c=vec4(ink*a,a);}',
+            '  }else if(h3<.75){a=(.2+.2*flick)*glyph(rnd,f);c=vec4(ink*a,a);}',
+            ' }else if(st.b>0.&&h3<(.42*noise+.04)*st.b&&flick<=.86){',
+            '  a=(.08+.2*st.b)*(.35+.65*noise)*(1.-uOut)*glyph(rnd,f);c=vec4(ink*a,a);}',
+            ' gl_FragColor=c;}',
+        ].join('\n');
+        // cell states, top to bottom: letting go → landing (inverted) → landed (on a faint tile) →
+        // still searching (dim random records); outside the word, the stream thins as the word resolves
+        function sh(t, src) { var o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); return o; }
+        var pr = gl.createProgram();
+        gl.attachShader(pr, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(pr, sh(gl.FRAGMENT_SHADER, FS));
+        gl.bindAttribLocation(pr, 0, 'a');
+        gl.linkProgram(pr);
+        if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return null;
+        gl.useProgram(pr);
+        gl.bindBuffer(gl.ARRAY_BUFFER, gl.createBuffer());
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+        gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+        var U = {};
+        ['uState', 'uAtlas', 'uGrid', 'uCell', 'uRes', 'uAG', 'uP', 'uOut', 'uFlash', 'uTime'].forEach(function (n) { U[n] = gl.getUniformLocation(pr, n); });
+        function tex(unit) {
+            var t = gl.createTexture(); gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, t);
+            var filt = unit ? gl.LINEAR : gl.NEAREST;
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filt); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filt);
+            return t;
+        }
+        var tState = tex(0), tAtlas = tex(1);
+        gl.uniform1i(U.uState, 0); gl.uniform1i(U.uAtlas, 1);
 
-    function hash(i, j, k) { // stable per cell, so the same cells lock in the same order on every page
-        var h = Math.sin(i * 127.1 + j * 311.7 + k * 74.7) * 43758.5453;
-        return h - Math.floor(h);
+        var target = 0, p = 0, out = 0, vel = 0, running = false, last = 0, hasLayout = false, hasAtlas = false;
+        var raf = typeof requestAnimationFrame === 'function'
+            ? function (f) { return requestAnimationFrame(f); }
+            : function (f) { return setTimeout(function () { f(performance.now()); }, 16); };
+        function frame(now) {
+            if (!running) return;
+            var dt = last ? Math.min(0.1, (now - last) / 1000) : 0.016; last = now;
+            var prev = p;
+            p += (target - p) * Math.min(1, dt * 14); // glides over any hitch in the progress messages
+            if (Math.abs(target - p) < 0.0005) p = target;
+            vel += (Math.abs(p - prev) / Math.max(dt, 0.001) - vel) * Math.min(1, dt * 8);
+            if (hasLayout && hasAtlas) {
+                gl.uniform1f(U.uP, p); gl.uniform1f(U.uOut, out); gl.uniform1f(U.uTime, now / 1000);
+                gl.uniform1f(U.uFlash, Math.min(0.05, vel * 0.16)); // a landing flash lasts ~0.16s, and none while stalled
+                gl.drawArrays(gl.TRIANGLES, 0, 3);
+            }
+            raf(frame);
+        }
+        return {
+            msg: function (m) {
+                if (m.t === 'layout') {
+                    canvas.width = m.W; canvas.height = m.H;
+                    gl.viewport(0, 0, m.W, m.H);
+                    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tState);
+                    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, m.cols, m.rows, 0, gl.RGBA, gl.UNSIGNED_BYTE, new Uint8Array(m.state));
+                    gl.uniform2f(U.uGrid, m.cols, m.rows); gl.uniform2f(U.uCell, m.cw, m.ch); gl.uniform2f(U.uRes, m.W, m.H);
+                    hasLayout = true;
+                } else if (m.t === 'atlas') {
+                    gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, tAtlas);
+                    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, m.img);
+                    gl.uniform2f(U.uAG, m.ac, m.ar);
+                    hasAtlas = true;
+                } else if (m.t === 'p') { target = m.v; if (m.snap) p = m.v; }
+                else if (m.t === 'out') out = m.v;
+                else if (m.t === 'run') { if (!running) { running = true; last = 0; raf(frame); } }
+                else if (m.t === 'stop') running = false;
+            },
+        };
     }
+
+    // ── Where the renderer lives: a worker if the browser can hand the canvas over, else this thread.
+    var post = null, viaWorker = false;
+    try {
+        if (canvas.transferControlToOffscreen && window.Worker && window.createImageBitmap) {
+            var src = Renderer.toString() + '\nvar r;onmessage=function(e){var m=e.data;if(m.t==="init")r=Renderer(m.canvas,m.n);else if(r)r.msg(m);};';
+            var wk = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
+            var off = canvas.transferControlToOffscreen();
+            wk.postMessage({ t: 'init', canvas: off, n: CHARSET.length }, [off]);
+            post = function (m, tr) { wk.postMessage(m, tr || []); };
+            viaWorker = true;
+        }
+    } catch (e) { post = null; }
+    if (!post) {
+        var R = Renderer(canvas, CHARSET.length);
+        if (R) post = function (m) { R.msg(m); };
+    }
+    if (!post) return;
+    canvas.dataset.renderer = viaWorker ? 'worker' : 'main';
+
+    var S = { p: 0, word: '', path: '' }, fontReady = false, cw, ch, dpr;
+
     function wordFor(path) { return WORDS[path] || WORDS[path + '/'] || 'JEFF K. HURIA'; }
-
-    // Lay the word out to the screen and sample which grid cells fall inside its letters
-    function build() {
-        dpr = Math.min(window.devicePixelRatio || 1, 2);
-        W = innerWidth; H = innerHeight;
-        canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
-        cw = Math.max(5, Math.min(10, Math.round(W / 180)));
-        ch = Math.round(cw * 1.3);
-        cols = Math.ceil(W / cw); rows = Math.ceil(H / ch);
-
-        var off = document.createElement('canvas');
-        var k = 0.5; off.width = Math.ceil(W * k); off.height = Math.ceil(H * k);
-        var o = off.getContext('2d');
-        var fam = fontReady ? '"Sofia Sans Condensed", "Arial Narrow", sans-serif' : '"Arial Narrow", sans-serif';
-        var lines = [S.word];
-        var size = fit(o, lines, fam);
-        // long titles on a narrow screen read better on two lines
-        if (S.word.indexOf(' ') > 0 && size < H * 0.16) {
-            var ws = S.word.split(' '), best = null;
-            for (var i = 1; i < ws.length; i++) {
-                var l2 = [ws.slice(0, i).join(' '), ws.slice(i).join(' ')];
-                var s2 = fit(o, l2, fam);
-                if (!best || s2 > best.s) best = { l: l2, s: s2 };
-            }
-            if (best && best.s > size * 1.15) { lines = best.l; size = best.s; }
-        }
-        var lh = size * 0.86, total = lh * lines.length;
-        o.setTransform(k, 0, 0, k, 0, 0);
-        o.fillStyle = '#000'; o.textAlign = 'center'; o.textBaseline = 'middle';
-        o.font = '800 ' + size + 'px ' + fam;
-        for (var n = 0; n < lines.length; n++) o.fillText(lines[n], W / 2, H / 2 - total / 2 + lh * (n + 0.5) + size * 0.04);
-        var img = o.getImageData(0, 0, off.width, off.height).data;
-
-        var top = H / 2 - total / 2, bot = H / 2 + total / 2;
-        band0 = Math.max(0, Math.floor(top / ch) - 9); band1 = Math.min(rows, Math.ceil(bot / ch) + 9);
-        var name = S.word.replace(/[^A-Z0-9]/g, '') || 'JKH', seq = 0;
-        cells = [];
-        for (var r = band0; r < band1; r++) {
-            for (var c = 0; c < cols; c++) {
-                var x = (c + 0.5) * cw, y = (r + 0.5) * ch;
-                var a = img[(Math.floor(y * k) * off.width + Math.floor(x * k)) * 4 + 3] || 0;
-                var inside = a > 110;
-                var dist = inside ? 0 : Math.min(Math.abs(y - top), Math.abs(y - bot)) / ch;
-                if (y > top && y < bot && !inside) dist = 0;
-                cells.push({
-                    c: c, r: r, in: inside,
-                    h: hash(c, r, 1), h2: hash(c, r, 2), h3: hash(c, r, 3),
-                    fall: inside ? 1 : Math.max(0, 1 - dist / 9),
-                    ch: inside ? name[seq++ % name.length] : '',
-                });
-            }
-        }
-        draw();
-    }
-    function fit(o, lines, fam) {
+    function fit(o, lines, fam, W, H) {
         o.font = '800 100px ' + fam;
         var wmax = 0;
         for (var i = 0; i < lines.length; i++) wmax = Math.max(wmax, o.measureText(lines[i]).width);
         return Math.min(100 * (W * 0.88) / wmax, (H * 0.42) / (lines.length * 0.86));
     }
 
-    function smooth(a, b, x) { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); }
-    function rnd() { return CHARSET[(Math.random() * CHARSET.length) | 0]; }
-
-    function draw() {
-        var p = S.p, out = S.out, tick = Math.floor(performance.now() / 70);
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-        ctx.clearRect(0, 0, W, H);
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        var fs = Math.round(cw * 1.5), mono = 'px "Spline Sans Mono", ui-monospace, monospace';
-        var noise = 1 - smooth(0.35, 1, p), locked = [], flash = [];
-        ctx.font = '400 ' + fs + mono; ctx.fillStyle = INK;
-        // pass 1: the stream, and the cells of the word still searching for their record
-        for (var i = 0; i < cells.length; i++) {
-            var e = cells[i], x = (e.c + 0.5) * cw, y = (e.r + 0.5) * ch;
-            if (e.in) {
-                var at = 0.04 + e.h * 0.9, let_go = e.h2 * 0.85 + 0.1;
-                if (out > let_go) continue;                         // released as the sheet lifts
-                if (p >= at) {
-                    if (out > let_go - 0.1) { ctx.globalAlpha = 0.9; ctx.fillText(rnd(), x, y); } // letting go
-                    else (at > prevP - 0.015 ? flash : locked).push(e);
-                } else if (e.h3 < 0.75) {
-                    ctx.globalAlpha = 0.2 + 0.2 * hash(e.c, e.r, tick);
-                    ctx.fillText(rnd(), x, y);
-                }
-            } else if (e.fall > 0 && e.h3 < (0.42 * noise + 0.04) * e.fall) {
-                if (hash(e.c, e.r, tick) > 0.86) continue;          // the stream flickers
-                ctx.globalAlpha = (0.08 + 0.2 * e.fall) * (0.35 + 0.65 * noise) * (1 - out);
-                ctx.fillText(rnd(), x, y);
+    // Lay the word out to the screen and record, per grid cell, whether it falls inside a letter.
+    // Runs once per word / size / font, never per frame.
+    function layout() {
+        var W = innerWidth, H = innerHeight;
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        cw = Math.max(5, Math.min(10, Math.round(W / 180)));
+        ch = Math.round(cw * 1.3);
+        var cols = Math.ceil(W / cw), rows = Math.ceil(H / ch);
+        var off = document.createElement('canvas'), k = 0.5;
+        off.width = Math.ceil(W * k); off.height = Math.ceil(H * k);
+        var o = off.getContext('2d', { willReadFrequently: true });
+        var fam = fontReady ? '"Sofia Sans Condensed", "Arial Narrow", sans-serif' : '"Arial Narrow", sans-serif';
+        var lines = [S.word], size = fit(o, lines, fam, W, H);
+        if (S.word.indexOf(' ') > 0 && size < H * 0.16) { // long titles on a narrow screen read better on two lines
+            var ws = S.word.split(' '), best = null;
+            for (var i = 1; i < ws.length; i++) {
+                var l2 = [ws.slice(0, i).join(' '), ws.slice(i).join(' ')], s2 = fit(o, l2, fam, W, H);
+                if (!best || s2 > best.s) best = { l: l2, s: s2 };
+            }
+            if (best && best.s > size * 1.15) { lines = best.l; size = best.s; }
+        }
+        var lh = size * 0.86, total = lh * lines.length, top = H / 2 - total / 2, bot = H / 2 + total / 2;
+        o.setTransform(k, 0, 0, k, 0, 0);
+        o.textAlign = 'center'; o.textBaseline = 'middle'; o.font = '800 ' + size + 'px ' + fam;
+        for (var n = 0; n < lines.length; n++) o.fillText(lines[n], W / 2, top + lh * (n + 0.5) + size * 0.04);
+        var img = o.getImageData(0, 0, off.width, off.height).data;
+        var name = S.word.replace(/[^A-Z0-9]/g, '') || 'JKH', seq = 0;
+        var state = new Uint8Array(cols * rows * 4);
+        for (var r = 0; r < rows; r++) {
+            var y = (r + 0.5) * ch, dist = y > top && y < bot ? 0 : Math.min(Math.abs(y - top), Math.abs(y - bot)) / ch;
+            var fall = Math.max(0, 1 - dist / 9);
+            for (var c = 0; c < cols; c++) {
+                var x = (c + 0.5) * cw, i4 = (r * cols + c) * 4;
+                var inside = (img[(Math.floor(y * k) * off.width + Math.floor(x * k)) * 4 + 3] || 0) > 110;
+                state[i4] = inside ? 255 : 0;
+                state[i4 + 1] = inside ? CHARSET.indexOf(name[seq++ % name.length]) : 0;
+                state[i4 + 2] = Math.round((inside ? 1 : fall) * 255);
             }
         }
-        ctx.globalAlpha = 1;
-        // pass 2: the records that have landed, on a faint tile so the letters read as solid shapes
-        ctx.globalAlpha = 0.07;
-        for (i = 0; i < locked.length; i++) { e = locked[i]; ctx.fillRect(e.c * cw, e.r * ch, cw, ch); }
-        ctx.globalAlpha = 1;
-        ctx.font = '500 ' + fs + mono;
-        for (i = 0; i < locked.length; i++) { e = locked[i]; ctx.fillText(e.ch, (e.c + 0.5) * cw, (e.r + 0.5) * ch); }
-        // pass 3: the ones landing right now, written inverted for one beat
-        for (i = 0; i < flash.length; i++) { e = flash[i]; ctx.fillRect(e.c * cw, e.r * ch, cw, ch); }
-        ctx.fillStyle = PAPER;
-        for (i = 0; i < flash.length; i++) { e = flash[i]; ctx.fillText(e.ch, (e.c + 0.5) * cw, (e.r + 0.5) * ch); }
-        prevP = p;
+        post({ t: 'layout', W: Math.round(W * dpr), H: Math.round(H * dpr), cols: cols, rows: rows, cw: cw * dpr, ch: ch * dpr, state: state.buffer }, [state.buffer]);
+        atlas();
     }
 
-    function loop(t) {
-        if (!S.running) return;
-        if (t - last > 41) { last = t; draw(); } // the records tick at ~24/s, like a feed
-        requestAnimationFrame(loop);
+    // White glyphs on transparent, one per grid cell at the cell's exact device size
+    function atlas() {
+        var ac = 8, ar = Math.ceil(CHARSET.length / ac), w = Math.round(cw * dpr), h = Math.round(ch * dpr);
+        var c = document.createElement('canvas'); c.width = ac * w; c.height = ar * h;
+        var o = c.getContext('2d');
+        o.fillStyle = '#fff'; o.textAlign = 'center'; o.textBaseline = 'middle';
+        o.font = '500 ' + Math.round(cw * 1.5 * dpr) + 'px "Spline Sans Mono", ui-monospace, monospace';
+        for (var i = 0; i < CHARSET.length; i++) o.fillText(CHARSET[i], (i % ac) * w + w / 2, ((i / ac) | 0) * h + h / 2);
+        if (viaWorker) createImageBitmap(c).then(function (b) { post({ t: 'atlas', img: b, ac: ac, ar: ar }, [b]); });
+        else post({ t: 'atlas', img: c, ac: ac, ar: ar });
     }
 
     var L = window.jkhLoader = {
         get p() { return S.p * 100; },
-        set: function (v) { S.p = Math.max(0, Math.min(1, v / 100)); },
-        release: function (v) { S.out = v; },
+        set: function (v) { S.p = Math.max(0, Math.min(1, v / 100)); post({ t: 'p', v: S.p }); },
+        release: function (v) { post({ t: 'out', v: v }); },
         start: function (path) {
             S.path = path || location.pathname;
-            var w = wordFor(S.path);
             if (destEl) destEl.textContent = S.path;
-            S.out = 0; S.p = 0; prevP = 0;
-            if (w !== S.word || !cells.length) { S.word = w; build(); }
-            if (!S.running) { S.running = true; requestAnimationFrame(loop); }
+            S.p = 0; post({ t: 'p', v: 0, snap: true }); post({ t: 'out', v: 0 });
+            var w = wordFor(S.path);
+            if (w !== S.word) { S.word = w; layout(); }
+            post({ t: 'run' });
         },
-        stop: function () { S.running = false; },
+        stop: function () { post({ t: 'stop' }); },
         // handed to the next page so the word keeps forming across the navigation
         carry: function () {
             try { sessionStorage.setItem('jkh-loader', JSON.stringify({ path: S.path, p: S.p, t: Date.now() })); } catch (e) {}
@@ -166,17 +231,20 @@
 
     L.start(location.pathname);
     try {
-        var c = JSON.parse(sessionStorage.getItem('jkh-loader') || 'null');
+        var cy = JSON.parse(sessionStorage.getItem('jkh-loader') || 'null');
         sessionStorage.removeItem('jkh-loader');
-        if (c && c.path === location.pathname && Date.now() - c.t < 5000) { S.p = c.p; prevP = c.p; }
+        if (cy && cy.path === location.pathname && Date.now() - cy.t < 5000) {
+            S.p = cy.p; post({ t: 'p', v: cy.p, snap: true });
+            var pc = document.getElementById('loaderPct'); if (pc) pc.textContent = Math.round(cy.p * 100);
+        }
     } catch (e) {}
-    var rebuild = function () { if (S.word) build(); };
+    var rebuild = function () { if (S.word) layout(); };
     if (document.fonts && document.fonts.load) {
         Promise.race([
             Promise.all([document.fonts.load('800 100px "Sofia Sans Condensed"'), document.fonts.load('500 12px "Spline Sans Mono"')]),
             new Promise(function (r) { setTimeout(r, 2500); }),
         ]).then(function () { fontReady = true; rebuild(); });
-    } else { fontReady = true; }
+    } else fontReady = true;
     var rt; addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(rebuild, 120); });
 })();
 </script>
