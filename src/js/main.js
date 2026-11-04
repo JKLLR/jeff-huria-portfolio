@@ -140,8 +140,13 @@ function initRoll() {
 function buildOdometer(el) {
     const value = Number(el.dataset.odometer);
     const text = value.toLocaleString('en-US');
-    el.setAttribute('aria-label', text);
     el.innerHTML = '';
+    // the reels are hidden from assistive tech; the value is read from a hidden text copy
+    // (aria-label on a plain span is not reliably announced)
+    const said = document.createElement('span');
+    said.className = 'visually-hidden';
+    said.textContent = text;
+    el.appendChild(said);
     const reels = [];
     [...text].forEach((c) => {
         if (!/\d/.test(c)) {
@@ -452,11 +457,25 @@ function initReveals() {
         if (img) gsap.fromTo(img, { scale: 1.3 }, { scale: 1, duration: 1.8, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 85%' } });
     });
 
-    // Section labels type in like records as they arrive
-    $$('.sec-bar > span').forEach((el) => {
-        if (!window.DataField || el.children.length || !el.textContent.trim()) return;
+    // Labels and meta lines type in like records as they arrive: section labels, numbering, small
+    // headings. Only short single-line text, so a label growing in can never reflow its block;
+    // never links (their hover roll stays), never the big display type.
+    const DECRYPT = [
+        '.sec-bar > span', '.stat-label', '.exp-num', '.exp-points-head', '.word-num', '.recog-mark',
+        '.cap-links-label', '.service-items-head', '.wi-head > span', '.feature-num', '.contrib-num',
+        '.stack-row dt', '.project-meta dt', '.next-meta',
+    ].join(', ');
+    $$(DECRYPT).forEach((el) => {
         const text = el.textContent;
-        ScrollTrigger.create({ trigger: el, start: 'top 92%', once: true, onEnter: () => DataField.scramble(el, text, { duration: 650 }) });
+        if (!window.DataField || el.children.length || el.closest('a') || !text.trim() || text.length > 48) return;
+        if (el.getClientRects().length > 1) return; // wraps: leave it
+        // labels arriving together (a row of stats, a table head) settle one after another
+        const sibs = [...el.parentElement.children].filter((c) => c.matches(DECRYPT));
+        const delay = Math.max(0, sibs.indexOf(el)) * 70;
+        ScrollTrigger.create({
+            trigger: el, start: 'top 92%', once: true,
+            onEnter: () => setTimeout(() => DataField.scramble(el, text, { duration: 650 }), delay),
+        });
     });
 
     // Big titles: scattered letters assemble as they scroll into view
@@ -682,18 +701,25 @@ function initWorksIndex() {
 function initMarquees() {
     $$('[data-marquee]').forEach((track) => {
         const group = $('.marquee-group', track);
-        let x = 0, dir = -1;
+        let x = 0, dir = -1, w = group.offsetWidth, on = false;
         const base = 0.6;
-        gsap.ticker.add(() => {
+        // measured on resize, never per frame (a per-frame offsetWidth can force a layout)
+        new ResizeObserver(() => { w = group.offsetWidth; }).observe(group);
+        const tick = () => {
             const v = lenis ? lenis.velocity : 0;
             if (v) dir = v > 0 ? -1 : 1;
-            if (REDUCED) return;
             x += dir * (base + Math.min(Math.abs(v) * 0.35, 14));
-            const w = group.offsetWidth;
             if (x <= -w) x += w;
             if (x > 0) x -= w;
             track.style.transform = `translate3d(${x}px,0,0)`;
-        });
+        };
+        if (REDUCED) return;
+        // only runs while on screen
+        new IntersectionObserver(([e]) => {
+            if (e.isIntersecting === on) return;
+            on = e.isIntersecting;
+            on ? gsap.ticker.add(tick) : gsap.ticker.remove(tick);
+        }, { rootMargin: '100px 0px' }).observe(track);
     });
 }
 
@@ -746,6 +772,36 @@ function initProject() {
     }
 }
 
+// ── Prototype: the whole page as data (preview builds only) ──
+// The button (or the ` key) transmits what is on screen into records, which hold there, churning;
+// the cursor is a lens that shows the real page through the data. Again (or Esc) develops it back.
+// Scrolling pauses while the data view is up.
+function initDataView() {
+    const btn = $('#viewToggle'), view = $('#dataView');
+    if (!btn || !view) return;
+    const scr = !REDUCED && window.DataField ? DataField.screen($('canvas', view), view) : null;
+    if (!scr) { btn.hidden = true; return; }
+    let on = false, busy = false, px = innerWidth / 2, py = innerHeight / 2;
+    const R = FINE_POINTER ? 130 : 0;
+    addEventListener('pointermove', (e) => { px = e.clientX; py = e.clientY; if (on) scr.lensAt(px, py, R); }, { passive: true });
+    const paint = (ctx, w, h) => DataField.paintView(ctx, w, h, [$('#main'), $('#connect')].filter(Boolean));
+    async function set(next) {
+        if (busy || next === on) return;
+        busy = true; on = next;
+        btn.setAttribute('aria-pressed', String(on));
+        btn.textContent = on ? '[ VIEW AS PAGE ]' : '[ VIEW AS DATA ]';
+        if (on) { pauseScroll(); scr.lensAt(px, py, R); await scr.hold(paint); }
+        else { await scr.release(); resumeScroll(); }
+        busy = false;
+    }
+    btn.addEventListener('click', () => set(!on));
+    addEventListener('keydown', (e) => {
+        if (e.target.closest && e.target.closest('input, textarea, [contenteditable]')) return;
+        if (e.key === '`') set(!on);
+        else if (e.key === 'Escape' && on) set(false);
+    });
+}
+
 // ── Clock ───────────────────────────────────────────────
 function initClock() {
     const el = $('#clock');
@@ -790,6 +846,7 @@ function initClock() {
     initHorizontal();
     initProject();
     initCursor();
+    initDataView();
     await yieldTask();
 
     ScrollTrigger.sort();

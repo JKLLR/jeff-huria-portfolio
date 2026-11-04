@@ -59,6 +59,12 @@
 
     {% include "partials/footer.njk" %}
 
+    {%- if build.preview %}
+    {#- prototype: the whole page as data (preview builds only) -#}
+    <div class="data-view" id="dataView" aria-hidden="true"><canvas class="screen-signal"></canvas></div>
+    <button class="view-toggle" id="viewToggle" type="button" aria-pressed="false" title="See the page as data (`)">[ VIEW AS DATA ]</button>
+    {%- endif %}
+
     {%- if build.showMock %}
     <button class="mock-toggle" id="mockToggle" type="button" aria-pressed="true" title="Highlight placeholder content (M)">
         <span class="mock-dot"></span> MOCK DATA <span class="mock-state">ON</span>
@@ -68,6 +74,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.3/dist/lenis.min.js"></script>
+    <script>window.JKH_RECORDS = {{ records | dump | safe }};</script>
     <script src="/js/datafield.js"></script>
     <script src="/js/main.js"></script>
 </body>

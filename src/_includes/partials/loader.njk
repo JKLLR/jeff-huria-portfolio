@@ -21,6 +21,17 @@
     WORDS['/capabilities/{{ c.slug }}/'] = {{ c.title | upper | dump | safe }};
 {%- endfor %}
     var CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-·.,:/+';
+    // the stream is made of the systems actually worked with (src/_data/records.js)
+    var REC = {{ records | dump | safe }};
+    var POOLS = [REC.erps, REC.erps, REC.payments, REC.access, REC.messaging, REC.services].filter(function (l) { return l && l.length; });
+    var STATUS = ['SYNC OK', 'POSTED', '200 OK', 'ACK', 'MATCHED', 'RECONCILED'];
+    function pick(l) { return l[(Math.random() * l.length) | 0]; }
+    function logLine(n) { // e.g. "SAP B1 · POSTED   M-PESA DARAJA · ACK   SYSPRO · SYNC OK"
+        var s = '';
+        while (s.length < n) s += (POOLS.length ? pick(pick(POOLS)) : 'SYNC') + ' · ' + pick(STATUS) + '   ';
+        var cut = (Math.random() * 20) | 0;
+        return (s + s).slice(cut, cut + n);
+    }
     var canvas = document.getElementById('loaderField');
     var destEl = document.getElementById('loaderDest');
     // no field without motion (the CSS hides the loader then), and nothing left running behind the page
@@ -57,8 +68,12 @@
             '   else if(at>uP-uFlash){float g=glyph(letter,f);c=vec4(mix(ink,paper,g),1.);}',
             '   else{a=.07+.93*glyph(letter,f);c=vec4(ink*a,a);}',
             '  }else if(h3<.75){a=(.2+.2*flick)*glyph(rnd,f);c=vec4(ink*a,a);}',
-            ' }else if(st.b>0.&&h3<(.42*noise+.04)*st.b&&flick<=.86){',
-            '  a=(.08+.2*st.b)*(.35+.65*noise)*(1.-uOut)*glyph(rnd,f);c=vec4(ink*a,a);}',
+            ' }else if(st.b>0.){',
+            // the stream: each row is a line of sync log (alpha channel) sliding past at its own speed
+            '  float sp=(hash(vec2(cell.y,9.),4.)*2.-1.)*3.;float sx=mod(cell.x+floor(uTime*sp),uGrid.x);',
+            '  float rc=floor(texture2D(uState,(vec2(sx,cell.y)+.5)/uGrid).a*255.+.5);',
+            '  if(rc<250.&&hash(vec2(sx,cell.y),3.)<(.62*noise+.1)*st.b&&flick<=.9){',
+            '   a=(.08+.2*st.b)*(.35+.65*noise)*(1.-uOut)*glyph(flick>.84?rnd:rc,f);c=vec4(ink*a,a);}}',
             ' gl_FragColor=c;}',
         ].join('\n');
         // cell states, top to bottom: letting go → landing (inverted) → landed (on a faint tile) →
@@ -183,9 +198,10 @@
             o.restore();
         }
         var img = o.getImageData(0, 0, off.width, off.height).data;
-        var name = S.word.replace(/[^A-Z0-9]/g, '') || 'JKH', seq = 0;
+        var name = S.word.replace(/[^A-Z0-9]/g, '') || 'JKH', seq = 0, line;
         var state = new Uint8Array(cols * rows * 4);
         for (var r = 0; r < rows; r++) {
+            line = logLine(cols);
             var y = (r + 0.5) * ch, dist = y > top && y < bot ? 0 : Math.min(Math.abs(y - top), Math.abs(y - bot)) / ch;
             var fall = Math.max(0, 1 - dist / 9);
             for (var c = 0; c < cols; c++) {
@@ -194,6 +210,8 @@
                 state[i4] = inside ? 255 : 0;
                 state[i4 + 1] = inside ? CHARSET.indexOf(name[seq++ % name.length]) : 0;
                 state[i4 + 2] = Math.round((inside ? 1 : fall) * 255);
+                var li = CHARSET.indexOf(line[c]);
+                state[i4 + 3] = li < 0 ? 255 : li;   // 255: a gap between records
             }
         }
         post({ t: 'layout', W: Math.round(W * dpr), H: Math.round(H * dpr), cols: cols, rows: rows, cw: cw * dpr, ch: ch * dpr, state: state.buffer });

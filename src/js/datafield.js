@@ -17,12 +17,24 @@
     const CHARSET = ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-·.,:/+';
     const INDEX = new Map([...CHARSET].map((c, i) => [c, i]));
 
+    // Phones, low-core machines and data-saver connections get the ambient fields at ~30fps
+    const LOW_POWER = matchMedia('(pointer: coarse)').matches
+        || (navigator.hardwareConcurrency || 8) <= 4
+        || !!(navigator.connection && navigator.connection.saveData);
+
     // ── Records: what an ERP sync log looks like up close ──
     const pick = (list) => list[(Math.random() * list.length) | 0];
     const digits = (n) => { let s = ''; for (let i = 0; i < n; i++) s += (Math.random() * 10) | 0; return s; };
     const alnum = (n) => { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ0123456789'; let s = ''; for (let i = 0; i < n; i++) s += a[(Math.random() * a.length) | 0]; return s; };
     const money = () => (Math.round(Math.random() * 480000) + 1200).toLocaleString('en-US');
     const clock = () => [24, 60, 60].map((m) => String((Math.random() * m) | 0).padStart(2, '0')).join(':');
+    // The systems come from the site's own data (src/_data/records.js, printed into the page as
+    // window.JKH_RECORDS), so every name streaming past is one actually worked with
+    const V = Object.assign({
+        erps: ['SAP B1', 'ODOO', 'SAGE 200', 'SYSPRO', 'DYNAMICS 365 BC', 'ACUMATICA', 'TALLY'],
+        payments: ['M-PESA DARAJA'], access: ['REST'], messaging: [], services: [],
+    }, window.JKH_RECORDS || {});
+    const any = (list, fallback) => (list && list.length ? pick(list) : fallback);
     const RECORDS = [
         () => `INV-26-${digits(5)}`,
         () => `SO-${digits(4)}`,
@@ -31,10 +43,14 @@
         () => `CN-${digits(4)}`,
         () => `SKU ${alnum(3)}-${digits(3)}`,
         () => `KES ${money()}`,
-        () => `MPESA ${alnum(10)}`,
+        () => `${any(V.payments, 'M-PESA')} ${alnum(10)}`,
         () => `${clock()}`,
         () => pick(['SYNC OK', 'POSTED', '200 OK', 'ACK', 'QUEUED', 'MATCHED', 'RECONCILED', 'BATCH DONE']),
-        () => pick(['SAP.B1', 'ODOO', 'SAGE', 'SYSPRO', 'DYNAMICS', 'ACUMATICA', 'TALLY']),
+        () => any(V.erps, 'ERP'),
+        () => `${any(V.erps, 'ERP')} ${any(V.access, 'REST')}`,
+        () => `${any(V.erps, 'ERP')} · ${pick(['POSTED', 'SYNC OK', 'PULLED', 'ACK'])}`,
+        () => `${any(V.messaging, 'SMS')} · SENT`,
+        () => `${any(V.services, 'API')} · SYNC`,
         () => `QTY ${(Math.random() * 900 + 1) | 0}`,
         () => `WH/${pick(['NBO', 'MSA', 'KSM', 'EDL'])}/${digits(2)}`,
     ];
@@ -332,6 +348,8 @@ void main() {
         }
         function frame(now) {
             raf = requestAnimationFrame(frame);
+            // ambient motion: on phones, low-power devices and data saver, half rate is plenty
+            if (LOW_POWER && last && now - last < 30) return;
             const dt = Math.min(64, last ? now - last : 16);
             last = now;
             // scrolling stirs the flow a little
@@ -440,7 +458,8 @@ void main() {
 }`;
 
     function portrait(canvas, img, opts = {}) {
-        const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false });
+        // preserveDrawingBuffer: it only redraws when its progress changes, and the page data view copies it
+        const gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, preserveDrawingBuffer: true });
         if (!gl || !img) return null;
         const vs = compile(gl, gl.VERTEX_SHADER, VERT);
         const fs = compile(gl, gl.FRAGMENT_SHADER, PORTRAIT_FRAG);
@@ -576,6 +595,8 @@ uniform float uP;
 uniform float uTime;
 uniform float uStandby;   // 1: there is no picture A, the screen starts dark with faint data
 uniform vec3 uPaper;      // the screen's paper colour
+uniform float uAuto;      // 1: whole-page view, the paper follows the page (light or dark) under each pixel
+uniform vec3 uLens;       // whole-page view: x, y (device px), radius of the cursor lens showing the real page
 uniform sampler2D uGlyphs;
 uniform sampler2D uChars;
 uniform sampler2D uFrom;
@@ -591,13 +612,18 @@ float glyphAt(vec2 cell, vec2 local, float idx) {
     return texture2D(uGlyphs, (g + local) / uAtlasGrid).a;
 }
 
-vec3 halftone(vec3 src, float glyph) {
+vec3 halftone(vec3 src, float glyph, vec3 paper) {
     // whatever stands out from the paper inks hard; the paper itself still carries faint records.
     // Ink pushes away from the paper: darker on light paper, brighter on dark
-    float ink = 0.16 + 0.84 * smoothstep(0.03, 0.3, length(src - uPaper));
-    vec3 ghost = mix(uPaper, src, 0.3);
-    vec3 inkCol = dot(uPaper, vec3(0.299, 0.587, 0.114)) > 0.5 ? src * 0.3 : mix(src, vec3(1.0), 0.45);
+    float ink = 0.16 + 0.84 * smoothstep(0.03, 0.3, length(src - paper));
+    vec3 ghost = mix(paper, src, 0.3);
+    vec3 inkCol = dot(paper, vec3(0.299, 0.587, 0.114)) > 0.5 ? src * 0.3 : mix(src, vec3(1.0), 0.45);
     return mix(ghost, inkCol, glyph * ink);
+}
+// whole-page view: the paper under a pixel is the page's own light paper or its dark sections
+vec3 paperOf(vec3 src) {
+    if (uAuto < 0.5) return uPaper;
+    return dot(src, vec3(0.299, 0.587, 0.114)) > 0.45 ? uPaper : vec3(0.067);
 }
 
 void main() {
@@ -611,6 +637,8 @@ void main() {
     // this cell's own timeline: the beam sweeps down from the projector, broken up by noise
     float order = 0.55 * h + 0.45 * (cell.y / uGrid.y);
     float t = clamp(uP * 1.6 - order * 0.6, 0.0, 1.0);
+    // the lens: around the cursor the real page shows through (A is the page itself in this mode)
+    if (uLens.z > 0.0) t *= smoothstep(uLens.z * 0.82, uLens.z, distance(px, uLens.xy));
 
     vec4 A = texture2D(uFrom, uv);
     vec4 B = texture2D(uTo, uv);
@@ -626,8 +654,8 @@ void main() {
 
     // Each picture as a halftone of itself made of records (the hero portrait's language): the paper
     // stays, a ghost of the picture stays faintly, and whatever stands out from the paper becomes ink
-    vec3 hb = halftone(B.rgb, glyph);
-    vec3 ha = uStandby > 0.5 ? DARK + 0.11 * glyph : halftone(A.rgb, glyph);
+    vec3 hb = halftone(B.rgb, glyph, paperOf(B.rgb));
+    vec3 ha = uStandby > 0.5 ? DARK + 0.11 * glyph : halftone(A.rgb, glyph, paperOf(A.rgb));
     float k = smoothstep(0.3, 0.7, t + (hash(cell + 3.1) - 0.5) * 0.3);
     vec3 signal = mix(ha, hb, k);
 
@@ -635,7 +663,7 @@ void main() {
     vec3 col = t < 0.5 ? mix(A.rgb, signal, smoothstep(0.0, 0.1, t)) : mix(signal, B.rgb, smoothstep(0.86, 1.0, t));
     // the projector's light sweeping down the screen
     float beam = uv.y - (uP * 1.4 - 0.2);
-    col += 0.09 * exp(-beam * beam / 0.006) * sin(3.14159 * uP);
+    col += 0.09 * exp(-beam * beam / 0.006) * sin(3.14159 * uP) * (1.0 - uAuto);
     gl_FragColor = vec4(min(col, 1.0), 1.0);
 }`;
 
@@ -716,10 +744,11 @@ void main() {
         gl.enableVertexAttribArray(aPos);
         gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0);
         const U = {};
-        ['uRes', 'uCell', 'uGrid', 'uAtlasGrid', 'uP', 'uTime', 'uStandby', 'uPaper', 'uGlyphs', 'uChars', 'uFrom', 'uTo']
+        ['uRes', 'uCell', 'uGrid', 'uAtlasGrid', 'uP', 'uTime', 'uStandby', 'uPaper', 'uAuto', 'uLens', 'uGlyphs', 'uChars', 'uFrom', 'uTo']
             .forEach((n) => { U[n] = gl.getUniformLocation(prog, n); });
         gl.uniform1i(U.uGlyphs, 0); gl.uniform1i(U.uChars, 1); gl.uniform1i(U.uFrom, 2); gl.uniform1i(U.uTo, 3);
         gl.uniform3fv(U.uPaper, opts.paper || [246 / 255, 246 / 255, 244 / 255]);
+        gl.uniform1f(U.uAuto, 0); gl.uniform3f(U.uLens, 0, 0, 0);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
         const tex = (unit, filter) => {
             const t = gl.createTexture();
@@ -839,7 +868,134 @@ void main() {
         let rt = 0;
         addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(() => { sized = false; }, 150); });
         canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); cancelAnimationFrame(raf); canvas.classList.remove('is-on'); });
-        return { play, standby };
+        // ── Whole-page view: the visible page transmits into records and holds there, churning; the
+        // cursor is a lens showing the real page through the data. release() develops it back.
+        let holding = false, hraf = 0, lens = [0, 0, 0];
+        function lensAt(x, y, r) { lens = [x, y, r]; }
+        function hold(paint) {
+            return fonts.then(() => {
+                cancelAnimationFrame(raf); raf = 0; cancelAnimationFrame(hraf);
+                sized = false;
+                if (!size()) return;
+                const page = document.createElement('canvas');
+                page.width = w; page.height = h;
+                paint(page.getContext('2d'), w, h);
+                upload(2, fromTex, page); upload(3, toTex, page);
+                gl.uniform1f(U.uStandby, 0); gl.uniform1f(U.uAuto, 1);
+                holding = true; canvas.classList.add('is-on');
+                const dpr = w / surface.clientWidth;
+                let t0 = 0;
+                const loop = (now) => {
+                    if (!t0) t0 = now;
+                    const k = Math.min(1, (now - t0) / 1100);
+                    gl.uniform3f(U.uLens, lens[0] * dpr, lens[1] * dpr, lens[2] * dpr * Math.min(1, k * 2));
+                    draw(0.5 * ease(k), now / 1000);   // at 0.5 every cell is mid-signal
+                    if (holding) hraf = requestAnimationFrame(loop);
+                };
+                hraf = requestAnimationFrame(loop);
+            });
+        }
+        function release() {
+            return new Promise((resolve) => {
+                if (!holding) { resolve(); return; }
+                holding = false; cancelAnimationFrame(hraf);
+                let t0 = 0;
+                const loop = (now) => {
+                    if (!t0) t0 = now;
+                    const k = Math.min(1, (now - t0) / 1000);
+                    gl.uniform3f(U.uLens, 0, 0, 0);
+                    draw(0.5 + 0.5 * ease(k), now / 1000);
+                    if (k < 1) { hraf = requestAnimationFrame(loop); return; }
+                    canvas.classList.remove('is-on'); gl.uniform1f(U.uAuto, 0);
+                    resolve();
+                };
+                hraf = requestAnimationFrame(loop);
+            });
+        }
+
+        return { play, standby, hold, release, lensAt };
+    }
+
+    // Paints what is on screen into a 2D canvas (backgrounds, images, the data fields' canvases, text glyph
+    // by glyph), for the whole-page data view. Only what intersects the viewport.
+    function paintView(ctx, w, h, roots) {
+        const scale = w / innerWidth;
+        ctx.fillStyle = getComputedStyle(document.body).backgroundColor;
+        ctx.fillRect(0, 0, w, h);
+        const range = document.createRange();
+        const visible = (r) => r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth && r.width && r.height;
+        // what an element may paint into: the intersection of every ancestor that clips its overflow
+        // (odometer windows, masked lines, image frames), so hidden parts stay hidden
+        const clips = new Map();
+        const ALL = { l: -1e9, t: -1e9, r: 1e9, b: 1e9 };
+        const clipOf = (el) => {
+            if (!el || el === document.body) return ALL;
+            if (clips.has(el)) return clips.get(el);
+            const up = clipOf(el.parentElement);
+            const cs = getComputedStyle(el);
+            let c = up;
+            if (cs.overflowX !== 'visible' || cs.overflowY !== 'visible') {
+                const r = el.getBoundingClientRect();
+                c = { l: Math.max(up.l, r.left), t: Math.max(up.t, r.top), r: Math.min(up.r, r.right), b: Math.min(up.b, r.bottom) };
+            }
+            clips.set(el, c);
+            return c;
+        };
+        const shown = (el, cs) => (el.checkVisibility
+            ? el.checkVisibility({ opacityProperty: true, visibilityProperty: true })   // ancestors' opacity too
+            : cs.visibility !== 'hidden' && +cs.opacity > 0 && cs.display !== 'none');
+        roots.forEach((root) => [root, ...root.querySelectorAll('*')].forEach((el) => {
+            const r = el.getBoundingClientRect();
+            if (!visible(r)) return;
+            const cs = getComputedStyle(el);
+            if (!shown(el, cs)) return;
+            const c = clipOf(el.parentElement);
+            if (c.r <= c.l || c.b <= c.t) return;   // clipped away entirely
+            ctx.save();
+            ctx.beginPath(); ctx.rect(c.l * scale, c.t * scale, (c.r - c.l) * scale, (c.b - c.t) * scale); ctx.clip();
+            paintEl(el, r, cs);
+            ctx.restore();
+        }));
+
+        function paintEl(el, r, cs) {
+            if (cs.backgroundColor !== CLEAR) {
+                ctx.fillStyle = cs.backgroundColor;
+                ctx.fillRect(r.left * scale, r.top * scale, r.width * scale, r.height * scale);
+            }
+            if (el.tagName === 'IMG' && el.naturalWidth) {
+                const s = Math.max(r.width / el.naturalWidth, r.height / el.naturalHeight) * scale;
+                ctx.save(); ctx.beginPath(); ctx.rect(r.left * scale, r.top * scale, r.width * scale, r.height * scale); ctx.clip();
+                ctx.drawImage(el, r.left * scale + (r.width * scale - el.naturalWidth * s) / 2, r.top * scale + (r.height * scale - el.naturalHeight * s) / 2, el.naturalWidth * s, el.naturalHeight * s);
+                ctx.restore();
+                return;
+            }
+            if (el.tagName === 'CANVAS') {
+                try { ctx.drawImage(el, r.left * scale, r.top * scale, r.width * scale, r.height * scale); } catch (e) { /* tainted or lost */ }
+                return;
+            }
+            const texts = [...el.childNodes].filter((n) => n.nodeType === 3 && n.data.trim());
+            if (!texts.length) return;
+            const upper = cs.textTransform === 'uppercase';
+            ctx.font = `${cs.fontStyle} ${cs.fontWeight} ${parseFloat(cs.fontSize) * scale}px ${cs.fontFamily}`;
+            const stroke = parseFloat(cs.webkitTextStrokeWidth) || 0;
+            const outline = stroke > 0 && cs.color === CLEAR;
+            ctx.fillStyle = cs.color; ctx.strokeStyle = cs.webkitTextStrokeColor; ctx.lineWidth = stroke * scale;
+            ctx.textBaseline = 'alphabetic';
+            const m = ctx.measureText('Hg');
+            const asc = m.fontBoundingBoxAscent || m.actualBoundingBoxAscent, desc = m.fontBoundingBoxDescent || m.actualBoundingBoxDescent;
+            texts.forEach((node) => {
+                for (let i = 0; i < node.length; i++) {
+                    const ch = node.data[i];
+                    if (!ch.trim()) continue;
+                    range.setStart(node, i); range.setEnd(node, i + 1);
+                    const cr = range.getBoundingClientRect();
+                    if (!cr.width || cr.bottom < 0 || cr.top > innerHeight) continue;
+                    const top = cr.top * scale + (cr.height * scale - (asc + desc)) / 2;
+                    const c = upper ? ch.toUpperCase() : ch;
+                    if (outline) ctx.strokeText(c, cr.left * scale, top + asc); else ctx.fillText(c, cr.left * scale, top + asc);
+                }
+            });
+        }
     }
 
     // ── Edge: the loader sheet's ragged data edge ──
@@ -903,5 +1059,5 @@ void main() {
         el._scramble = requestAnimationFrame(step);
     }
 
-    window.DataField = { mount, portrait, screen, scramble, edge };
+    window.DataField = { mount, portrait, screen, scramble, edge, paintView };
 })();
