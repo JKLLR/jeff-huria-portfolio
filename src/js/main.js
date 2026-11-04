@@ -181,20 +181,19 @@ function initOdometers() {
     });
 }
 
-// ── Loader: 3D text cylinder ────────────────────────────
+// ── Loader: a word assembled from records ───────────────
 // The only loading screen on the site. It covers every page load and every
-// internal navigation; the rings themselves are rendered in loader.njk.
+// internal navigation; the field itself is drawn by the inline script in loader.njk
+// (window.jkhLoader), and this file drives its progress and its release.
 // The loader moves as one solid layer (transform only, so the compositor does
 // the work), on an expo in-out curve, and the page drifts with it.
 const loader = $('#loader');
 let markBooted;
 const booted = new Promise((r) => { markBooted = r; });
 const loaderPct = $('#loaderPct');
-// The first time GSAP transforms a fixed element with no transform, it measures it by briefly taking it out
-// of the DOM, and that restarts the rings' CSS spin at 0deg (a visible jerk as the loader lifts). Let that
-// happen once, now, and put the spin back on the shared clock in the same frame so nothing moves.
-if (loader) { gsap.set(loader, { yPercent: 0 }); window.jkhSyncSpin && window.jkhSyncSpin(); }
-const setPct = (v) => { if (loaderPct) loaderPct.textContent = Math.round(v); };
+const field = window.jkhLoader || { p: 0, set() {}, release() {}, start() {}, stop() {}, carry() {} };
+if (loader) gsap.set(loader, { yPercent: 0 });
+const setPct = (v) => { if (loaderPct) loaderPct.textContent = Math.round(v); field.set(v); };
 const EASE_SHEET = 'expo.inOut';
 // how far the sheet travels to be fully off screen, its ragged data edges (26% of its height) included
 const OFF = 126;
@@ -205,6 +204,7 @@ const pinActive = () => ScrollTrigger.getAll().some((t) => t.pin && t.isActive);
 function hideLoader() {
     if (!loader) return;
     gsap.set(loader, { yPercent: OFF, visibility: 'hidden' });
+    field.stop();
 }
 
 // Resolves as the page starts to show, so the hero intro overlaps the reveal
@@ -212,7 +212,9 @@ function runLoader() {
     return new Promise((resolve) => {
         if (REDUCED || !loader) { resolve(); return; }
         pauseScroll();
-        const progress = { v: 0 };
+        // a navigation hands over how far the word had got, so it keeps forming instead of starting over
+        const progress = { v: field.p };
+        setPct(progress.v);
         const ready = Promise.all([
             document.fonts.ready,
             new Promise((r) => (document.readyState === 'complete' ? r() : addEventListener('load', r, { once: true }))),
@@ -248,13 +250,14 @@ function uncover(drift, onShowing) {
     gsap.timeline({
         onComplete: () => {
             hideLoader();
-            gsap.set('.loader-stage', { clearProps: 'all' });
             gsap.set('.loader-pct', { clearProps: 'opacity' });
+            field.release(0);
             if (drift) { gsap.set(main, { clearProps: 'transform' }); ScrollTrigger.refresh(); }
             resumeScroll();
         },
     })
-        .to('.loader-stage', { scale: 1.6, opacity: 0, duration: 0.8, ease: 'power3.in' })
+        // the word lets go of its records as the sheet lifts
+        .to({ v: 0 }, { v: 1, duration: 1, ease: 'power1.in', onUpdate() { field.release(this.targets()[0].v); } })
         .to('.loader-pct', { opacity: 0, duration: 0.3, ease: 'power1.out' }, 0)
         .to(loader, { yPercent: -OFF, duration: 1.2, ease: EASE_SHEET }, 0.4)
         .to(drift ? main : {}, { y: 0, duration: 1.1, ease: EASE_SHEET, force3D: true }, 0.4)
@@ -265,13 +268,15 @@ function uncover(drift, onShowing) {
 function coverWithLoader(href) {
     if (!loader) { location.href = href; return; }
     pauseScroll();
+    // the destination's name starts forming on the way out and carries on on the next page
+    field.start(new URL(href, location.href).pathname);
     setPct(0);
-    const tl = gsap.timeline({ onComplete: () => { location.href = href; } })
+    const progress = { v: 0 };
+    const tl = gsap.timeline({ onComplete: () => { field.carry(); location.href = href; } })
         .set(loader, { visibility: 'visible', yPercent: OFF })
-        .set('.loader-stage', { scale: 0.86, opacity: 0 })
         .set('.loader-pct', { opacity: 0 })
         .to(loader, { yPercent: 0, duration: 1, ease: EASE_SHEET })
-        .to('.loader-stage', { scale: 1, opacity: 1, duration: 0.7, ease: 'power3.out' }, 0.4)
+        .to(progress, { v: 34, duration: 1, ease: 'power1.in', onUpdate: () => setPct(progress.v) }, 0.1)
         .to('.loader-pct', { opacity: 1, duration: 0.4 }, 0.6);
     if (!pinActive()) tl.to('#main', { y: -70, duration: 0.9, ease: EASE_SHEET, force3D: true }, 0);
 }

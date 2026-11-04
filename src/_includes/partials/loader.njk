@@ -1,51 +1,182 @@
-{#- The site's only loading screen: a 3D text cylinder, shown on every page load
-    and on the way out of every internal link. The rings are rendered here, not
-    by JS, so they are already spinning before any script has loaded. -#}
-{%- macro ring(cls, text, radius) -%}
-{%- set chars = text | list -%}
-<div class="ring {{ cls }}"><div class="ring-spin">
-{%- for c in chars -%}
-<span class="ring-ch" style="transform:rotateY({{ (360 / (chars | length) * loop.index0) | round(3) }}deg) translateZ({{ radius }}px)">{{ c }}</span>
-{%- endfor -%}
-</div></div>
-{%- endmacro -%}
+{#- The site's only loading screen. A band of churning records; as the load progresses the cells
+    inside the letters of a word lock one by one until the word stands, made of data. The word is
+    where you are going: the name on the home page, the project or capability title elsewhere, so a
+    click on KODIWA starts spelling KODIWA before the page has even been requested.
+    It is drawn by the inline script below (not main.js) so it is alive from the first paint. -#}
 <div class="loader" id="loader" aria-hidden="true">
     {#- ragged data edges: records hanging off the sheet as it sweeps over the page (drawn by datafield.js) -#}
     <canvas class="loader-edge is-top"></canvas>
     <canvas class="loader-edge is-bottom"></canvas>
-    {#- loader-stage is animated by main.js; loader-fit holds the small-screen scale, so the two never fight -#}
-    <div class="loader-stage">
-        <div class="loader-fit">
-            {{ ring("ring-big", "CODE THAT CONNECTS THE ENTERPRISE · ", 170) }}
-            {{ ring("ring-small", "SOFTWARE ENGINEERING • ERP INTEGRATION • AI PRODUCTS • PAYMENTS • FOUNDER • ", 185) }}
-        </div>
-    </div>
-    <div class="loader-pct"><span id="loaderPct">0</span>%</div>
+    <div class="loader-stage"><canvas class="loader-field" id="loaderField"></canvas></div>
+    <div class="loader-pct"><span class="loader-dest" id="loaderDest"></span><span><span id="loaderPct">0</span>%</span></div>
 </div>
 <script>
-    // One continuous spin for the whole visit: every page starts the rings at the angle they would have
-    // reached since they first started, so they never snap back to "CODE" when a new page loads.
-    // Runs inline, before first paint, so the rings are never drawn at the wrong angle.
-    // main.js calls window.jkhSyncSpin() again if anything restarts the animation.
-    (function () {
-        var epoch = Date.now();
-        try {
-            epoch = +sessionStorage.getItem('jkh-spin-epoch') || epoch;
-            sessionStorage.setItem('jkh-spin-epoch', epoch);
-        } catch (e) { /* private mode: start fresh */ }
-        var spins = document.querySelectorAll('#loader .ring-spin');
-        // Pin each animation's start time to the page clock. A delay or a seek both wait for the browser to
-        // actually start the animation (up to a few hundred ms into loading), so they land several degrees late;
-        // a start time is absolute, so the angle is exact from the first frame.
-        (window.jkhSyncSpin = function () {
-            var elapsed = Date.now() - epoch;
-            for (var i = 0; i < spins.length; i++) {
-                var anim = spins[i].getAnimations ? spins[i].getAnimations()[0] : null;
-                var period = parseFloat(getComputedStyle(spins[i]).animationDuration) * 1000;
-                if (!(period > 0)) continue;
-                if (anim) anim.startTime = performance.now() - (elapsed % period);
-                else spins[i].style.animationDelay = -(elapsed % period) + 'ms';
+(function () {
+    var WORDS = { '/': 'JEFF K. HURIA', '/thanks/': 'THANK YOU' };
+{%- for p in projectPages %}
+    WORDS['/work/{{ p.slug }}/'] = {{ p.title | upper | dump | safe }};
+{%- endfor %}
+{%- for c in publishedCapabilities %}
+    WORDS['/capabilities/{{ c.slug }}/'] = {{ c.title | upper | dump | safe }};
+{%- endfor %}
+    var CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-·.,:/+';
+    var INK = '#111111', PAPER = '#f6f6f4';
+    var canvas = document.getElementById('loaderField');
+    var destEl = document.getElementById('loaderDest');
+    if (!canvas || !canvas.getContext) return;
+    var ctx = canvas.getContext('2d');
+
+    var S = { p: 0, out: 0, word: '', path: '', running: false };
+    var W, H, dpr, cw, ch, cols, rows, band0, band1, cells = [], prevP = 0, last = 0, fontReady = false;
+
+    function hash(i, j, k) { // stable per cell, so the same cells lock in the same order on every page
+        var h = Math.sin(i * 127.1 + j * 311.7 + k * 74.7) * 43758.5453;
+        return h - Math.floor(h);
+    }
+    function wordFor(path) { return WORDS[path] || WORDS[path + '/'] || 'JEFF K. HURIA'; }
+
+    // Lay the word out to the screen and sample which grid cells fall inside its letters
+    function build() {
+        dpr = Math.min(window.devicePixelRatio || 1, 2);
+        W = innerWidth; H = innerHeight;
+        canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
+        cw = Math.max(5, Math.min(10, Math.round(W / 180)));
+        ch = Math.round(cw * 1.3);
+        cols = Math.ceil(W / cw); rows = Math.ceil(H / ch);
+
+        var off = document.createElement('canvas');
+        var k = 0.5; off.width = Math.ceil(W * k); off.height = Math.ceil(H * k);
+        var o = off.getContext('2d');
+        var fam = fontReady ? '"Sofia Sans Condensed", "Arial Narrow", sans-serif' : '"Arial Narrow", sans-serif';
+        var lines = [S.word];
+        var size = fit(o, lines, fam);
+        // long titles on a narrow screen read better on two lines
+        if (S.word.indexOf(' ') > 0 && size < H * 0.16) {
+            var ws = S.word.split(' '), best = null;
+            for (var i = 1; i < ws.length; i++) {
+                var l2 = [ws.slice(0, i).join(' '), ws.slice(i).join(' ')];
+                var s2 = fit(o, l2, fam);
+                if (!best || s2 > best.s) best = { l: l2, s: s2 };
             }
-        })();
-    })();
+            if (best && best.s > size * 1.15) { lines = best.l; size = best.s; }
+        }
+        var lh = size * 0.86, total = lh * lines.length;
+        o.setTransform(k, 0, 0, k, 0, 0);
+        o.fillStyle = '#000'; o.textAlign = 'center'; o.textBaseline = 'middle';
+        o.font = '800 ' + size + 'px ' + fam;
+        for (var n = 0; n < lines.length; n++) o.fillText(lines[n], W / 2, H / 2 - total / 2 + lh * (n + 0.5) + size * 0.04);
+        var img = o.getImageData(0, 0, off.width, off.height).data;
+
+        var top = H / 2 - total / 2, bot = H / 2 + total / 2;
+        band0 = Math.max(0, Math.floor(top / ch) - 9); band1 = Math.min(rows, Math.ceil(bot / ch) + 9);
+        var name = S.word.replace(/[^A-Z0-9]/g, '') || 'JKH', seq = 0;
+        cells = [];
+        for (var r = band0; r < band1; r++) {
+            for (var c = 0; c < cols; c++) {
+                var x = (c + 0.5) * cw, y = (r + 0.5) * ch;
+                var a = img[(Math.floor(y * k) * off.width + Math.floor(x * k)) * 4 + 3] || 0;
+                var inside = a > 110;
+                var dist = inside ? 0 : Math.min(Math.abs(y - top), Math.abs(y - bot)) / ch;
+                if (y > top && y < bot && !inside) dist = 0;
+                cells.push({
+                    c: c, r: r, in: inside,
+                    h: hash(c, r, 1), h2: hash(c, r, 2), h3: hash(c, r, 3),
+                    fall: inside ? 1 : Math.max(0, 1 - dist / 9),
+                    ch: inside ? name[seq++ % name.length] : '',
+                });
+            }
+        }
+        draw();
+    }
+    function fit(o, lines, fam) {
+        o.font = '800 100px ' + fam;
+        var wmax = 0;
+        for (var i = 0; i < lines.length; i++) wmax = Math.max(wmax, o.measureText(lines[i]).width);
+        return Math.min(100 * (W * 0.88) / wmax, (H * 0.42) / (lines.length * 0.86));
+    }
+
+    function smooth(a, b, x) { x = Math.min(1, Math.max(0, (x - a) / (b - a))); return x * x * (3 - 2 * x); }
+    function rnd() { return CHARSET[(Math.random() * CHARSET.length) | 0]; }
+
+    function draw() {
+        var p = S.p, out = S.out, tick = Math.floor(performance.now() / 70);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.clearRect(0, 0, W, H);
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        var fs = Math.round(cw * 1.5), mono = 'px "Spline Sans Mono", ui-monospace, monospace';
+        var noise = 1 - smooth(0.35, 1, p), locked = [], flash = [];
+        ctx.font = '400 ' + fs + mono; ctx.fillStyle = INK;
+        // pass 1: the stream, and the cells of the word still searching for their record
+        for (var i = 0; i < cells.length; i++) {
+            var e = cells[i], x = (e.c + 0.5) * cw, y = (e.r + 0.5) * ch;
+            if (e.in) {
+                var at = 0.04 + e.h * 0.9, let_go = e.h2 * 0.85 + 0.1;
+                if (out > let_go) continue;                         // released as the sheet lifts
+                if (p >= at) {
+                    if (out > let_go - 0.1) { ctx.globalAlpha = 0.9; ctx.fillText(rnd(), x, y); } // letting go
+                    else (at > prevP - 0.015 ? flash : locked).push(e);
+                } else if (e.h3 < 0.75) {
+                    ctx.globalAlpha = 0.2 + 0.2 * hash(e.c, e.r, tick);
+                    ctx.fillText(rnd(), x, y);
+                }
+            } else if (e.fall > 0 && e.h3 < (0.42 * noise + 0.04) * e.fall) {
+                if (hash(e.c, e.r, tick) > 0.86) continue;          // the stream flickers
+                ctx.globalAlpha = (0.08 + 0.2 * e.fall) * (0.35 + 0.65 * noise) * (1 - out);
+                ctx.fillText(rnd(), x, y);
+            }
+        }
+        ctx.globalAlpha = 1;
+        // pass 2: the records that have landed, on a faint tile so the letters read as solid shapes
+        ctx.globalAlpha = 0.07;
+        for (i = 0; i < locked.length; i++) { e = locked[i]; ctx.fillRect(e.c * cw, e.r * ch, cw, ch); }
+        ctx.globalAlpha = 1;
+        ctx.font = '500 ' + fs + mono;
+        for (i = 0; i < locked.length; i++) { e = locked[i]; ctx.fillText(e.ch, (e.c + 0.5) * cw, (e.r + 0.5) * ch); }
+        // pass 3: the ones landing right now, written inverted for one beat
+        for (i = 0; i < flash.length; i++) { e = flash[i]; ctx.fillRect(e.c * cw, e.r * ch, cw, ch); }
+        ctx.fillStyle = PAPER;
+        for (i = 0; i < flash.length; i++) { e = flash[i]; ctx.fillText(e.ch, (e.c + 0.5) * cw, (e.r + 0.5) * ch); }
+        prevP = p;
+    }
+
+    function loop(t) {
+        if (!S.running) return;
+        if (t - last > 41) { last = t; draw(); } // the records tick at ~24/s, like a feed
+        requestAnimationFrame(loop);
+    }
+
+    var L = window.jkhLoader = {
+        get p() { return S.p * 100; },
+        set: function (v) { S.p = Math.max(0, Math.min(1, v / 100)); },
+        release: function (v) { S.out = v; },
+        start: function (path) {
+            S.path = path || location.pathname;
+            var w = wordFor(S.path);
+            if (destEl) destEl.textContent = S.path;
+            S.out = 0; S.p = 0; prevP = 0;
+            if (w !== S.word || !cells.length) { S.word = w; build(); }
+            if (!S.running) { S.running = true; requestAnimationFrame(loop); }
+        },
+        stop: function () { S.running = false; },
+        // handed to the next page so the word keeps forming across the navigation
+        carry: function () {
+            try { sessionStorage.setItem('jkh-loader', JSON.stringify({ path: S.path, p: S.p, t: Date.now() })); } catch (e) {}
+        },
+    };
+
+    L.start(location.pathname);
+    try {
+        var c = JSON.parse(sessionStorage.getItem('jkh-loader') || 'null');
+        sessionStorage.removeItem('jkh-loader');
+        if (c && c.path === location.pathname && Date.now() - c.t < 5000) { S.p = c.p; prevP = c.p; }
+    } catch (e) {}
+    var rebuild = function () { if (S.word) build(); };
+    if (document.fonts && document.fonts.load) {
+        Promise.race([
+            Promise.all([document.fonts.load('800 100px "Sofia Sans Condensed"'), document.fonts.load('500 12px "Spline Sans Mono"')]),
+            new Promise(function (r) { setTimeout(r, 2500); }),
+        ]).then(function () { fontReady = true; rebuild(); });
+    } else { fontReady = true; }
+    var rt; addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(rebuild, 120); });
+})();
 </script>

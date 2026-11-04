@@ -197,44 +197,30 @@ input, textarea { font: inherit; color: inherit; }
 .has-cursor .cursor.is-label .cursor-label { opacity: 1; }
 .theme-dark .cursor.is-label { background: var(--on-dark); }
 
-/* ── Loader: 3D text cylinder ───────────────────────── */
+/* ── Loader: a word assembled from records ─────────── */
 .loader {
     position: fixed; inset: 0; z-index: 1500;
     /* 0.5% short of opaque, which the eye can't see: a fully opaque cover lets Chrome skip painting the
        page beneath, so it would paint it all on the first uncovered frame and drop that frame */
     background: rgb(246 246 244 / 0.995);
-    display: none; place-items: center;
+    display: none;
     will-change: transform;
     /* soft edge so the sheet reads as a layer while it slides over a light page */
     box-shadow: 0 0 56px rgba(17, 17, 17, 0.08);
 }
-.js .loader { display: grid; }
+.js .loader { display: block; }
 .loader-edge { position: absolute; left: 0; width: 100%; height: 26%; pointer-events: none; }  /* main.js: OFF = 126 */
 .loader-edge.is-top { bottom: 100%; }
 .loader-edge.is-bottom { top: 100%; }
-.loader-stage { position: relative; width: 420px; height: 300px; }
-.loader-fit { position: absolute; inset: 0; perspective: 900px; transform: scale(var(--loader-scale, 1)); }
-.ring {
-    position: absolute; left: 50%; top: 50%;
-    width: 0; height: 0;
-    transform-style: preserve-3d;
-}
-.ring-big { transform: translateY(-34px) rotateX(-14deg) rotateZ(-4deg); }
-.ring-small { transform: translateY(42px) rotateX(-18deg) rotateZ(-4deg); }
-.ring-spin { position: absolute; transform-style: preserve-3d; animation: ring-spin 7s linear infinite; }
-.ring-small .ring-spin { animation-duration: 11s; animation-direction: reverse; }
-@keyframes ring-spin { to { transform: rotateY(-360deg); } }
-.ring-ch {
-    position: absolute; left: 0; top: 0;
-    display: block; text-align: center;
-    transform-origin: 50% 50%;
-}
-.ring-big .ring-ch { font: 800 66px/1 var(--display); width: 30px; margin: -33px 0 0 -15px; letter-spacing: -0.02em; }
-.ring-small .ring-ch { font: 400 15px/1 var(--mono); width: 10px; margin: -8px 0 0 -5px; }
+.loader-stage { position: absolute; inset: 0; }
+.loader-field { display: block; width: 100%; height: 100%; }
 .loader-pct {
-    position: absolute; left: 50%; bottom: 22vh; transform: translateX(-50%);
+    position: absolute; left: var(--gutter); right: var(--gutter); bottom: 6vh;
+    display: flex; justify-content: space-between; align-items: baseline; gap: 20px;
     font: 700 20px/1 var(--display); letter-spacing: -0.04em; font-variant-numeric: tabular-nums;
 }
+.loader-dest { font: 400 13px/1 var(--mono); letter-spacing: 0.02em; text-transform: uppercase; }
+.loader-dest::before { content: "→ "; }
 
 /* ── Header ──────────────────────────────────────────── */
 .header {
@@ -897,7 +883,6 @@ a.wi-link:hover { color: var(--bg); padding-left: 16px; }
     body { font-size: 13px; }
     .hero-counter-label { display: none; }
     .hero-copy { margin-top: 30px; }
-    .loader-stage { --loader-scale: 0.72; }
     .stat-num { font-size: 56px; }
     .contact-title { font-size: 11.6vw; }
     .budget { justify-content: flex-start; gap: 22px; }
