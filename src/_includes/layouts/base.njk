@@ -59,11 +59,9 @@
 
     {% include "partials/footer.njk" %}
 
-    {%- if build.preview %}
-    {#- prototype: the whole page as data (preview builds only) -#}
+    {#- the whole page as data: the button or the ` key -#}
     <div class="data-view" id="dataView" aria-hidden="true"><canvas class="screen-signal"></canvas></div>
     <button class="view-toggle" id="viewToggle" type="button" aria-pressed="false" title="See the page as data (`)">[ VIEW AS DATA ]</button>
-    {%- endif %}
 
     {%- if build.showMock %}
     <button class="mock-toggle" id="mockToggle" type="button" aria-pressed="true" title="Highlight placeholder content (M)">

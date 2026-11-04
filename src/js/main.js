@@ -772,7 +772,7 @@ function initProject() {
     }
 }
 
-// ── Prototype: the whole page as data (preview builds only) ──
+// ── The whole page as data ──────────────────────────────
 // The button (or the ` key) transmits what is on screen into records, which hold there, churning;
 // the cursor is a lens that shows the real page through the data. Again (or Esc) develops it back.
 // Scrolling pauses while the data view is up.

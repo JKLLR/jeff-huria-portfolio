@@ -2,6 +2,4 @@
 // placeholder highlighting and its toggle are left out. Preview and local builds keep them.
 module.exports = {
     showMock: process.env.CONTEXT !== 'production',
-    // prototypes still being judged (the whole-page data view) ship to previews only
-    preview: process.env.CONTEXT !== 'production',
 };

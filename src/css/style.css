@@ -171,7 +171,7 @@ input, textarea { font: inherit; color: inherit; }
     font: 500 9px/1 var(--mono); letter-spacing: 0.12em; color: #fff;
     background: var(--mock); padding: 3px 5px; margin-left: 10px;
 }
-/* ── Prototype: the whole page as data ─────────────── */
+/* ── The whole page as data ─────────────────────────── */
 .data-view { position: fixed; inset: 0; z-index: 780; pointer-events: none; }
 .view-toggle {
     position: fixed; right: 16px; bottom: 16px; z-index: 900;
