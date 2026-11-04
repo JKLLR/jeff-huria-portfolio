@@ -15,17 +15,20 @@ bodyClass: page-home
         <span class="hero-counter-label">{{ mock.hero.counter.label }}</span>
     </div>
 
-    <h1 class="hero-title" aria-label="Technology builder">
-        <span class="fit-text" data-fit data-letters>TECHNOLOGY BUILDER</span>
+    {#- The title re-transmits through what the work actually is: each role matches a line beside the
+        photo. The heading's name stays "Technology builder" for search and screen readers. -#}
+    <h1 class="hero-title" aria-label="Technology builder" data-roles='["SOFTWARE ENGINEER", "ERP INTEGRATOR", "AI PRODUCT BUILDER"]'>
+        <span class="fit-text" data-fit data-letters aria-hidden="true">TECHNOLOGY BUILDER</span>
+        <canvas class="screen-signal" aria-hidden="true"></canvas>
     </h1>
     <p class="hero-based" aria-label="Based in Nairobi, Kenya"><span>BASED</span><span>IN</span><span>NAIROBI</span></p>
 
     <div class="hero-visual">
         <div class="hero-plate" aria-hidden="true"></div>
         <ul class="hero-roles">
-            <li>/ SOFTWARE ENGINEERING</li>
-            <li>/ ERP INTEGRATION</li>
-            <li>/ AI PRODUCTS</li>
+            <li data-role="SOFTWARE ENGINEER">/ SOFTWARE ENGINEERING</li>
+            <li data-role="ERP INTEGRATOR">/ ERP INTEGRATION</li>
+            <li data-role="AI PRODUCT BUILDER">/ AI PRODUCTS</li>
         </ul>
         <figure class="hero-photo">
             <img src="/assets/1760274672058.jfif" alt="Jeff .K. Huria" width="900" height="1125" fetchpriority="high">

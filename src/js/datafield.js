@@ -673,8 +673,10 @@ void main() {
     function paintSlide(ctx, slide, w, h) {
         const ref = slide.getBoundingClientRect();
         const scale = w / ref.width;
-        const own = getComputedStyle(slide).backgroundColor;
-        ctx.fillStyle = own !== CLEAR ? own : getComputedStyle(slide.parentElement).backgroundColor;
+        // paper: the slide's own background, else the nearest ancestor's
+        let paper = slide, bg = CLEAR;
+        while (paper && (bg = getComputedStyle(paper).backgroundColor) === CLEAR) paper = paper.parentElement;
+        ctx.fillStyle = bg !== CLEAR ? bg : '#f6f6f4';
         ctx.fillRect(0, 0, w, h);
         const img = slide.querySelector('img');
         if (img) {
@@ -693,7 +695,7 @@ void main() {
         slide.querySelectorAll('*').forEach((el) => {
             const cs = getComputedStyle(el);
             const r = el.getBoundingClientRect();
-            if (el.tagName === 'CANVAS') return;
+            if (el.tagName === 'CANVAS' || cs.visibility === 'hidden') return;   // nothing invisible gets painted
             if (cs.backgroundColor !== CLEAR) {
                 ctx.fillStyle = cs.backgroundColor;
                 ctx.fillRect((r.left - ref.left) * scale, (r.top - ref.top) * scale, r.width * scale, r.height * scale);
@@ -794,6 +796,7 @@ void main() {
             return true;
         }
         function shot(slide) {
+            if (slide instanceof HTMLCanvasElement) return slide;   // already painted by the caller
             if (!shots.has(slide)) {
                 const c = document.createElement('canvas');
                 c.width = w; c.height = h;
@@ -913,7 +916,10 @@ void main() {
             });
         }
 
-        return { play, standby, hold, release, lensAt };
+        // the device size pictures must be painted at (for callers that paint their own)
+        function pixelSize() { size(); return [w, h]; }
+
+        return { play, standby, hold, release, lensAt, pixelSize };
     }
 
     // Paints what is on screen into a 2D canvas (backgrounds, images, the data fields' canvases, text glyph
@@ -1059,5 +1065,5 @@ void main() {
         el._scramble = requestAnimationFrame(step);
     }
 
-    window.DataField = { mount, portrait, screen, scramble, edge, paintView };
+    window.DataField = { mount, portrait, screen, scramble, edge, paintView, paintSlide };
 })();

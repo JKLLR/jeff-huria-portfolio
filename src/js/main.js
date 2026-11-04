@@ -543,6 +543,87 @@ function prepareHero() {
     };
 }
 
+// ── Hero title: re-transmits through the roles ──────────
+// TECHNOLOGY BUILDER, then each role in data-roles, through the projector's signal: the title breaks into
+// records top to bottom and they lock into the next word. Each word fills the width but never grows past
+// the anchor's size, so the heading never changes height. The shader runs only during a switch, and the
+// loop waits while the hero is off screen, the tab is hidden or the page is being viewed as data.
+function initHeroRoles() {
+    const h1 = $('.hero-title[data-roles]');
+    if (!h1 || REDUCED || !window.DataField) return;
+    const text = $('.fit-text', h1), canvas = $('canvas', h1), list = $('.hero-roles');
+    const scr = DataField.screen(canvas, h1);
+    if (!scr) return;
+    const words = [text.textContent.trim(), ...JSON.parse(h1.dataset.roles)];
+    const HOLD = 4500, SWITCH = 1200;
+    h1.dataset.signalMs = SWITCH;
+
+    // the size each word is set at: fitted to the line, capped at the anchor's
+    const probe = document.createElement('span');
+    probe.className = 'fit-text';
+    probe.setAttribute('aria-hidden', 'true');
+    probe.style.cssText = 'position:absolute;visibility:hidden;left:0;top:0;font-size:100px';
+    h1.appendChild(probe);
+    const widthAt100 = (word) => { probe.textContent = word; return probe.getBoundingClientRect().width; };
+    // the anchor keeps the size the page fitted it at; the others are scaled from it, never larger
+    let anchorSize = 0;
+    const sizeFor = (word) => Math.floor(anchorSize * Math.min(1, widthAt100(words[0]) / widthAt100(word)) * 100) / 100;
+    let index = 0, timer = 0, playing = false, onScreen = true;
+    // the heading keeps the anchor's height whatever word it shows
+    const lock = () => { h1.style.minHeight = ''; h1.style.minHeight = h1.getBoundingClientRect().height / (gsap.getProperty(h1, 'scaleY') || 1) + 'px'; };
+    const setWord = (word) => {
+        text.textContent = word;
+        delete text.dataset.split;
+        text.style.fontSize = sizeFor(word) + 'px';
+    };
+    const mark = () => {
+        if (!list) return;
+        list.classList.toggle('is-cycling', index > 0);
+        $$('li', list).forEach((li) => li.classList.toggle('is-on', li.dataset.role === words[index]));
+    };
+    // on resize, re-fit the anchor the way the page does (fitAll has just run on whatever word is showing)
+    addEventListener('resize', () => {
+        if (!anchorSize) return;
+        const cs = getComputedStyle(h1);
+        const avail = h1.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        anchorSize = Math.floor((avail / widthAt100(words[0])) * 99 * 100) / 100;
+        text.style.fontSize = sizeFor(words[index]) + 'px';
+        h1.style.minHeight = '';
+        const shown = text.textContent;
+        text.textContent = words[0]; text.style.fontSize = anchorSize + 'px';
+        lock();
+        text.textContent = shown; text.style.fontSize = sizeFor(words[index]) + 'px';
+    });
+
+    const paused = () => !onScreen || document.hidden || !!$('#viewToggle[aria-pressed="true"]');
+    function next() {
+        clearTimeout(timer);
+        if (paused()) { timer = setTimeout(next, 600); return; }
+        const [w, h] = scr.pixelSize();
+        if (!w || !h) { timer = setTimeout(next, HOLD); return; }
+        const shot = () => {
+            const c = document.createElement('canvas');
+            c.width = w; c.height = h;
+            DataField.paintSlide(c.getContext('2d'), h1, w, h);
+            return c;
+        };
+        // all in one task: paint the word on screen, swap in the next, paint it; the canvas covers the
+        // title before the browser paints again, so the swap underneath is never seen
+        const from = shot();
+        index = (index + 1) % words.length;
+        setWord(words[index]);
+        const to = shot();
+        playing = true;
+        mark();
+        scr.play(from, to).then(() => { playing = false; timer = setTimeout(next, HOLD); });
+    }
+    new IntersectionObserver(([e]) => { onScreen = e.isIntersecting && e.intersectionRatio > 0.5; }, { threshold: [0, 0.5, 1] }).observe(h1);
+    const begin = () => { anchorSize = parseFloat(text.style.fontSize) || parseFloat(getComputedStyle(text).fontSize); lock(); timer = setTimeout(next, HOLD - 1500); };
+    // starts once the intro has played
+    const wait = () => (heroIntroDone ? begin() : setTimeout(wait, 250));
+    wait();
+}
+
 // Scrolling past the hero: the portrait decodes into records and streams down the page.
 // It takes over from the <img> only once the intro has finished, so the photo's reveal is untouched.
 let heroIntroDone = false;
@@ -833,6 +914,7 @@ function initClock() {
     await yieldTask();
     initOdometers();
     initHeroScroll();
+    initHeroRoles();
     await yieldTask();
     initReveals();
     initManifesto();
