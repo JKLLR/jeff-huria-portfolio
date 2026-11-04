@@ -197,6 +197,8 @@ const setPct = (v) => { if (loaderPct) loaderPct.textContent = Math.round(v); fi
 const EASE_SHEET = 'expo.inOut';
 // how far the sheet travels to be fully off screen, its ragged data edges (26% of its height) included
 const OFF = 126;
+// give the browser a turn (to paint a frame, run the loader) before carrying on
+const yieldTask = () => (window.scheduler && scheduler.yield ? scheduler.yield() : new Promise((r) => setTimeout(r, 0)));
 const nextFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
 // a transform on <main> would unfix a pinned section, so the page only drifts when nothing is pinned
 const pinActive = () => ScrollTrigger.getAll().some((t) => t.pin && t.isActive);
@@ -770,17 +772,25 @@ function initClock() {
     fitAll();
     addEventListener('resize', fitAll);
 
+    // Build the sections in short slices, handing the thread back between them, so the loader keeps
+    // drawing and the sheet keeps moving while the page is put together behind it
+    await yieldTask();
     initOdometers();
     initHeroScroll();
+    await yieldTask();
     initReveals();
     initManifesto();
     initFooterField();
+    await yieldTask();
     initRoom();
+    await yieldTask();
     initWorksIndex();
     initMarquees();
+    await yieldTask();
     initHorizontal();
     initProject();
     initCursor();
+    await yieldTask();
 
     ScrollTrigger.sort();
     ScrollTrigger.refresh();

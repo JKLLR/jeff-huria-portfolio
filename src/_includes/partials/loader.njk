@@ -2,9 +2,8 @@
     inside the letters of a word lock one by one until the word stands, made of data. The word is
     where you are going: the name on the home page, the project or capability title elsewhere, so a
     click on KODIWA starts spelling KODIWA before the page has even been requested.
-    It is drawn by the inline script below (not main.js) so it is alive from the first paint, on the GPU,
-    from a worker thread where the browser allows it: the page boots on the main thread behind the
-    loader, and none of that work can make the field stutter. -#}
+    It is drawn by the inline script below (not main.js) so it is alive from the first paint, by one
+    WebGL shader: the per-cell work is on the GPU, so a frame costs the main thread next to nothing. -#}
 <div class="loader" id="loader" aria-hidden="true">
     {#- ragged data edges: records hanging off the sheet as it sweeps over the page (drawn by datafield.js) -#}
     <canvas class="loader-edge is-top"></canvas>
@@ -24,13 +23,14 @@
     var CHARSET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-·.,:/+';
     var canvas = document.getElementById('loaderField');
     var destEl = document.getElementById('loaderDest');
-    if (!canvas) return;
+    // no field without motion (the CSS hides the loader then), and nothing left running behind the page
+    if (!canvas || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
 
-    // ── The renderer. Self-contained (it is also stringified into the worker), so no outside names.
+    // ── The renderer.
     // One full-screen triangle; each pixel finds its grid cell, reads that cell's state (inside the word?
     // which letter? how near?) from a tiny texture and picks a glyph from the atlas. All the per-cell
     // logic is in the shader, so a frame costs the main thread nothing.
-    function Renderer(canvas, NGLYPH) {
+    function Renderer(canvas, NGLYPH, report) {
         var gl = canvas.getContext('webgl', { alpha: true, premultipliedAlpha: true, antialias: false, powerPreference: 'low-power' });
         if (!gl) return null;
         var VS = 'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}';
@@ -85,7 +85,7 @@
         var tState = tex(0), tAtlas = tex(1);
         gl.uniform1i(U.uState, 0); gl.uniform1i(U.uAtlas, 1);
 
-        var target = 0, p = 0, out = 0, vel = 0, running = false, last = 0, hasLayout = false, hasAtlas = false;
+        var target = 0, p = 0, out = 0, vel = 0, running = false, last = 0, hasLayout = false, hasAtlas = false, frames = 0;
         var raf = typeof requestAnimationFrame === 'function'
             ? function (f) { return requestAnimationFrame(f); }
             : function (f) { return setTimeout(function () { f(performance.now()); }, 16); };
@@ -100,6 +100,7 @@
                 gl.uniform1f(U.uP, p); gl.uniform1f(U.uOut, out); gl.uniform1f(U.uTime, now / 1000);
                 gl.uniform1f(U.uFlash, Math.min(0.05, vel * 0.16)); // a landing flash lasts ~0.16s, and none while stalled
                 gl.drawArrays(gl.TRIANGLES, 0, 3);
+                if (++frames === 1) report({ t: 'drawn' });
             }
             raf(frame);
         }
@@ -122,30 +123,23 @@
                 else if (m.t === 'out') out = m.v;
                 else if (m.t === 'run') { if (!running) { running = true; last = 0; raf(frame); } }
                 else if (m.t === 'stop') running = false;
+                else if (m.t === 'stats') report({ t: 'stats', frames: frames });
             },
         };
     }
 
-    // ── Where the renderer lives: a worker if the browser can hand the canvas over, else this thread.
-    var post = null, viaWorker = false;
-    try {
-        if (canvas.transferControlToOffscreen && window.Worker && window.createImageBitmap) {
-            var src = Renderer.toString() + '\nvar r;onmessage=function(e){var m=e.data;if(m.t==="init")r=Renderer(m.canvas,m.n);else if(r)r.msg(m);};';
-            var wk = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })));
-            var off = canvas.transferControlToOffscreen();
-            wk.postMessage({ t: 'init', canvas: off, n: CHARSET.length }, [off]);
-            post = function (m, tr) { wk.postMessage(m, tr || []); };
-            viaWorker = true;
-        }
-    } catch (e) { post = null; }
-    if (!post) {
-        var R = Renderer(canvas, CHARSET.length);
-        if (R) post = function (m) { R.msg(m); };
+    // ── The renderer draws from this thread. A frame costs it a fraction of a millisecond, and it is ready
+    // on the first paint. (A worker with an OffscreenCanvas was tried: its first frame arrived only after
+    // the page had booted, so on a slow load the word appeared already finished, and Chrome let the page
+    // show through the sheet until then.)
+    var S = { p: 0, word: '', path: '', running: false }, fontReady = false, cw, ch, dpr, statsCb = null;
+    function report(m) {
+        if (m.t === 'drawn') canvas.dataset.firstFrame = Math.round(performance.now());
+        else if (m.t === 'stats' && statsCb) statsCb(m);
     }
-    if (!post) return;
-    canvas.dataset.renderer = viaWorker ? 'worker' : 'main';
-
-    var S = { p: 0, word: '', path: '' }, fontReady = false, cw, ch, dpr;
+    var R = Renderer(canvas, CHARSET.length, report);
+    if (!R) return;
+    var post = function (m) { R.msg(m); };
 
     function wordFor(path) { return WORDS[path] || WORDS[path + '/'] || 'JEFF K. HURIA'; }
     function fit(o, lines, fam, W, H) {
@@ -194,7 +188,7 @@
                 state[i4 + 2] = Math.round((inside ? 1 : fall) * 255);
             }
         }
-        post({ t: 'layout', W: Math.round(W * dpr), H: Math.round(H * dpr), cols: cols, rows: rows, cw: cw * dpr, ch: ch * dpr, state: state.buffer }, [state.buffer]);
+        post({ t: 'layout', W: Math.round(W * dpr), H: Math.round(H * dpr), cols: cols, rows: rows, cw: cw * dpr, ch: ch * dpr, state: state.buffer });
         atlas();
     }
 
@@ -206,8 +200,7 @@
         o.fillStyle = '#fff'; o.textAlign = 'center'; o.textBaseline = 'middle';
         o.font = '500 ' + Math.round(cw * 1.5 * dpr) + 'px "Spline Sans Mono", ui-monospace, monospace';
         for (var i = 0; i < CHARSET.length; i++) o.fillText(CHARSET[i], (i % ac) * w + w / 2, ((i / ac) | 0) * h + h / 2);
-        if (viaWorker) createImageBitmap(c).then(function (b) { post({ t: 'atlas', img: b, ac: ac, ar: ar }, [b]); });
-        else post({ t: 'atlas', img: c, ac: ac, ar: ar });
+        post({ t: 'atlas', img: c, ac: ac, ar: ar });
     }
 
     var L = window.jkhLoader = {
@@ -220,9 +213,11 @@
             S.p = 0; post({ t: 'p', v: 0, snap: true }); post({ t: 'out', v: 0 });
             var w = wordFor(S.path);
             if (w !== S.word) { S.word = w; layout(); }
-            post({ t: 'run' });
+            S.running = true; post({ t: 'run' });
         },
-        stop: function () { post({ t: 'stop' }); },
+        stop: function () { S.running = false; post({ t: 'stop' }); },
+        // frames drawn so far (for performance checks)
+        stats: function (cb) { statsCb = cb; post({ t: 'stats' }); },
         // handed to the next page so the word keeps forming across the navigation
         carry: function () {
             try { sessionStorage.setItem('jkh-loader', JSON.stringify({ path: S.path, p: S.p, t: Date.now() })); } catch (e) {}
