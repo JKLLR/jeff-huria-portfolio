@@ -1,0 +1,21 @@
+---
+layout: layouts/base.njk
+title: Not found — JEFF .K. HURIA
+description: This page is not in the records.
+permalink: /404.html
+loaderWord: NOT FOUND
+noindex: true
+eleventyExcludeFromCollections: true
+---
+{#- Netlify serves this for any unknown path. The loader spells NOT FOUND, then the page says where you
+    tried to go and offers the way back. -#}
+<section class="section thanks notfound">
+    <p class="notfound-record" aria-hidden="true">→ <span id="nfPath">/</span> · 404 · NO RECORD</p>
+    <h1 class="big-title" data-scatter>NOT FOUND</h1>
+    <p class="thanks-text">This page is not in the records. It may have moved, or the link is wrong.</p>
+    <div class="notfound-links">
+        <a href="/" class="link-line" data-roll>BACK TO HOME <span class="arr">↗</span></a>
+        <a href="/#works" class="link-line" data-roll>SEE THE WORK <span class="arr">↗</span></a>
+    </div>
+</section>
+<script>document.getElementById('nfPath').textContent = location.pathname;</script>

@@ -71,6 +71,10 @@ input, textarea { font: inherit; color: inherit; }
 .theme-dark { background: var(--dark); color: var(--on-dark); }
 /* on dark surfaces the secondary grey goes lighter instead (6.9:1 on #111) */
 .theme-dark, .menu, .next-project { --gray: #9a9a9a; }
+
+/* 404: the address that had no record, then the way back */
+.notfound-record { font: 400 13px/1 var(--mono); letter-spacing: 0.04em; text-transform: uppercase; color: var(--gray); overflow-wrap: anywhere; }
+.notfound-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 48px; }
 .section { padding: clamp(80px, 11vw, 160px) var(--gutter); }
 
 .fit-text {

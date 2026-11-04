@@ -156,7 +156,12 @@
     if (!R) return;
     var post = function (m) { R.msg(m); };
 
-    function wordFor(path) { return WORDS[path] || WORDS[path + '/'] || 'JEFF K. HURIA'; }
+    // a page can name its own word (the 404 spells NOT FOUND whatever the address was)
+    var FORCED = document.body.getAttribute('data-loader-word');
+    function wordFor(path) {
+        if (FORCED && path === location.pathname) return FORCED.toUpperCase();
+        return WORDS[path] || WORDS[path + '/'] || 'JEFF K. HURIA';
+    }
     function fit(o, lines, fam, W, H) {
         o.font = '800 100px ' + fam;
         var wmax = 0;

@@ -1,4 +1,5 @@
 {%- set metaTitle = title or 'JEFF .K. HURIA — Technology Builder' -%}
+{%- set metaImage = site.url + (ogImage or site.image) -%}
 {%- set metaDesc = description or 'Jeff .K. Huria — Technology Builder. Software engineer, ERP integration specialist, and AI-native founder building, connecting, and scaling systems, products, and businesses from Nairobi, Kenya.' -%}
 <!DOCTYPE html>
 <html lang="en">
@@ -7,7 +8,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="{{ metaDesc }}">
     <meta name="theme-color" content="#f6f6f4">
+    {%- if noindex %}
+    <meta name="robots" content="noindex">
+    {%- endif %}
     <title>{{ metaTitle }}</title>
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" href="/assets/icons/icon-192.png" type="image/png" sizes="192x192">
+    <link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png">
 
     <link rel="canonical" href="{{ site.url }}{{ page.url }}">
     <meta property="og:type" content="website">
@@ -15,11 +22,18 @@
     <meta property="og:title" content="{{ metaTitle }}">
     <meta property="og:description" content="{{ metaDesc }}">
     <meta property="og:url" content="{{ site.url }}{{ page.url }}">
-    <meta property="og:image" content="{{ site.url }}{{ site.image }}">
+    <meta property="og:image" content="{{ metaImage }}">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="{{ metaTitle }}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ metaTitle }}">
     <meta name="twitter:description" content="{{ metaDesc }}">
-    <meta name="twitter:image" content="{{ site.url }}{{ site.image }}">
+    <meta name="twitter:image" content="{{ metaImage }}">
+    {%- if page.url == '/' %}
+    {#- who this is, for search engines: only facts the site states (src/_data/person.js) -#}
+    <script type="application/ld+json">{{ person | dump | safe }}</script>
+    {%- endif %}
 
     <script>
         // js: enable entrance styles. first-visit: the loader runs its full count once per session (shorter after).
@@ -43,7 +57,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Sofia+Sans+Condensed:wght@500;600;700;800;900&family=Spline+Sans+Mono:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/style.css">
 </head>
-<body class="{{ bodyClass or '' }}">
+<body class="{{ bodyClass or '' }}"{% if loaderWord %} data-loader-word="{{ loaderWord }}"{% endif %}>
 
     <a class="skip-link" href="#main">Skip to content</a>
 

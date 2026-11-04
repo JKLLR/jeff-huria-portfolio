@@ -4,10 +4,12 @@ pagination:
   data: projectPages
   size: 1
   alias: project
+  addAllPagesToCollections: true
 permalink: /work/{{ project.slug }}/index.html
 bodyClass: page-project
 eleventyComputed:
   title: "{{ project.title }} — JEFF .K. HURIA"
+  ogImage: "/assets/og/{{ project.slug }}.jpg"
   description: "{{ project.shortDescription }}"
 ---
 {%- set mf = project.mockFields or [] -%}
