@@ -172,8 +172,16 @@
         }
         var lh = size * 0.86, total = lh * lines.length, top = H / 2 - total / 2, bot = H / 2 + total / 2;
         o.setTransform(k, 0, 0, k, 0, 0);
-        o.textAlign = 'center'; o.textBaseline = 'middle'; o.font = '800 ' + size + 'px ' + fam;
-        for (var n = 0; n < lines.length; n++) o.fillText(lines[n], W / 2, top + lh * (n + 0.5) + size * 0.04);
+        o.textAlign = 'center'; o.textBaseline = 'alphabetic'; o.font = '800 ' + size + 'px ' + fam;
+        // Each line is centred on its capitals and clipped to them, so tails (the J of JEFF, a comma)
+        // don't hang under the word: it reads as one clean block of records
+        var cap = o.measureText('H').actualBoundingBoxAscent || size * 0.7;
+        for (var n = 0; n < lines.length; n++) {
+            var base = top + lh * (n + 0.5) + cap / 2;
+            o.save(); o.beginPath(); o.rect(0, base - cap - 1, W, cap + 1); o.clip();
+            o.fillText(lines[n], W / 2, base);
+            o.restore();
+        }
         var img = o.getImageData(0, 0, off.width, off.height).data;
         var name = S.word.replace(/[^A-Z0-9]/g, '') || 'JKH', seq = 0;
         var state = new Uint8Array(cols * rows * 4);
