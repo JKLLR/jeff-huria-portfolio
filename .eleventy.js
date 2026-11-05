@@ -8,6 +8,7 @@ module.exports = function (eleventyConfig) {
     eleventyConfig.addPassthroughCopy("src/assets");
     eleventyConfig.addPassthroughCopy("src/favicon.ico");
     eleventyConfig.addPassthroughCopy("src/_headers");
+    eleventyConfig.addPassthroughCopy("src/_redirects");
 
     // The WebP twin of a .jpg/.png under src/, when one exists ("" otherwise), for <picture> sources
     eleventyConfig.addFilter("webp", (src) => {

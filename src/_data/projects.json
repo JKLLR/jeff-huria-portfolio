@@ -247,6 +247,277 @@
         ]
     },
     {
+        "id": "kodiwa-pay",
+        "slug": "kodiwa-pay",
+        "title": "KODIWA PAY",
+        "shortDescription": "Tipping for African hospitality: a guest scans a QR code and tips by M-Pesa, the money settles straight to the worker's own account, and the worker's app shows it the moment it lands. Live in production since October 2026.",
+        "type": "product",
+        "status": "active",
+        "role": [
+            "Founder",
+            "Software Engineer"
+        ],
+        "highlights": [
+            "Took a live tip through production on 29 October 2026: QR tip page, STK push over KCB Buni, bank callback, tip settled and the recipient notified in real time",
+            "Designed it non-custodial: tips settle to the recipient's own account, so the platform never holds anyone's money and earns from subscriptions instead of a cut",
+            "Built one mobile-money layer for every rail, with Safaricom Daraja and KCB Buni drivers today and Stanbic, Equity, Co-op, NCBA, Airtel Money and cards on the roadmap"
+        ],
+        "image": {
+            "src": "/assets/projects/kodiwa-pay.jpg",
+            "alt": "Kodiwa Pay landing page: 'Get tipped. Instantly. Straight to your M-PESA.' beside a tip card for a demo barista with amount buttons and a Send M-PESA prompt button"
+        },
+        "technologies": [
+            "Laravel",
+            "Vue",
+            "Expo",
+            "M-Pesa",
+            "KCB Buni"
+        ],
+        "capabilities": [
+            "software-engineering"
+        ],
+        "featured": true,
+        "links": {
+            "website": "https://payments.kodiwa.com"
+        },
+        "caseStudy": null,
+        "period": {
+            "start": "2026-10",
+            "end": null
+        },
+        "overview": [
+            "Kodiwa Pay is a tipping platform for African hospitality. A guest scans a worker's QR code, picks an amount and gets an M-Pesa prompt on their phone; the tip settles to the worker's own account, and the worker watches it arrive in the Kodiwa Pay app.",
+            "It is non-custodial by design. Pooling every tip into one account and paying it out later means holding other people's money, which in Kenya is regulated activity. Instead each recipient connects their own collection account, and the platform earns from a subscription rather than a cut of each tip. A recipient can be one person or a whole team.",
+            "Guests never install anything: tipping happens on the web. Recipients use an Android app to manage their tip page and QR code and to see every tip land; operators run the platform from an admin hub. The first live tip went through production on 29 October 2026."
+        ],
+        "facts": [
+            {
+                "label": "First live tip",
+                "value": "29.10.26"
+            },
+            {
+                "label": "Rails built",
+                "value": "2"
+            },
+            {
+                "label": "Rails on the roadmap",
+                "value": "6"
+            }
+        ],
+        "features": [
+            {
+                "title": "Tip by QR",
+                "description": "Every recipient gets a public tip page and a QR code. A guest scans, picks or types an amount, and gets an M-Pesa prompt on their phone. No app, no account."
+            },
+            {
+                "title": "Straight to the recipient",
+                "description": "Tips settle to the account the recipient connects, not to a pool. The platform keeps the record and never touches the money."
+            },
+            {
+                "title": "Clear fees",
+                "description": "A fee engine shows the tipper exactly what the recipient receives before they pay, with exemptions for small tips and an option to cover the recipient's fee."
+            },
+            {
+                "title": "Live tips feed",
+                "description": "Each tip lands in the recipient's app the moment the payment confirms, over websockets, with a push notification."
+            },
+            {
+                "title": "The recipient app",
+                "description": "An Android app to create and edit tip pages, share or download the QR code, and follow every tip, downloadable straight from the landing page."
+            },
+            {
+                "title": "Plans and an operator hub",
+                "description": "Subscription plans with usage limits, billed through Paystack or Stripe, and an admin hub for recipients, teams, roles and tip pages."
+            }
+        ],
+        "contributions": [
+            {
+                "area": "Payment rails",
+                "items": [
+                    "Wrote the Safaricom Daraja and KCB Buni gateways behind one mobile-money contract: authentication, STK push, status queries and one normalised response shape",
+                    "Made payment callbacks safe to receive twice: verified, idempotent on the checkout and receipt ids, and always acknowledged so the provider stops retrying",
+                    "Stored every account's credentials encrypted and resolved them per recipient, with sandbox and production kept strictly apart"
+                ]
+            },
+            {
+                "area": "Tipping",
+                "items": [
+                    "Built the public tip flow end to end (resolve the page, preview fees, create the tip, follow its status) with a QR code for every page",
+                    "Built the fee engine and the tip ledger, kept in step with the payment events so a tip completes when the money does",
+                    "Tied tipping to subscription plans and usage limits"
+                ]
+            },
+            {
+                "area": "The recipient app",
+                "items": [
+                    "Built the recipient screens in Expo: the live tips feed over Reverb with push notifications, and tip-page management with QR sharing",
+                    "Set up signed Android builds with EAS and the landing page that distributes the APK"
+                ]
+            },
+            {
+                "area": "Platform and production",
+                "items": [
+                    "Built it on my own Laravel SaaS starter: teams as tenants, roles and permissions, subscription billing, SMS, WhatsApp and push notifications, and a versioned API for the app",
+                    "Deployed it to production with TLS, Horizon queues and Reverb websockets, then took the first live tip through end to end",
+                    "Kept the codebase at PHPStan's strictest level, with Pest tests, Pint, TypeScript and ESLint clean"
+                ]
+            }
+        ],
+        "roadmap": [
+            {
+                "group": "Payment rails",
+                "items": [
+                    {
+                        "name": "KCB Buni",
+                        "detail": "STK push collection and payment callbacks",
+                        "status": "live"
+                    },
+                    {
+                        "name": "M-Pesa Daraja",
+                        "detail": "STK push to the recipient's own till, with status queries",
+                        "status": "built"
+                    },
+                    {
+                        "name": "Stanbic Kilele",
+                        "detail": "STK collection and instant payment notifications, ported from Kodiwa",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "Equity Jenga",
+                        "detail": "Collection through Equity's Jenga API, ported from Kodiwa",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "Co-op Bank",
+                        "detail": "Collection and reconciliation, ported from Kodiwa",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "NCBA",
+                        "detail": "Bank transfers reconciled from payment notifications",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "Airtel Money",
+                        "detail": "Mobile-money collection for Airtel subscribers",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "Cards",
+                        "detail": "Visa, Mastercard, Apple Pay and Google Pay through Stripe",
+                        "status": "planned"
+                    }
+                ]
+            },
+            {
+                "group": "Product",
+                "items": [
+                    {
+                        "name": "M-Pesa B2C payouts",
+                        "detail": "Paying out to personal M-Pesa numbers and bank accounts",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "Pooled TipJAR",
+                        "detail": "A business's tips pooled and split across its staff by weight",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "Licensed custody",
+                        "detail": "Pooled funds held by a licensed payment partner, never by the platform",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "KYC",
+                        "detail": "Recipients verified before money is paid out",
+                        "status": "planned"
+                    },
+                    {
+                        "name": "Google Play",
+                        "detail": "The app on the Play Store, beside the direct APK",
+                        "status": "planned"
+                    }
+                ]
+            }
+        ],
+        "stack": [
+            {
+                "group": "Backend",
+                "items": [
+                    "Laravel 12",
+                    "PHP 8.3",
+                    "Filament 3",
+                    "Jetstream",
+                    "Sanctum",
+                    "Horizon",
+                    "Reverb",
+                    "Pennant"
+                ]
+            },
+            {
+                "group": "Web front end",
+                "items": [
+                    "Vue 3",
+                    "Inertia.js 2",
+                    "Tailwind CSS 4",
+                    "Vite"
+                ]
+            },
+            {
+                "group": "Mobile",
+                "items": [
+                    "Expo SDK 54",
+                    "React Native 0.81",
+                    "Expo Router",
+                    "TanStack Query",
+                    "Zustand",
+                    "TypeScript"
+                ]
+            },
+            {
+                "group": "Payments",
+                "items": [
+                    "KCB Buni",
+                    "M-Pesa Daraja",
+                    "Paystack",
+                    "Stripe"
+                ]
+            },
+            {
+                "group": "Quality",
+                "items": [
+                    "Pest",
+                    "PHPStan (max level)",
+                    "Pint",
+                    "ESLint"
+                ]
+            }
+        ],
+        "gallery": [
+            {
+                "src": "/assets/projects/kodiwa-pay-tip.jpg",
+                "alt": "Public tip page for a demo barista: preset amounts, a custom amount field, the tipper's M-Pesa number, an optional name and message, and what the recipient receives",
+                "caption": "The tip page a guest lands on after scanning the QR: amount, phone number, done.",
+                "width": 1440,
+                "height": 900
+            },
+            {
+                "src": "/assets/projects/kodiwa-pay-features.jpg",
+                "alt": "Kodiwa Pay landing page sections: three steps to a first tip, then feature cards for tipping by QR, M-Pesa and cards, and real-time alerts",
+                "caption": "Three steps to a first tip: create a page, share the QR, get paid to M-Pesa.",
+                "width": 1440,
+                "height": 900
+            },
+            {
+                "src": "/assets/projects/kodiwa-pay-phone.jpg",
+                "alt": "The demo tip page on a phone screen",
+                "caption": "Built for the phone in a guest's hand.",
+                "width": 780,
+                "height": 1688
+            }
+        ]
+    },
+    {
         "id": "sat-erp-integrator",
         "slug": "sat-erp-integrator",
         "title": "SAT ERP INTEGRATOR",
@@ -670,29 +941,6 @@
         "technologies": [
             "React",
             "Ruby on Rails"
-        ],
-        "capabilities": [
-            "software-engineering"
-        ],
-        "featured": false,
-        "links": {},
-        "caseStudy": null
-    },
-    {
-        "id": "nahla-naturals",
-        "slug": "nahla-naturals",
-        "title": "NAHLA NATURALS",
-        "shortDescription": null,
-        "type": "product",
-        "status": "shipped",
-        "role": [
-            "Software Engineer"
-        ],
-        "highlights": [],
-        "image": null,
-        "technologies": [
-            "Next.js",
-            "Sanity CMS"
         ],
         "capabilities": [
             "software-engineering"

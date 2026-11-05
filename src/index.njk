@@ -113,9 +113,10 @@ bodyClass: page-home
         </div>
     </div>
 
-    <div class="stats mock" data-mock="stats">
+    <div class="stats">
         {% for s in mock.stats %}
-        <div class="stat">
+        {#- confirmed figures carry "verified": true; the rest are still placeholders -#}
+        <div class="stat{% if not s.verified %} mock{% endif %}"{% if not s.verified %} data-mock="stats.{{ loop.index0 }}"{% endif %}>
             <span class="stat-num"><span class="odometer" data-odometer="{{ s.value }}">{{ s.value }}</span>{{ s.suffix }}</span>
             <span class="stat-label">{{ s.label }}</span>
         </div>

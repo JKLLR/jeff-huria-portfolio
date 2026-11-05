@@ -1,0 +1,4 @@
+# Netlify redirects (copied to the site root by Eleventy)
+# Nahla Naturals was replaced by Kodiwa Pay (2026-11-05)
+/work/nahla-naturals/*  /work/kodiwa-pay/  301
+/work/nahla-naturals    /work/kodiwa-pay/  301

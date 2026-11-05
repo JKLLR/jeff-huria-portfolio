@@ -752,6 +752,27 @@ a.wi-link:hover { color: var(--bg); padding-left: 16px; }
 .feature h3 { font: 800 clamp(26px, 2.6vw, 40px)/0.92 var(--display); letter-spacing: -0.03em; text-transform: uppercase; margin: 40px 0 16px; }
 .feature p { font-size: 13px; line-height: 1.6; max-width: 40ch; }
 
+/* Roadmap: rows like a status log; LIVE inked solid, BUILT outlined, PLANNED in grey */
+.roadmap-group + .roadmap-group { margin-top: clamp(56px, 6vw, 90px); }
+.roadmap-head { font: 500 13px/1 var(--mono); letter-spacing: 0.08em; color: var(--gray); padding-bottom: 14px; border-bottom: 1px solid var(--ink); }
+.roadmap-item {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 120px; gap: 24px; align-items: baseline;
+    padding: 22px 0; border-bottom: 1px solid var(--line);
+}
+.roadmap-name { font: 800 clamp(24px, 2.4vw, 36px)/0.95 var(--display); letter-spacing: -0.03em; text-transform: uppercase; }
+.roadmap-detail { font-size: 13px; line-height: 1.55; text-transform: uppercase; color: var(--ink-2); }
+.roadmap-status { justify-self: end; display: inline-flex; align-items: center; gap: 8px; font: 500 12px/1 var(--mono); letter-spacing: 0.1em; }
+.roadmap-status i { width: 9px; height: 9px; border: 1.5px solid currentColor; }
+.roadmap-item.is-live .roadmap-status i { background: currentColor; }
+.roadmap-item.is-built .roadmap-status i { border-radius: 50%; }
+.roadmap-item.is-planned { color: var(--gray); }
+.roadmap-item.is-planned .roadmap-name { color: var(--ink); opacity: 0.55; }
+@media (max-width: 760px) {
+    .roadmap-item { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 16px; }
+    .roadmap-detail { grid-column: 1 / -1; grid-row: 2; }
+    .roadmap-status { grid-row: 1; grid-column: 2; }
+}
+
 .project-contributions { padding: clamp(100px, 12vw, 180px) var(--gutter); }
 .contrib-list { border-top: 1px solid var(--line-dark); }
 .contrib {

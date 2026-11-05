@@ -135,6 +135,10 @@ projects.forEach((p) => {
     optionalArray('contributions', (c) => c && isNonEmptyString(c.area) && isStringList(c.items), '{ area, items: [non-empty strings] }');
     optionalArray('stack', (s) => s && isNonEmptyString(s.group) && isStringList(s.items), '{ group, items: [non-empty strings] }');
     optionalArray('facts', (f) => f && isNonEmptyString(f.label) && isNonEmptyString(f.value), '{ label, value } strings');
+    const ROADMAP_STATUSES = ['live', 'built', 'planned'];
+    optionalArray('roadmap', (g) => g && isNonEmptyString(g.group) && isArray(g.items) && g.items.length > 0
+        && g.items.every((it) => it && isNonEmptyString(it.name) && isNonEmptyString(it.detail) && ROADMAP_STATUSES.includes(it.status)),
+        `{ group, items: [{ name, detail, status: ${ROADMAP_STATUSES.join('|')} }] }`);
     optionalArray('gallery', (g) => g && isNonEmptyString(g.alt) && isNonEmptyString(g.caption)
         && Number.isInteger(g.width) && Number.isInteger(g.height)
         && isString(g.src) && g.src.startsWith('/assets/') && IMAGE_EXT_RE.test(g.src)

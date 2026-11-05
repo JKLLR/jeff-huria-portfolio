@@ -21,7 +21,7 @@ field is only shown while the real field is empty.
 
 | Key | Placeholder |
 |---|---|
-| `about.experience` | A senior engineer and founder with 8+ years of building software for companies on three continents. |
+| `about.experience` | A senior engineer and founder with 5 years of building software for companies on three continents. |
 | `about.philosophy` | I value clarity, leverage, and reliability — in code and in business. I build only what moves the result, and I build it to keep working when nobody is watching. |
 | `about.lifestyle` | I look for systems everywhere: in markets, in cities, in how people pay and trade. It is not a job — it is a way of seeing the world. |
 | `about.closing` | Every product is more than a ticket. It is a business I help run on better software. A good system is not about frameworks — it is about the trust it earns. |
@@ -30,18 +30,15 @@ field is only shown while the real field is empty.
 
 | Key | Placeholder |
 |---|---|
-| `stats[0].value` | 8 |
+| `stats[0].value` | 40 |
 | `stats[0].suffix` | + |
-| `stats[0].label` | YEARS BUILDING |
-| `stats[1].value` | 40 |
-| `stats[1].suffix` | + |
-| `stats[1].label` | COMPANIES SERVED |
-| `stats[2].value` | 6 |
+| `stats[0].label` | COMPANIES SERVED |
+| `stats[1].value` | 6 |
+| `stats[1].suffix` |  |
+| `stats[1].label` | COUNTRIES |
+| `stats[2].value` | 12 |
 | `stats[2].suffix` |  |
-| `stats[2].label` | COUNTRIES |
-| `stats[3].value` | 12 |
-| `stats[3].suffix` |  |
-| `stats[3].label` | PRODUCTS SHIPPED |
+| `stats[2].label` | PRODUCTS SHIPPED |
 
 ## recognition
 
@@ -315,42 +312,3 @@ Shown (real field empty): `shortDescription`, `period`, `overview`, `facts`, `im
 | `stack[1].group` | Backend |
 | `stack[1].items[0]` | Ruby on Rails |
 | `stack[1].items[1]` | PostgreSQL |
-
-### nahla-naturals
-
-Shown (real field empty): `shortDescription`, `period`, `overview`, `facts`, `impact`, `features`, `contributions`, `stack`
-
-| Key | Placeholder |
-|---|---|
-| `shortDescription` | E-commerce store for a natural skincare brand — fast storefront, editable catalogue, and checkout. |
-| `period.start` | 2023-05 |
-| `period.end` | 2023-07 |
-| `overview[0]` | Nahla Naturals is a natural skincare brand that needed a storefront as considered as its products. |
-| `overview[1]` | I built a fast Next.js store with a Sanity CMS so the team can edit products, stories, and campaigns themselves, plus checkout and order notifications. |
-| `overview[2]` | The result is a site that loads instantly on mobile data and that the brand can run without a developer. |
-| `facts[0].label` | Lighthouse score |
-| `facts[0].value` | 98 |
-| `facts[1].label` | Products |
-| `facts[1].value` | 60+ |
-| `facts[2].label` | Load time |
-| `facts[2].value` | <1s |
-| `impact[0].value` | +140% |
-| `impact[0].label` | Online sales |
-| `impact[1].value` | -50% |
-| `impact[1].label` | Bounce rate |
-| `impact[2].value` | 0 |
-| `impact[2].label` | Developer edits needed |
-| `features[0].title` | Storefront |
-| `features[0].description` | Statically generated product pages that load instantly. |
-| `features[1].title` | Editable catalogue |
-| `features[1].description` | Products, stories, and campaigns edited in Sanity. |
-| `features[2].title` | Checkout |
-| `features[2].description` | Cart, checkout, and order notifications. |
-| `contributions[0].area` | Build |
-| `contributions[0].items[0]` | Built the Next.js storefront and Sanity content model |
-| `contributions[0].items[1]` | Built checkout and order notifications |
-| `stack[0].group` | Frontend |
-| `stack[0].items[0]` | Next.js |
-| `stack[0].items[1]` | React |
-| `stack[1].group` | Content |
-| `stack[1].items[0]` | Sanity CMS |

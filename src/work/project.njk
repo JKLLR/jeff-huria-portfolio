@@ -130,6 +130,32 @@ eleventyComputed:
 </section>
 {% endif %}
 
+{% if project.roadmap | length %}
+{%- set STATUS = { live: 'LIVE', built: 'BUILT', planned: 'PLANNED' } -%}
+<section class="section project-roadmap">
+    <div class="sec-bar">
+        <span class="sec-idx">03</span>
+        <span class="sec-name">WHAT'S NEXT</span>
+        <span class="sec-code">LIVE · BUILT · PLANNED</span>
+    </div>
+    <h2 class="section-title" data-scatter>ROADMAP</h2>
+    {% for group in project.roadmap %}
+    <div class="roadmap-group">
+        <h3 class="roadmap-head">{{ group.group | upper }}</h3>
+        <ul class="roadmap-list">
+            {% for item in group.items %}
+            <li class="roadmap-item is-{{ item.status }}" data-reveal>
+                <span class="roadmap-name">{{ item.name }}</span>
+                <span class="roadmap-detail">{{ item.detail }}</span>
+                <span class="roadmap-status"><i aria-hidden="true"></i>{{ STATUS[item.status] }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endfor %}
+</section>
+{% endif %}
+
 {% if project.stack | length %}
 <section class="section project-stack">
     <h2 class="label-arrow">STACK <span class="arr">↘</span></h2>

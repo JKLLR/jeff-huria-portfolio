@@ -32,7 +32,8 @@ const out = [
 for (const [section, value] of Object.entries(mock)) {
     if (section.startsWith('_') || section === 'projects') continue;
     lines.length = 0;
-    flatten(value, [section]);
+    // confirmed figures ("verified": true) are no longer placeholders
+    flatten(Array.isArray(value) ? value.filter((v) => !(v && v.verified)) : value, [section]);
     out.push(`## ${section}`, '', '| Key | Placeholder |', '|---|---|', ...lines, '');
 }
 
